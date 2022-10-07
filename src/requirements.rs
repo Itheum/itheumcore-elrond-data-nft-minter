@@ -13,16 +13,7 @@ pub trait RequirementsModule: crate::storage::StorageModule {
         if self.token_id().is_empty() {
             is_mint_ready = false;
         }
-        if self.token_created_nonce().is_empty() {
-            is_mint_ready = false;
-        }
         require!(is_mint_ready, "Minting is not ready");
-    }
-
-    //Checks whether a price is valid
-    fn require_price_set_is_valid(&self, token: &EgldOrEsdtTokenIdentifier, price: &BigUint) {
-        require!(token.is_valid(), "Token id is not valid");
-        self.require_value_higher_than_zero(&price);
     }
 
     //Checks whether a value is higher than zero
@@ -35,22 +26,6 @@ pub trait RequirementsModule: crate::storage::StorageModule {
         require!(
             value <= &self.max_per_address().get(),
             "Value must be lower than or equal to max per address"
-        );
-    }
-
-    //Checks whether a value is higher than or equal to max per transaction
-    fn require_value_higher_or_equal_max_per_tx(&self, value: &BigUint) {
-        require!(
-            value >= &self.max_per_tx().get(),
-            "Value must be higher than or equal to max per tx"
-        );
-    }
-
-    //Checks whether a value is lower than or equal to max per transaction
-    fn require_value_lower_or_equal_max_per_tx(&self, value: &BigUint) {
-        require!(
-            value <= &self.max_per_tx().get(),
-            "Value must be lower than or equal to max per tx"
         );
     }
 }

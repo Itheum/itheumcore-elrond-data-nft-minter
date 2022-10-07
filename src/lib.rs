@@ -34,26 +34,8 @@ pub trait SftMint:
     #[only_owner]
     #[payable("EGLD")]
     #[endpoint(initializeContract)]
-    fn initialize_contract(
-        &self,
-        collection_name: ManagedBuffer,
-        token_ticker: ManagedBuffer,
-        token_royalties: BigUint,
-        token_media_cid: ManagedBuffer,
-        token_metadata_cid: ManagedBuffer,
-        collection_size: BigUint,
-        max_per_tx: BigUint,
-        max_per_address: BigUint,
-    ) {
+    fn initialize_contract(&self, collection_name: ManagedBuffer, token_ticker: ManagedBuffer) {
         self.require_value_higher_than_zero(&max_per_tx);
-        require!(
-            max_per_tx <= max_per_address,
-            "Max per tx must be lower or equal to max per address"
-        );
-        require!(
-            collection_size >= max_per_address,
-            "Collection size must be greater than or equal to max per address"
-        );
         require!(
             self.token_id().is_empty(),
             "Contract was already initialized"
@@ -63,16 +45,10 @@ pub trait SftMint:
             issue_cost == BigUint::from(5u64) * BigUint::from(10u64).pow(16u32),
             "Issue cost is 0.05 eGLD"
         );
-        self.token_royalties().set(token_royalties);
-        self.token_media_cid().set(token_media_cid);
-        self.max_per_tx().set(max_per_tx);
-        self.max_per_address().set(max_per_address);
-        self.token_metadata_cid().set(token_metadata_cid);
-        self.collection_size().set(collection_size);
 
-        // Collection issuing and giving SFT cration rights to the contract.
+        // Collection issuing and giving NFT creation rights to the contract.
         self.token_id().issue_and_set_all_roles(
-            EsdtTokenType::SemiFungible,
+            EsdtTokenType::NonFungible,
             issue_cost,
             collection_name,
             token_ticker,
@@ -115,72 +91,51 @@ pub trait SftMint:
         let payment = self.call_value().egld_or_single_esdt();
 
         let whitelist_enabled = self.white_list_enabled().get();
-        let option_price;
-
-        // If whitelist is enabled, the private price will be used, else the public price will be used.
-        if whitelist_enabled {
-            option_price = self.token_private_price().get(&payment.token_identifier);
-        } else {
-            option_price = self.token_public_price().get(&payment.token_identifier);
-        }
+        let price = self.mint_price().get(&payment.token_identifier);
 
         // The contract will panic if the user tries to use a token which is has not been set as buyable by the owner.
-        if let Some(price) = option_price {
-            require!(price > BigUint::zero(), "Cannot buy with this token");
+        require!(price > BigUint::zero(), "Cannot buy with this token");
+        require!(&payment.amount == &price, "Wrong amount of payment sent");
+
+        let caller = self.blockchain().get_caller();
+        self.minted_per_address(&caller)
+            .update(|n| *n += &number_of_tokens_to_mint);
+        let already_minted_for_address = self.minted_per_address(&caller).get();
+        self.require_value_lower_or_equal_max_per_address(&already_minted_for_address);
+
+        self.minted_tokens()
+            .update(|n| *n += &number_of_tokens_to_mint);
+
+        // Check if there are enough tokens left to mint.
+        let already_minted = self.minted_tokens().get();
+        require!(
+            already_minted <= self.collection_size().get(),
+            "Collection size exceeded"
+        );
+
+        // Check if user is allowed to mint in case of private sale.
+        if whitelist_enabled {
+            let whitelist_mints_allowed = self.white_list(&caller);
             require!(
-                &payment.amount % &price == BigUint::zero(),
-                "Wrong amount of payment sent"
+                number_of_tokens_to_mint <= whitelist_mints_allowed.get(),
+                "Maximum number of private sale mints for this address exceeded"
             );
-
-            let number_of_tokens_to_mint = &payment.amount / &price;
-            require!(
-                number_of_tokens_to_mint >= BigUint::from(1u64),
-                "Payment too low"
-            );
-            self.require_value_lower_or_equal_max_per_tx(&number_of_tokens_to_mint);
-
-            let caller = self.blockchain().get_caller();
-            self.minted_per_address(&caller)
-                .update(|n| *n += &number_of_tokens_to_mint);
-            let already_minted_for_address = self.minted_per_address(&caller).get();
-            self.require_value_lower_or_equal_max_per_address(&already_minted_for_address);
-
-            self.minted_tokens()
-                .update(|n| *n += &number_of_tokens_to_mint);
-
-            // Check if there are enough tokens left to mint.
-            let already_minted = self.minted_tokens().get();
-            require!(
-                already_minted <= self.collection_size().get(),
-                "Collection size exceeded"
-            );
-
-            // Check if user is allowed to mint in case of private sale.
-            if whitelist_enabled {
-                let whitelist_mints_allowed = self.white_list(&caller);
-                require!(
-                    number_of_tokens_to_mint <= whitelist_mints_allowed.get(),
-                    "Maximum number of private sale mints for this address exceeded"
-                );
-                whitelist_mints_allowed.update(|n| *n -= &number_of_tokens_to_mint);
-            }
-
-            self.mint_event(
-                &caller,
-                &number_of_tokens_to_mint,
-                &payment.token_identifier,
-                &price,
-            );
-
-            // Create the SFT quantity paid by the user and send it.
-            self.token_id().nft_add_quantity_and_send(
-                &caller,
-                self.token_created_nonce().get(),
-                number_of_tokens_to_mint,
-            );
-        } else {
-            sc_panic!("Cannot buy with this token");
+            whitelist_mints_allowed.update(|n| *n -= &number_of_tokens_to_mint);
         }
+
+        self.mint_event(
+            &caller,
+            &number_of_tokens_to_mint,
+            &payment.token_identifier,
+            &price,
+        );
+
+        // Create the SFT quantity paid by the user and send it.
+        self.token_id().nft_add_quantity_and_send(
+            &caller,
+            self.token_created_nonce().get(),
+            number_of_tokens_to_mint,
+        );
     }
 
     // Endpoint that will be used by the owner to change the mint pause value.

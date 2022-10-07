@@ -9,55 +9,20 @@ pub trait StorageModule {
     #[storage_mapper("sft_token_id")]
     fn token_id(&self) -> NonFungibleTokenMapper<Self::Api>;
 
-    // Stores the CID of the media file used for the SFT
-    #[view(getTokenMediaCid)]
-    #[storage_mapper("sft_token_media_cid")]
-    fn token_media_cid(&self) -> SingleValueMapper<ManagedBuffer>;
-
-    // Stores the CID of the metadata file used for the SFT
-    #[view(getTokenMetadataCid)]
-    #[storage_mapper("sft_token_metadata_cid")]
-    fn token_metadata_cid(&self) -> SingleValueMapper<ManagedBuffer>;
-
-    // Stores the royalties percentage of the created SFT
-    #[view(getTokenRoyalties)]
-    #[storage_mapper("sft_token_royalties")]
-    fn token_royalties(&self) -> SingleValueMapper<BigUint>;
-
-    // Stores the maximum amount that can be created from the given SFT
-    #[view(getCollectionSize)]
-    #[storage_mapper("collection_size")]
-    fn collection_size(&self) -> SingleValueMapper<BigUint>;
-
     // Stores the amount of SFTs that have been created
     #[view(getMintedTokens)]
     #[storage_mapper("minted_tokens")]
     fn minted_tokens(&self) -> SingleValueMapper<BigUint>;
 
+    // Stores the price for minting an NFT
+    #[view(getMintPrice)]
+    #[storage_get("mint_price")]
+    fn mint_price(&self, token: &EgldOrEsdtTokenIdentifier) -> SingleValueMapper<BigUint>;
+
     // Stores whether minting is paused or not
     #[view(getIsPaused)]
     #[storage_mapper("is_paused")]
     fn is_paused(&self) -> SingleValueMapper<bool>;
-
-    // Stores the prices of the SFT for the public sale
-    #[view(getTokenPublicPrice)]
-    #[storage_mapper("token_public_price")]
-    fn token_public_price(&self) -> MapMapper<EgldOrEsdtTokenIdentifier, BigUint>;
-
-    // Stores the prices of the SFT for the private sale
-    #[view(getTokenPrivatePrice)]
-    #[storage_mapper("token_private_price")]
-    fn token_private_price(&self) -> MapMapper<EgldOrEsdtTokenIdentifier, BigUint>;
-
-    // Stores the max per transaction minting limit
-    #[view(getMaxPerTx)]
-    #[storage_mapper("max_per_tx")]
-    fn max_per_tx(&self) -> SingleValueMapper<BigUint>;
-
-    // Stores the max per address minting limit
-    #[view(getMaxPerAddress)]
-    #[storage_mapper("max_per_address")]
-    fn max_per_address(&self) -> SingleValueMapper<BigUint>;
 
     // Stores how many SFTs have been minted per address
     #[view(getMintedPerAddress)]
