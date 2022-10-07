@@ -1,0 +1,20 @@
+[package]
+name = "sftmint-meta"
+version = "0.0.0"
+edition = "2021"
+publish = false
+authors = [ "Damian Ovidu - Itheum"]
+
+[dev-dependencies]
+
+[dependencies.sftmint]
+path = ".."
+
+[dependencies.elrond-wasm]
+version = "0.35.0"
+
+[dependencies.elrond-wasm-modules]
+version = "0.35.0"
+
+[dependencies.elrond-wasm-debug]
+version = "0.35.0"
