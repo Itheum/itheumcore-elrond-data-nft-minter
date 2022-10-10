@@ -20,12 +20,4 @@ pub trait RequirementsModule: crate::storage::StorageModule {
     fn require_value_higher_than_zero(&self, value: &BigUint) {
         require!(value > &BigUint::zero(), "Value must be greater than 0");
     }
-
-    //Checks whether a value is lower than or equal to max per address
-    fn require_value_lower_or_equal_max_per_address(&self, value: &BigUint) {
-        require!(
-            value <= &self.max_per_address().get(),
-            "Value must be lower than or equal to max per address"
-        );
-    }
 }

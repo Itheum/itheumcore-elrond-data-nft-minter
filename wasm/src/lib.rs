@@ -8,32 +8,19 @@ elrond_wasm_node::wasm_endpoints! {
     sftmint
     (
         callBack
-        createToken
-        getCollectionSize
         getContractInitialized
         getIsPaused
-        getMaxPerAddress
-        getMaxPerTx
+        getMintPrice
         getMintedPerAddress
         getMintedTokens
-        getSftsLeftToMint
         getTokenCreatedNonce
         getTokenId
-        getTokenMediaCid
-        getTokenMetadataCid
-        getTokenPrivatePrice
-        getTokenPublicPrice
-        getTokenRoyalties
-        getUserDataOutFromContract
         getWhiteList
         initializeContract
         isWhiteListEnabled
         mint
         setIsPaused
-        setMaxPerAddress
-        setMaxPerTx
-        setPrivatePrice
-        setPublicPrice
+        setMintPrice
         setWhiteListEnabled
         setWhiteListSpots
     )

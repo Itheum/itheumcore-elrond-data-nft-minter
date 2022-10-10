@@ -16,7 +16,7 @@ pub trait StorageModule {
 
     // Stores the price for minting an NFT
     #[view(getMintPrice)]
-    #[storage_get("mint_price")]
+    #[storage_mapper("mint_price")]
     fn mint_price(&self, token: &EgldOrEsdtTokenIdentifier) -> SingleValueMapper<BigUint>;
 
     // Stores whether minting is paused or not
@@ -32,7 +32,7 @@ pub trait StorageModule {
     // Stores how many SFTs each address can mint during private sale
     #[view(getWhiteList)]
     #[storage_mapper("white_list")]
-    fn white_list(&self, address: &ManagedAddress) -> SingleValueMapper<BigUint>;
+    fn white_list(&self) -> SetMapper<ManagedAddress>;
 
     // Stores whether the contract is in private sale mode or not
     #[view(isWhiteListEnabled)]
