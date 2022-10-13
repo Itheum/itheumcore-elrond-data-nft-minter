@@ -3,7 +3,10 @@
 elrond_wasm::imports!();
 elrond_wasm::derive_imports!();
 
+use crate::storage::DataNftAttributes;
+
 pub mod events;
+pub mod nft_mint_utils;
 pub mod requirements;
 pub mod storage;
 pub mod views;
@@ -15,6 +18,7 @@ pub trait SftMint:
     + events::EventsModule
     + views::ViewsModule
     + requirements::RequirementsModule
+    + nft_mint_utils::NftMintUtils
 {
     // When the smart contract is deployed or upgraded, minting is automatically paused and sale is set to private.
     #[init]
@@ -65,7 +69,15 @@ pub trait SftMint:
     // Public endpoint used to mint and buy SFTs.
     #[payable("*")]
     #[endpoint(mint)]
-    fn mint_token(&self) {
+    fn mint_token(
+        &self,
+        name: ManagedBuffer,
+        media: ManagedBuffer,
+        data_marchal: ManagedBuffer,
+        data_stream: ManagedBuffer,
+        data_preview: ManagedBuffer,
+        royalties: BigUint,
+    ) {
         self.require_minting_is_ready();
         let payment = self.call_value().egld_or_single_esdt();
 
@@ -91,14 +103,25 @@ pub trait SftMint:
             );
         }
 
+        let attributes: DataNftAttributes<Self::Api> = DataNftAttributes {
+            creation_time: self.blockchain().get_block_timestamp(),
+            creator: caller.clone(),
+            data_marchal_url: data_marchal.clone(),
+            data_stream_url: data_stream.clone(),
+            data_preview_url: data_preview.clone(),
+        };
+
         self.mint_event(&caller, &one_token, &payment.token_identifier, &price);
 
-        // Create the SFT quantity paid by the user and send it.
-        // self.token_id().nft_add_quantity_and_send(
-        //     &caller,
-        //     self.token_created_nonce().get(),
-        //     number_of_tokens_to_mint,
-        // );
+        self.send().esdt_nft_create(
+            &self.token_id().get_token_id(),
+            &one_token,
+            &name,
+            &royalties,
+            &self.crate_hash_buffer(&data_marchal, &data_stream),
+            &attributes,
+            &self.create_uris(media),
+        );
     }
 
     // Endpoint that will be used by the owner to change the mint pause value.

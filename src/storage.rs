@@ -1,6 +1,15 @@
 elrond_wasm::imports!();
 elrond_wasm::derive_imports!();
 
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, PartialEq, Clone, Debug, TypeAbi)]
+pub struct DataNftAttributes<M: ManagedTypeApi> {
+    pub data_stream_url: ManagedBuffer<M>,
+    pub data_preview_url: ManagedBuffer<M>,
+    pub data_marchal_url: ManagedBuffer<M>,
+    pub creator: ManagedAddress<M>,
+    pub creation_time: u64,
+}
+
 // Module that handles the common storage of the smart contract
 #[elrond_wasm::module]
 pub trait StorageModule {
