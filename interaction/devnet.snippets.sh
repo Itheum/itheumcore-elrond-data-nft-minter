@@ -8,7 +8,7 @@ DEPLOY_TRANSACTION=$(erdpy data load --key=deployTransaction-devnet)
 
 deploy(){
     erdpy --verbose contract deploy \
-    --bytecode output/sftmint.wasm \
+    --bytecode output/datanftmint.wasm \
     --outfile deployOutput \
     --metadata-not-readable \
     --pem wallet.pem \

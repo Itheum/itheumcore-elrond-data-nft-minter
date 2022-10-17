@@ -1,5 +1,5 @@
 [package]
-name = "sftmint-wasm"
+name = "datanftmint-wasm"
 version = "0.0.0"
 edition = "2021"
 publish = false
@@ -20,7 +20,7 @@ lto = true
 debug = false
 panic = "abort"
 
-[dependencies.sftmint]
+[dependencies.datanftmint]
 path = ".."
 
 [dependencies.elrond-wasm-node]

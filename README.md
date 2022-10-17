@@ -246,7 +246,7 @@ The Smart Contract is structured in 6 files:
 The tests are located in the tests folder, in the rust_tests file. In order to run the tests one can use the command:
 
 ```shell
-    cargo test --package sftmint --test rust_tests --  --nocapture
+    cargo test --package datanftmint --test rust_tests --  --nocapture
 ```
 
 Another way of running the tests is by using the rust-analyzer extension in Visual Studio Code, which is also very helpful for Elrond Smart Contract development. If one has the extension installed, they can go open and go to the top of the rust_tests file and click the Run Tests button.

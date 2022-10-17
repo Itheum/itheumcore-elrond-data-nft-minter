@@ -44,6 +44,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
+name = "datanftmint"
+version = "0.0.0"
+dependencies = [
+ "elrond-wasm",
+ "elrond-wasm-modules",
+]
+
+[[package]]
+name = "datanftmint-wasm"
+version = "0.0.0"
+dependencies = [
+ "datanftmint",
+ "elrond-wasm-node",
+ "elrond-wasm-output",
+]
+
+[[package]]
 name = "elrond-codec"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -248,23 +265,6 @@ checksum = "3d3681b28cd95acfb0560ea9441f82d6a4504fa3b15b97bd7b6e952131820e95"
 dependencies = [
  "endian-type",
  "nibble_vec",
-]
-
-[[package]]
-name = "sftmint"
-version = "0.0.0"
-dependencies = [
- "elrond-wasm",
- "elrond-wasm-modules",
-]
-
-[[package]]
-name = "sftmint-wasm"
-version = "0.0.0"
-dependencies = [
- "elrond-wasm-node",
- "elrond-wasm-output",
- "sftmint",
 ]
 
 [[package]]

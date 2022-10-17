@@ -12,7 +12,7 @@ pub mod storage;
 pub mod views;
 
 #[elrond_wasm::contract]
-pub trait SftMint:
+pub trait DataNftMint:
     elrond_wasm_modules::default_issue_callbacks::DefaultIssueCallbacksModule
     + storage::StorageModule
     + events::EventsModule
