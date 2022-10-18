@@ -57,7 +57,7 @@ pub trait DataNftMint:
 
         // Collection issuing and giving NFT creation rights to the contract.
         self.token_id().issue_and_set_all_roles(
-            EsdtTokenType::NonFungible,
+            EsdtTokenType::SemiFungible,
             issue_cost,
             collection_name,
             token_ticker,
@@ -77,6 +77,7 @@ pub trait DataNftMint:
         data_stream: ManagedBuffer,
         data_preview: ManagedBuffer,
         royalties: BigUint,
+        amount: BigUint,
     ) {
         self.require_minting_is_ready();
         let payment = self.call_value().egld_or_single_esdt();
@@ -115,7 +116,7 @@ pub trait DataNftMint:
 
         self.send().esdt_nft_create(
             &self.token_id().get_token_id(),
-            &one_token,
+            &amount,
             &name,
             &royalties,
             &self.crate_hash_buffer(&data_marchal, &data_stream),
