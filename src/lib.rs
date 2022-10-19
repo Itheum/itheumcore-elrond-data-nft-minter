@@ -112,10 +112,12 @@ pub trait DataNftMint:
             data_preview_url: data_preview.clone(),
         };
 
+        let token_identifier = self.token_id().get_token_id();
+
         self.mint_event(&caller, &one_token, &payment.token_identifier, &price);
 
-        self.send().esdt_nft_create(
-            &self.token_id().get_token_id(),
+        let nonce = self.send().esdt_nft_create(
+            &token_identifier,
             &amount,
             &name,
             &royalties,
@@ -123,6 +125,9 @@ pub trait DataNftMint:
             &attributes,
             &self.create_uris(media),
         );
+
+        self.send()
+            .direct_esdt(&caller, &token_identifier, nonce, &amount);
     }
 
     // Endpoint that will be used by the owner to change the mint pause value.
