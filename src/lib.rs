@@ -78,7 +78,7 @@ pub trait DataNftMint:
         data_preview: ManagedBuffer,
         royalties: BigUint,
         amount: BigUint,
-    ) {
+    ) -> DataNftAttributes<Self::Api> {
         self.require_minting_is_ready();
         let payment = self.call_value().egld_or_single_esdt();
 
@@ -128,6 +128,8 @@ pub trait DataNftMint:
 
         self.send()
             .direct_esdt(&caller, &token_identifier, nonce, &amount);
+
+        attributes
     }
 
     // Endpoint that will be used by the owner to change the mint pause value.
