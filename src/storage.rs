@@ -5,7 +5,7 @@ elrond_wasm::derive_imports!();
 pub struct DataNftAttributes<M: ManagedTypeApi> {
     pub data_stream_url: ManagedBuffer<M>,
     pub data_preview_url: ManagedBuffer<M>,
-    pub data_marchal_url: ManagedBuffer<M>,
+    pub data_marshal_url: ManagedBuffer<M>,
     pub creator: ManagedAddress<M>,
     pub creation_time: u64,
 }
@@ -24,9 +24,9 @@ pub trait StorageModule {
     fn minted_tokens(&self) -> SingleValueMapper<BigUint>;
 
     // Stores the price for minting an NFT
-    #[view(getMintPrice)]
-    #[storage_mapper("mint_price")]
-    fn mint_price(&self, token: &EgldOrEsdtTokenIdentifier) -> SingleValueMapper<BigUint>;
+    #[view(getAntiSpamTax)]
+    #[storage_mapper("anti_spam_tax")]
+    fn anti_spam_tax(&self, token: &EgldOrEsdtTokenIdentifier) -> SingleValueMapper<BigUint>;
 
     // Stores whether minting is paused or not
     #[view(getIsPaused)]
@@ -37,21 +37,6 @@ pub trait StorageModule {
     #[view(getMintedPerAddress)]
     #[storage_mapper("minted_per_address")]
     fn minted_per_address(&self, address: &ManagedAddress) -> SingleValueMapper<BigUint>;
-
-    // Stores how many SFTs each address can mint during private sale
-    #[view(getWhiteList)]
-    #[storage_mapper("white_list")]
-    fn white_list(&self) -> SetMapper<ManagedAddress>;
-
-    // Stores whether the contract is in private sale mode or not
-    #[view(isWhiteListEnabled)]
-    #[storage_mapper("white_list_enabled")]
-    fn white_list_enabled(&self) -> SingleValueMapper<bool>;
-
-    // Stores the nonce of the SFT that is sold (in happy workflow should always be 1)
-    #[view(getTokenCreatedNonce)]
-    #[storage_mapper("token_created_nonce")]
-    fn token_created_nonce(&self) -> SingleValueMapper<u64>;
 
     // Stores whether the contract has been initialized or not
     #[view(getContractInitialized)]

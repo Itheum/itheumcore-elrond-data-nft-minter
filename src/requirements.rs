@@ -15,9 +15,4 @@ pub trait RequirementsModule: crate::storage::StorageModule {
         }
         require!(is_mint_ready, "Minting is not ready");
     }
-
-    //Checks whether a value is higher than zero
-    fn require_value_higher_than_zero(&self, value: &BigUint) {
-        require!(value > &BigUint::zero(), "Value must be greater than 0");
-    }
 }

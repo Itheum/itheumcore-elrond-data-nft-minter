@@ -8,20 +8,15 @@ elrond_wasm_node::wasm_endpoints! {
     datanftmint
     (
         callBack
+        getAntiSpamTax
         getContractInitialized
         getIsPaused
-        getMintPrice
         getMintedPerAddress
         getMintedTokens
-        getTokenCreatedNonce
         getTokenId
-        getWhiteList
         initializeContract
-        isWhiteListEnabled
         mint
+        setAntiSpamTax
         setIsPaused
-        setMintPrice
-        setWhiteListEnabled
-        setWhiteListSpots
     )
 }
