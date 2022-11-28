@@ -211,4 +211,20 @@ pub trait DataNftMint:
         self.min_royalties().set(min_royalties);
         self.max_royalties().set(max_royalties);
     }
+
+    // Endpoint that will be used by the owner to set max supply.
+    #[only_owner]
+    #[endpoint(setMaxSupply)]
+    fn set_max_supply(&self, max_supply: BigUint) {
+        self.set_max_supply_event(&max_supply);
+        self.max_supply().set(max_supply);
+    }
+
+    // Endpoint that will be used by the owner to change the administrator
+    #[only_owner]
+    #[endpoint(setAdministrator)]
+    fn set_administrator(&self, administrator: ManagedAddress) {
+        self.set_administrator_event(&administrator);
+        self.administrator().set(&administrator);
+    }
 }
