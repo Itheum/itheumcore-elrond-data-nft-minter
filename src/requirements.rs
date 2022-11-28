@@ -15,4 +15,14 @@ pub trait RequirementsModule: crate::storage::StorageModule {
         }
         require!(is_mint_ready, "Minting is not ready");
     }
+
+    // Checks whether the address trying to mint is allowed to do so
+    fn require_minting_is_allowed(&self, address: &ManagedAddress, current_time: u64) {
+        let last_mint_time = self.last_mint_time(address).get();
+        let mint_time_liimit = self.mint_time_limit().get();
+        require!(
+            current_time - last_mint_time >= mint_time_liimit,
+            "Minting is not allowed"
+        );
+    }
 }

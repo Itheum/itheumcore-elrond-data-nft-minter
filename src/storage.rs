@@ -42,4 +42,14 @@ pub trait StorageModule {
     #[view(getContractInitialized)]
     #[storage_mapper("contract_initialized")]
     fn contract_initialized(&self) -> SingleValueMapper<bool>;
+
+    // Stores the amount of time in seconds that an address has to wait before minting again
+    #[view(mintTimeLiimit)]
+    #[storage_mapper("mint_time_limit")]
+    fn mint_time_limit(&self) -> SingleValueMapper<u64>;
+
+    // Stores the moment when an address last minted
+    #[view(lastMintTime)]
+    #[storage_mapper("last_mint_time")]
+    fn last_mint_time(&self, address: &ManagedAddress) -> SingleValueMapper<u64>;
 }

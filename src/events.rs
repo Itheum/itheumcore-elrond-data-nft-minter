@@ -15,6 +15,9 @@ pub trait EventsModule {
         #[indexed] amount: &BigUint,
     );
 
+    #[event("mintTimeLimitSet")]
+    fn set_mint_time_limit_event(&self, #[indexed] mint_time_limit: &u64);
+
     //Emitted whenever a mint is performed
     #[event("mint")]
     fn mint_event(

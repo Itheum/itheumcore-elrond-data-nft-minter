@@ -35,6 +35,7 @@ pub trait DataNftMint:
         token_ticker: ManagedBuffer,
         token_identifier: &EgldOrEsdtTokenIdentifier,
         anti_spam_tax: BigUint,
+        mint_time_limit: u64,
     ) {
         require!(
             self.token_id().is_empty(),
@@ -47,8 +48,10 @@ pub trait DataNftMint:
         );
 
         self.set_anti_spam_tax_event(&token_identifier, &anti_spam_tax);
-
         self.anti_spam_tax(token_identifier).set(anti_spam_tax);
+
+        self.set_mint_time_limit_event(&mint_time_limit);
+        self.mint_time_limit().set(mint_time_limit);
 
         // Collection issuing and giving NFT creation rights to the contract.
         self.token_id().issue_and_set_all_roles(
@@ -75,15 +78,17 @@ pub trait DataNftMint:
         amount: BigUint,
     ) -> DataNftAttributes<Self::Api> {
         self.require_minting_is_ready();
+        let caller = self.blockchain().get_caller();
+        let current_time = self.blockchain().get_block_timestamp();
+        self.require_minting_is_allowed(&caller, current_time);
+        self.last_mint_time(&caller).set(current_time);
+
         let payment = self.call_value().egld_or_single_esdt();
-
         let price = self.anti_spam_tax(&payment.token_identifier).get();
-
         // The contract will panic if the user tries to use a token which is has not been set as buyable by the owner.
         require!(price > BigUint::zero(), "Cannot buy with this token");
         require!(&payment.amount == &price, "Wrong amount of payment sent");
 
-        let caller = self.blockchain().get_caller();
         let one_token = BigUint::from(1u64);
         self.minted_per_address(&caller)
             .update(|n| *n += &one_token);
