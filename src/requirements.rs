@@ -22,7 +22,15 @@ pub trait RequirementsModule: crate::storage::StorageModule {
         let mint_time_liimit = self.mint_time_limit().get();
         require!(
             current_time - last_mint_time >= mint_time_liimit,
-            "Minting is not allowed"
+            "You need to wait more time before minting again"
         );
+
+        let whitelist_enabled = self.white_list_enabled().get();
+        if whitelist_enabled {
+            require!(
+                self.white_list().contains(address),
+                "You are not whitelisted"
+            );
+        }
     }
 }

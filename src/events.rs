@@ -7,6 +7,18 @@ pub trait EventsModule {
     #[event("mintPauseToggle")]
     fn mint_pause_toggle_event(&self, #[indexed] pause_value: &bool);
 
+    //Emitted whenever whitelist enabling changes value
+    #[event("whitelistEnableToggle")]
+    fn whitelist_enable_toggle_event(&self, #[indexed] enable_value: &bool);
+
+    //Emitted whenever a whitelist spot is set
+    #[event("whitelistSpotSet")]
+    fn set_whitelist_spot_event(
+        &self,
+        #[indexed] address: &ManagedAddress,
+        #[indexed] amount: &BigUint,
+    );
+
     //Emitted whenever a price for the public sale is set
     #[event("antiSpamTaxSet")]
     fn set_anti_spam_tax_event(

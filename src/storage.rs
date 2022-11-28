@@ -52,4 +52,14 @@ pub trait StorageModule {
     #[view(lastMintTime)]
     #[storage_mapper("last_mint_time")]
     fn last_mint_time(&self, address: &ManagedAddress) -> SingleValueMapper<u64>;
+
+    // Stores how many SFTs each address can mint during private sale
+    #[view(getWhiteList)]
+    #[storage_mapper("white_list")]
+    fn white_list(&self) -> SetMapper<ManagedAddress>;
+
+    // Stores whether the contract is in private sale mode or not
+    #[view(isWhiteListEnabled)]
+    #[storage_mapper("white_list_enabled")]
+    fn white_list_enabled(&self) -> SingleValueMapper<bool>;
 }

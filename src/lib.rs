@@ -23,6 +23,9 @@ pub trait DataNftMint:
     fn init(&self) {
         self.is_paused().set(true);
         self.mint_pause_toggle_event(&true);
+
+        self.white_list_enabled().set(true);
+        self.whitelist_enable_toggle_event(&true);
     }
 
     // Endpoint used by the owner in the first place to initialize the contract with all the data needed for the token creation to begin.
@@ -137,5 +140,23 @@ pub trait DataNftMint:
     fn set_anti_spam_tax(&self, token_id: EgldOrEsdtTokenIdentifier, tax: BigUint) {
         self.set_anti_spam_tax_event(&token_id, &tax);
         self.anti_spam_tax(&token_id).set(tax);
+    }
+
+    // Endpoint that will be used by the owner to change the whitelist enable value.
+    #[only_owner]
+    #[endpoint(setWhiteListEnabled)]
+    fn set_white_list_enabled(&self, is_enabled: bool) {
+        self.whitelist_enable_toggle_event(&is_enabled);
+        self.white_list_enabled().set(is_enabled);
+    }
+
+    // Endpoint that will be used by the owner to set whitelist spots.
+    #[only_owner]
+    #[endpoint(setWhiteListSpots)]
+    fn set_whitelist_spots(&self, whitelist: MultiValueEncoded<ManagedAddress>) {
+        require!(!whitelist.is_empty(), "Given whitelist is empty");
+        for item in whitelist.into_iter() {
+            self.white_list().insert(item);
+        }
     }
 }
