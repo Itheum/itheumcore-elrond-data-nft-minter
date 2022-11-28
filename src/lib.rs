@@ -89,7 +89,7 @@ pub trait DataNftMint:
         let payment = self.call_value().egld_or_single_esdt();
         let price = self.anti_spam_tax(&payment.token_identifier).get();
         // The contract will panic if the user tries to use a token which is has not been set as buyable by the owner.
-        require!(price > BigUint::zero(), "Cannot buy with this token");
+        self.require_value_is_positive(&payment.amount);
         require!(&payment.amount == &price, "Wrong amount of payment sent");
 
         let one_token = BigUint::from(1u64);
@@ -124,6 +124,21 @@ pub trait DataNftMint:
             .direct_esdt(&caller, &token_identifier, nonce, &amount);
 
         attributes
+    }
+
+    #[payable("*")]
+    #[endpoint(burn)]
+    fn burn_token(&self) {
+        self.require_minting_is_ready();
+        let payment = self.call_value().single_esdt();
+        let token_identifier = self.token_id().get_token_id();
+        require!(
+            payment.token_identifier == token_identifier,
+            "Wrong token sent"
+        );
+        self.require_value_is_positive(&payment.amount);
+        self.token_id()
+            .nft_burn(payment.token_nonce, &payment.amount)
     }
 
     // Endpoint that will be used by the owner to change the mint pause value.
