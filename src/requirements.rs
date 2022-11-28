@@ -19,9 +19,9 @@ pub trait RequirementsModule: crate::storage::StorageModule {
     // Checks whether the address trying to mint is allowed to do so
     fn require_minting_is_allowed(&self, address: &ManagedAddress, current_time: u64) {
         let last_mint_time = self.last_mint_time(address).get();
-        let mint_time_liimit = self.mint_time_limit().get();
+        let mint_time_limit = self.mint_time_limit().get();
         require!(
-            current_time - last_mint_time >= mint_time_liimit,
+            current_time - last_mint_time >= mint_time_limit,
             "You need to wait more time before minting again"
         );
 
