@@ -13,10 +13,18 @@ pub trait EventsModule {
 
     //Emitted whenever a whitelist spot is set
     #[event("whitelistSpotSet")]
-    fn set_whitelist_spot_event(
+    fn set_whitelist_spot_event(&self, #[indexed] address: &ManagedAddress);
+
+    //Emitted whenever a whitelist spot is removed
+    #[event("whitelistSpotRemoved")]
+    fn remove_whitelist_spot_event(&self, #[indexed] address: &ManagedAddress);
+
+    //Emitted whenever the minimum and maximum royalties values changes
+    #[event("setRoyaltiesLimits")]
+    fn set_royalties_limits_event(
         &self,
-        #[indexed] address: &ManagedAddress,
-        #[indexed] amount: &BigUint,
+        #[indexed] min_royalties: &BigUint,
+        #[indexed] max_royalties: &BigUint,
     );
 
     //Emitted whenever a price for the public sale is set

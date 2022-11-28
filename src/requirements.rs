@@ -38,4 +38,21 @@ pub trait RequirementsModule: crate::storage::StorageModule {
     fn require_value_is_positive(&self, value: &BigUint) {
         require!(value > &BigUint::zero(), "Value must be positive");
     }
+
+    // Checks whether SFT creation conditions are met
+    fn require_sft_is_valid(&self, royalties: &BigUint, supply: &BigUint) {
+        let max_royalties = self.max_royalties().get();
+        let min_royalties = self.min_royalties().get();
+        let max_supply = self.max_supply().get();
+        require!(
+            royalties <= &max_royalties,
+            "Royalties are bigger than max royalties"
+        );
+        require!(
+            royalties >= &min_royalties,
+            "Royalties are smaller than min royalties"
+        );
+        require!(supply <= &max_supply, "Max supply exceeded");
+        require!(supply > &BigUint::zero(), "Supply must be positive");
+    }
 }

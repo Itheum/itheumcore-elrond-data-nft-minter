@@ -33,6 +33,21 @@ pub trait StorageModule {
     #[storage_mapper("is_paused")]
     fn is_paused(&self) -> SingleValueMapper<bool>;
 
+    // Stores max royalties
+    #[view(getMaxRoyalties)]
+    #[storage_mapper("max_royalties")]
+    fn max_royalties(&self) -> SingleValueMapper<BigUint>;
+
+    // Stores min royalties
+    #[view(getMinRoyalties)]
+    #[storage_mapper("min_royalties")]
+    fn min_royalties(&self) -> SingleValueMapper<BigUint>;
+
+    // Stores max SFT supply
+    #[view(getMaxSupply)]
+    #[storage_mapper("max_supply")]
+    fn max_supply(&self) -> SingleValueMapper<BigUint>;
+
     // Stores how many SFTs have been minted per address
     #[view(getMintedPerAddress)]
     #[storage_mapper("minted_per_address")]

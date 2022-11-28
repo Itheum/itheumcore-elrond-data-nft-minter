@@ -26,6 +26,11 @@ pub trait DataNftMint:
 
         self.white_list_enabled().set(true);
         self.whitelist_enable_toggle_event(&true);
+
+        self.min_royalties().set(BigUint::from(0u64));
+        self.max_royalties().set(BigUint::from(8000u64));
+
+        self.max_supply().set(&BigUint::from(20u64));
     }
 
     // Endpoint used by the owner in the first place to initialize the contract with all the data needed for the token creation to begin.
@@ -78,9 +83,10 @@ pub trait DataNftMint:
         data_stream: ManagedBuffer,
         data_preview: ManagedBuffer,
         royalties: BigUint,
-        amount: BigUint,
+        supply: BigUint,
     ) -> DataNftAttributes<Self::Api> {
         self.require_minting_is_ready();
+        self.require_sft_is_valid(&royalties, &supply);
         let caller = self.blockchain().get_caller();
         let current_time = self.blockchain().get_block_timestamp();
         self.require_minting_is_allowed(&caller, current_time);
@@ -112,7 +118,7 @@ pub trait DataNftMint:
 
         let nonce = self.send().esdt_nft_create(
             &token_identifier,
-            &amount,
+            &supply,
             &name,
             &royalties,
             &self.crate_hash_buffer(&data_marshal, &data_stream),
@@ -121,7 +127,7 @@ pub trait DataNftMint:
         );
 
         self.send()
-            .direct_esdt(&caller, &token_identifier, nonce, &amount);
+            .direct_esdt(&caller, &token_identifier, nonce, &supply);
 
         attributes
     }
@@ -171,7 +177,36 @@ pub trait DataNftMint:
     fn set_whitelist_spots(&self, whitelist: MultiValueEncoded<ManagedAddress>) {
         require!(!whitelist.is_empty(), "Given whitelist is empty");
         for item in whitelist.into_iter() {
+            self.set_whitelist_spot_event(&item);
             self.white_list().insert(item);
         }
+    }
+
+    // Endpoiint that will be used by the owner to unset whitelist spots.
+    #[only_owner]
+    #[endpoint(removeWhiteListSpots)]
+    fn remove_whitelist_spots(&self, whitelist: MultiValueEncoded<ManagedAddress>) {
+        require!(!whitelist.is_empty(), "Given whitelist is empty");
+        for item in whitelist.into_iter() {
+            self.remove_whitelist_spot_event(&item);
+            self.white_list().remove(&item);
+        }
+    }
+
+    // Endpoint that will be used by the owner to set mint time limit.
+    #[only_owner]
+    #[endpoint(setMintTimeLimit)]
+    fn set_mint_time_limit(&self, mint_time_limit: u64) {
+        self.set_mint_time_limit_event(&mint_time_limit);
+        self.mint_time_limit().set(mint_time_limit);
+    }
+
+    // Endpoiint that will be used by the owner to set min and max royalties
+    #[only_owner]
+    #[endpoint(setRoyaltiesLimits)]
+    fn set_royalties_limiits(&self, min_royalties: BigUint, max_royalties: BigUint) {
+        self.set_royalties_limits_event(&min_royalties, &max_royalties);
+        self.min_royalties().set(min_royalties);
+        self.max_royalties().set(max_royalties);
     }
 }
