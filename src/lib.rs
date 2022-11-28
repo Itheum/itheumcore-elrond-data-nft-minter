@@ -172,10 +172,11 @@ pub trait DataNftMint:
     }
 
     // Endpoint that will be used by the owner to set whitelist spots.
-    #[only_owner]
     #[endpoint(setWhiteListSpots)]
     fn set_whitelist_spots(&self, whitelist: MultiValueEncoded<ManagedAddress>) {
         require!(!whitelist.is_empty(), "Given whitelist is empty");
+        let caller = self.blockchain().get_caller();
+        self.require_is_privileged(&caller);
         for item in whitelist.into_iter() {
             self.set_whitelist_spot_event(&item);
             self.white_list().insert(item);
@@ -183,10 +184,11 @@ pub trait DataNftMint:
     }
 
     // Endpoiint that will be used by the owner to unset whitelist spots.
-    #[only_owner]
     #[endpoint(removeWhiteListSpots)]
     fn remove_whitelist_spots(&self, whitelist: MultiValueEncoded<ManagedAddress>) {
         require!(!whitelist.is_empty(), "Given whitelist is empty");
+        let caller = self.blockchain().get_caller();
+        self.require_is_privileged(&caller);
         for item in whitelist.into_iter() {
             self.remove_whitelist_spot_event(&item);
             self.white_list().remove(&item);

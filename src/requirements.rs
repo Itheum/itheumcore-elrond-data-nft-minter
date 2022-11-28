@@ -55,4 +55,13 @@ pub trait RequirementsModule: crate::storage::StorageModule {
         require!(supply <= &max_supply, "Max supply exceeded");
         require!(supply > &BigUint::zero(), "Supply must be positive");
     }
+
+    // Checks whether address is privileged
+    fn require_is_privileged(&self, address: &ManagedAddress) {
+        require!(
+            &self.blockchain().get_owner_address() == address
+                || &self.administrator().get() == address,
+            "Address is not privileged"
+        );
+    }
 }

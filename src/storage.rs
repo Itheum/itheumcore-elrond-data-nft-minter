@@ -77,4 +77,9 @@ pub trait StorageModule {
     #[view(isWhiteListEnabled)]
     #[storage_mapper("white_list_enabled")]
     fn white_list_enabled(&self) -> SingleValueMapper<bool>;
+
+    // Stores admin address
+    #[view(getAdministrator)]
+    #[storage_mapper("administrator")]
+    fn administrator(&self) -> SingleValueMapper<ManagedAddress>;
 }
