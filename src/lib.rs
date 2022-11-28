@@ -183,7 +183,7 @@ pub trait DataNftMint:
         }
     }
 
-    // Endpoiint that will be used by the owner to unset whitelist spots.
+    // Endpoint that will be used by the owner to unset whitelist spots.
     #[endpoint(removeWhiteListSpots)]
     fn remove_whitelist_spots(&self, whitelist: MultiValueEncoded<ManagedAddress>) {
         require!(!whitelist.is_empty(), "Given whitelist is empty");
@@ -203,10 +203,10 @@ pub trait DataNftMint:
         self.mint_time_limit().set(mint_time_limit);
     }
 
-    // Endpoiint that will be used by the owner to set min and max royalties
+    // Endpoint that will be used by the owner to set min and max royalties
     #[only_owner]
     #[endpoint(setRoyaltiesLimits)]
-    fn set_royalties_limiits(&self, min_royalties: BigUint, max_royalties: BigUint) {
+    fn set_royalties_limits(&self, min_royalties: BigUint, max_royalties: BigUint) {
         self.set_royalties_limits_event(&min_royalties, &max_royalties);
         self.min_royalties().set(min_royalties);
         self.max_royalties().set(max_royalties);
