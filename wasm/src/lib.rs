@@ -24,10 +24,12 @@ elrond_wasm_node::wasm_endpoints! {
         isWhiteListEnabled
         lastMintTime
         mint
-        mintTimeLiimit
+        mintTimeLimit
         removeWhiteListSpots
+        setAdministrator
         setAntiSpamTax
         setIsPaused
+        setMaxSupply
         setMintTimeLimit
         setRoyaltiesLimits
         setWhiteListEnabled
