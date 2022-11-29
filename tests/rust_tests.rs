@@ -4,15 +4,17 @@ use datanftmint::nft_mint_utils::*;
 use datanftmint::requirements::RequirementsModule;
 use datanftmint::storage::*;
 use datanftmint::*;
+use elrond_wasm::elrond_codec::multi_encode_iter_or_handle_err;
 use elrond_wasm::hex_literal;
+use elrond_wasm::types::{ManagedAddress, MultiValueEncoded};
 use elrond_wasm::{
     storage::mappers::StorageTokenWrapper,
     types::{Address, EsdtLocalRole},
 };
 
 use elrond_wasm_debug::{
-    managed_biguint, managed_buffer, managed_token_id, managed_token_id_wrapped, rust_biguint,
-    testing_framework::*, DebugApi,
+    managed_address, managed_biguint, managed_buffer, managed_token_id, managed_token_id_wrapped,
+    rust_biguint, testing_framework::*, DebugApi,
 };
 
 pub const WASM_PATH: &'static str = "../output/datanftmint.wasm";
@@ -28,6 +30,7 @@ pub const DATA_MARCHAL_STREAM_SHA256: [u8; 32] =
     hex_literal::hex!("8c195f3b03f86fe51521c0ec6d353b58b635cf76362ed4731d4b90797b622865");
 pub const MEDIA_URI: &[u8] = b"https://ipfs.io/ipfs/123456abcdef/metadata.json";
 pub const USER_NFT_NAME: &[u8] = b"USER-NFT-NAME";
+pub const MINT_TIME_LIMIT: u64 = 15;
 pub const ROLES: &[EsdtLocalRole] = &[EsdtLocalRole::NftCreate, EsdtLocalRole::NftAddQuantity];
 
 struct ContractSetup<ContractObjBuilder>
@@ -39,6 +42,8 @@ where
     pub contract_wrapper:
         ContractObjWrapper<datanftmint::ContractObj<DebugApi>, ContractObjBuilder>,
     pub first_user_address: Address,
+    pub second_user_address: Address,
+    pub third_user_address: Address,
 }
 
 fn setup_contract<ContractObjBuilder>(
@@ -82,6 +87,8 @@ where
         blockchain_wrapper,
         owner_address,
         first_user_address,
+        second_user_address,
+        third_user_address,
         contract_wrapper: cf_wrapper,
     }
 }
@@ -127,6 +134,43 @@ fn pause_test() {
         .assert_ok();
 }
 
+#[test] // Tests if the contract has whitelist enabled and is empty
+        // Tests if the royalties and supply are set accordingly
+fn whitelist_test() {
+    let mut setup = setup_contract(datanftmint::contract_obj);
+    let b_wrapper = &mut setup.blockchain_wrapper;
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(sc.white_list_enabled().get(), true)
+        })
+        .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(sc.white_list().len(), 0usize)
+        })
+        .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(sc.min_royalties().get(), 0u64)
+        })
+        .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(sc.max_royalties().get(), 8000u64)
+        })
+        .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(sc.max_supply().get(), 20u64)
+        })
+        .assert_ok();
+}
+
 #[test] // Tests whether the owner can initialize the contract correctly.
 fn setup_contract_test() {
     let mut setup = setup_contract(datanftmint::contract_obj);
@@ -144,6 +188,7 @@ fn setup_contract_test() {
                     managed_buffer!(SFT_TICKER),
                     &managed_token_id_wrapped!(TOKEN_ID),
                     managed_biguint!(1_000_000),
+                    MINT_TIME_LIMIT,
                 )
             },
         )
@@ -160,6 +205,7 @@ fn setup_contract_test() {
                     managed_buffer!(SFT_TICKER),
                     &managed_token_id_wrapped!(TOKEN_ID),
                     managed_biguint!(1_000_000),
+                    MINT_TIME_LIMIT,
                 )
             },
         )
@@ -185,6 +231,7 @@ fn setup_contract_test() {
                     managed_buffer!(SFT_TICKER),
                     &managed_token_id_wrapped!(TOKEN_ID),
                     managed_biguint!(1_000_000),
+                    MINT_TIME_LIMIT,
                 )
             },
         )
@@ -245,6 +292,7 @@ fn nft_mint_utils_test() {
                     managed_buffer!(SFT_TICKER),
                     &managed_token_id_wrapped!(TOKEN_ID),
                     managed_biguint!(1_000_000),
+                    MINT_TIME_LIMIT,
                 )
             },
         )
@@ -279,6 +327,24 @@ fn requirements_test() {
     let mut setup = setup_contract(datanftmint::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
     let owner_address = &setup.owner_address;
+    let first_user_address = &setup.first_user_address;
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(5u64 * 10u64.pow(16u32)),
+            |sc| {
+                sc.initialize_contract(
+                    managed_buffer!(COLLECTION_NAME),
+                    managed_buffer!(SFT_TICKER),
+                    &managed_token_id_wrapped!(TOKEN_ID),
+                    managed_biguint!(1_000_000),
+                    MINT_TIME_LIMIT,
+                )
+            },
+        )
+        .assert_ok();
 
     b_wrapper
         .execute_tx(
@@ -345,6 +411,18 @@ fn requirements_test() {
             sc.require_minting_is_ready();
         })
         .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_is_privileged(&managed_address!(owner_address))
+        })
+        .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_is_privileged(&managed_address!(first_user_address))
+        })
+        .assert_user_error("Address is not privileged");
 }
 
 #[test] // Tests whether minting works correctly.
@@ -367,6 +445,8 @@ fn mint_nft_ft_test() {
                     managed_buffer!(DATA_STREAM),
                     managed_biguint!(2),
                     managed_biguint!(10),
+                    managed_buffer!(USER_NFT_NAME),
+                    managed_buffer!(USER_NFT_NAME),
                 );
             },
         )
