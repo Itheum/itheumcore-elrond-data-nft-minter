@@ -1,47 +1,51 @@
-use elrond_wasm::{
-    elrond_codec::{multi_types::MultiValue2, Empty},
-    storage::mappers::StorageTokenWrapper,
-    types::{
-        Address, EgldOrEsdtTokenIdentifier, EsdtLocalRole, EsdtTokenPayment, ManagedVec,
-        MultiValueEncoded,
-    },
-};
-use elrond_wasm_debug::{
-    managed_address, managed_biguint, managed_buffer, managed_egld_token_id, managed_token_id,
-    managed_token_id_wrapped, rust_biguint, testing_framework::*, DebugApi,
-};
-use sftmint::storage::*;
-use sftmint::*;
-use sftmint::{nft_mint_utils::*, views::ViewsModule};
+use std::u8;
 
-pub const WASM_PATH: &'static str = "../output/sftmint.wasm";
-pub const TOKEN_ID: &[u8] = b"ITHEUM-df6f26";
-pub const WRONG_TOKEN_ID: &[u8] = b"WRONG-123456";
+use datanftmint::nft_mint_utils::*;
+use datanftmint::requirements::RequirementsModule;
+use datanftmint::storage::*;
+use datanftmint::*;
+use elrond_wasm::hex_literal;
+use elrond_wasm::{
+    storage::mappers::StorageTokenWrapper,
+    types::{Address, EsdtLocalRole},
+};
+
+use elrond_wasm_debug::{
+    managed_biguint, managed_buffer, managed_token_id, managed_token_id_wrapped, rust_biguint,
+    testing_framework::*, DebugApi,
+};
+
+pub const WASM_PATH: &'static str = "../output/datanftmint.wasm";
 pub const OWNER_EGLD_BALANCE: u128 = 100 * 10u128.pow(18u32);
-pub const COLLECTION_NAME: &[u8] = b"NFMESFT";
-pub const SFT_TICKER: &[u8] = b"NFMESFT-1a2b3c";
-pub const SFT_NAME: &[u8] = b"NFME SFT";
-pub const MEDIA_CID: &[u8] = b"123456abcdef/image.png";
-pub const METADATA_CID: &[u8] = b"123456abcdef/metadata.json";
+pub const TOKEN_ID: &[u8] = b"ITHEUM-df6f26";
+pub const ANOTHER_TOKEN_ID: &[u8] = b"ANOTHER-123456";
+pub const COLLECTION_NAME: &[u8] = b"DATANFT-FT";
+pub const SFT_TICKER: &[u8] = b"DATANFTFT-1a2b3c";
+pub const SFT_NAME: &[u8] = b"DATA NFT-FT";
+pub const DATA_MARCHAL: &[u8] = b"DATA-MARCHAL-ENCRYPTED";
+pub const DATA_STREAM: &[u8] = b"DATA-STREAM-ECRYPTED";
+pub const DATA_MARCHAL_STREAM_SHA256: [u8; 32] =
+    hex_literal::hex!("8c195f3b03f86fe51521c0ec6d353b58b635cf76362ed4731d4b90797b622865");
+pub const MEDIA_URI: &[u8] = b"https://ipfs.io/ipfs/123456abcdef/metadata.json";
+pub const USER_NFT_NAME: &[u8] = b"USER-NFT-NAME";
 pub const ROLES: &[EsdtLocalRole] = &[EsdtLocalRole::NftCreate, EsdtLocalRole::NftAddQuantity];
 
 struct ContractSetup<ContractObjBuilder>
 where
-    ContractObjBuilder: 'static + Copy + Fn() -> sftmint::ContractObj<DebugApi>,
+    ContractObjBuilder: 'static + Copy + Fn() -> datanftmint::ContractObj<DebugApi>,
 {
     pub blockchain_wrapper: BlockchainStateWrapper,
     pub owner_address: Address,
-    pub contract_wrapper: ContractObjWrapper<sftmint::ContractObj<DebugApi>, ContractObjBuilder>,
+    pub contract_wrapper:
+        ContractObjWrapper<datanftmint::ContractObj<DebugApi>, ContractObjBuilder>,
     pub first_user_address: Address,
-    pub second_user_address: Address,
-    pub third_user_address: Address,
 }
 
 fn setup_contract<ContractObjBuilder>(
     cf_builder: ContractObjBuilder,
 ) -> ContractSetup<ContractObjBuilder>
 where
-    ContractObjBuilder: 'static + Copy + Fn() -> sftmint::ContractObj<DebugApi>,
+    ContractObjBuilder: 'static + Copy + Fn() -> datanftmint::ContractObj<DebugApi>,
 {
     let rust_zero = rust_biguint!(0u64);
     let mut blockchain_wrapper = BlockchainStateWrapper::new();
@@ -58,9 +62,13 @@ where
         WASM_PATH,
     );
     blockchain_wrapper.set_esdt_balance(&owner_address, TOKEN_ID, &rust_biguint!(5_000_000));
-    blockchain_wrapper.set_esdt_balance(&owner_address, WRONG_TOKEN_ID, &rust_biguint!(1_000_000));
+    blockchain_wrapper.set_esdt_balance(
+        &owner_address,
+        ANOTHER_TOKEN_ID,
+        &rust_biguint!(1_000_000),
+    );
     blockchain_wrapper.set_esdt_balance(&first_user_address, TOKEN_ID, &rust_biguint!(10_000));
-    blockchain_wrapper.set_esdt_balance(&owner_address, WRONG_TOKEN_ID, &rust_biguint!(10_000));
+    blockchain_wrapper.set_esdt_balance(&owner_address, ANOTHER_TOKEN_ID, &rust_biguint!(10_000));
     blockchain_wrapper.set_esdt_balance(&second_user_address, TOKEN_ID, &rust_biguint!(0));
     blockchain_wrapper.set_esdt_balance(&third_user_address, TOKEN_ID, &rust_biguint!(1_000));
 
@@ -74,16 +82,13 @@ where
         blockchain_wrapper,
         owner_address,
         first_user_address,
-        second_user_address,
-        third_user_address,
         contract_wrapper: cf_wrapper,
     }
 }
 
-// Tests whether the contract is deployed and initialized correctly after deployment.
-#[test]
+#[test] // Tests whether the contract is deployed and initialized correctly after deployment.
 fn deploy_test() {
-    let mut setup = setup_contract(sftmint::contract_obj);
+    let mut setup = setup_contract(datanftmint::contract_obj);
     setup
         .blockchain_wrapper
         .execute_tx(
@@ -97,10 +102,34 @@ fn deploy_test() {
         .assert_ok();
 }
 
-// Tests whether the owner can initialize the contract correctly.
-#[test]
+#[test] //Tests wether pause correct state after deployment
+        //Tests wether the owner can unpause the contract
+fn pause_test() {
+    let mut setup = setup_contract(datanftmint::contract_obj);
+    let b_wrapper = &mut setup.blockchain_wrapper;
+    let owner_address = &setup.owner_address;
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(sc.is_paused().get(), true)
+        })
+        .assert_ok();
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.set_is_paused(false);
+            },
+        )
+        .assert_ok();
+}
+
+#[test] // Tests whether the owner can initialize the contract correctly.
 fn setup_contract_test() {
-    let mut setup = setup_contract(sftmint::contract_obj);
+    let mut setup = setup_contract(datanftmint::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
     let owner_address = &setup.owner_address;
 
@@ -108,77 +137,13 @@ fn setup_contract_test() {
         .execute_tx(
             &owner_address,
             &setup.contract_wrapper,
-            &rust_biguint!(5u64 * 10u64.pow(16u32)),
+            &rust_biguint!(5u64),
             |sc| {
                 sc.initialize_contract(
                     managed_buffer!(COLLECTION_NAME),
-                    managed_buffer!(COLLECTION_NAME),
-                    managed_biguint!(1000u64),
-                    managed_buffer!(MEDIA_CID),
-                    managed_buffer!(METADATA_CID),
-                    managed_biguint!(2000u64),
-                    managed_biguint!(0u64),
-                    managed_biguint!(3u64),
-                )
-            },
-        )
-        .assert_user_error("Value must be greater than 0");
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(5u64 * 10u64.pow(16u32)),
-            |sc| {
-                sc.initialize_contract(
-                    managed_buffer!(COLLECTION_NAME),
-                    managed_buffer!(COLLECTION_NAME),
-                    managed_biguint!(1000u64),
-                    managed_buffer!(MEDIA_CID),
-                    managed_buffer!(METADATA_CID),
-                    managed_biguint!(2000u64),
-                    managed_biguint!(3u64),
-                    managed_biguint!(1u64),
-                )
-            },
-        )
-        .assert_user_error("Max per tx must be lower or equal to max per address");
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(5u64 * 10u64.pow(16u32)),
-            |sc| {
-                sc.initialize_contract(
-                    managed_buffer!(COLLECTION_NAME),
-                    managed_buffer!(COLLECTION_NAME),
-                    managed_biguint!(1000u64),
-                    managed_buffer!(MEDIA_CID),
-                    managed_buffer!(METADATA_CID),
-                    managed_biguint!(1u64),
-                    managed_biguint!(3u64),
-                    managed_biguint!(3u64),
-                )
-            },
-        )
-        .assert_user_error("Collection size must be greater than or equal to max per address");
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(4u64 * 10u64.pow(16u32)),
-            |sc| {
-                sc.initialize_contract(
-                    managed_buffer!(COLLECTION_NAME),
-                    managed_buffer!(COLLECTION_NAME),
-                    managed_biguint!(1000u64),
-                    managed_buffer!(MEDIA_CID),
-                    managed_buffer!(METADATA_CID),
-                    managed_biguint!(2000u64),
-                    managed_biguint!(1u64),
-                    managed_biguint!(3u64),
+                    managed_buffer!(SFT_TICKER),
+                    &managed_token_id_wrapped!(TOKEN_ID),
+                    managed_biguint!(1_000_000),
                 )
             },
         )
@@ -192,13 +157,9 @@ fn setup_contract_test() {
             |sc| {
                 sc.initialize_contract(
                     managed_buffer!(COLLECTION_NAME),
-                    managed_buffer!(COLLECTION_NAME),
-                    managed_biguint!(1000u64),
-                    managed_buffer!(MEDIA_CID),
-                    managed_buffer!(METADATA_CID),
-                    managed_biguint!(2000u64),
-                    managed_biguint!(1u64),
-                    managed_biguint!(3u64),
+                    managed_buffer!(SFT_TICKER),
+                    &managed_token_id_wrapped!(TOKEN_ID),
+                    managed_biguint!(1_000_000),
                 )
             },
         )
@@ -209,7 +170,7 @@ fn setup_contract_test() {
             &owner_address,
             &setup.contract_wrapper,
             &rust_biguint!(5u64 * 10u64.pow(16u32)),
-            |sc| sc.token_id().set_token_id(&managed_token_id!(SFT_TICKER)),
+            |sc| sc.token_id().set_token_id(managed_token_id!(SFT_TICKER)),
         )
         .assert_ok();
 
@@ -221,23 +182,55 @@ fn setup_contract_test() {
             |sc| {
                 sc.initialize_contract(
                     managed_buffer!(COLLECTION_NAME),
-                    managed_buffer!(COLLECTION_NAME),
-                    managed_biguint!(1000u64),
-                    managed_buffer!(MEDIA_CID),
-                    managed_buffer!(METADATA_CID),
-                    managed_biguint!(2000u64),
-                    managed_biguint!(1u64),
-                    managed_biguint!(3u64),
+                    managed_buffer!(SFT_TICKER),
+                    &managed_token_id_wrapped!(TOKEN_ID),
+                    managed_biguint!(1_000_000),
                 )
             },
         )
         .assert_user_error("Contract was already initialized");
 }
 
-// Test whether minting utilities for string creations works correctly.
-#[test]
+#[test] // Tests whether the owner can change the anti spam tax token
+        // Tests whether the owner can change the anti spam tax value
+fn anti_spam_tax_test() {
+    let mut setup = setup_contract(datanftmint::contract_obj);
+    let b_wrapper = &mut setup.blockchain_wrapper;
+    let owner_address = &setup.owner_address;
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.set_anti_spam_tax(
+                    managed_token_id_wrapped!(ANOTHER_TOKEN_ID),
+                    managed_biguint!(2_000_000),
+                )
+            },
+        )
+        .assert_ok();
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.set_anti_spam_tax(
+                    managed_token_id_wrapped!(TOKEN_ID),
+                    managed_biguint!(2_000_000),
+                )
+            },
+        )
+        .assert_ok();
+}
+
+#[test] // Tests whether minting utilities for string creations works correctly.
+        // Tests whether the concatenation and sha256 hash encryption works correctly.
 fn nft_mint_utils_test() {
-    let mut setup = setup_contract(sftmint::contract_obj);
+    let mut setup = setup_contract(datanftmint::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
     let owner_address = &setup.owner_address;
 
@@ -249,236 +242,41 @@ fn nft_mint_utils_test() {
             |sc| {
                 sc.initialize_contract(
                     managed_buffer!(COLLECTION_NAME),
-                    managed_buffer!(COLLECTION_NAME),
-                    managed_biguint!(1000u64),
-                    managed_buffer!(MEDIA_CID),
-                    managed_buffer!(METADATA_CID),
-                    managed_biguint!(2000u64),
-                    managed_biguint!(1u64),
-                    managed_biguint!(3u64),
+                    managed_buffer!(SFT_TICKER),
+                    &managed_token_id_wrapped!(TOKEN_ID),
+                    managed_biguint!(1_000_000),
                 )
             },
         )
         .assert_ok();
 
     b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(5u64 * 10u64.pow(16u32)),
-            |sc| sc.token_id().set_token_id(&managed_token_id!(SFT_TICKER)),
-        )
-        .assert_ok();
-
-    b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
             assert_eq!(
-                sc.create_attributes(),
-                managed_buffer!(&[b"metadata:", METADATA_CID].concat())
+                (sc.crate_hash_buffer(
+                    &managed_buffer!(DATA_MARCHAL),
+                    &managed_buffer!(DATA_STREAM)
+                )
+                .to_boxed_bytes()
+                .into_vec()),
+                DATA_MARCHAL_STREAM_SHA256
             );
         })
         .assert_ok();
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
-            let uris = sc.create_uris();
-            let media_uri = uris.find(&managed_buffer!(
-                &[b"https://ipfs.io/ipfs/", MEDIA_CID].concat()
-            ));
+            let uris = sc.create_uris(managed_buffer!(MEDIA_URI));
+            let media_uri = uris.find(&managed_buffer!(MEDIA_URI));
             assert_eq!(media_uri, Some(0usize));
-
-            let metadata_uri =
-                uris.find(&managed_buffer!(
-                    &[b"https://ipfs.io/ipfs/", METADATA_CID].concat()
-                ));
-            assert_eq!(metadata_uri, Some(1usize));
         })
         .assert_ok();
 }
 
-// Tests whether the pause setting function works as expected.
-#[test]
-fn set_is_paused_test() {
-    let mut setup = setup_contract(sftmint::contract_obj);
-    let b_wrapper = &mut setup.blockchain_wrapper;
-    let owner_address = &setup.owner_address;
-    b_wrapper
-        .execute_query(&setup.contract_wrapper, |sc| {
-            assert_eq!(sc.is_paused().get(), true);
-        })
-        .assert_ok();
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(0),
-            |sc| sc.set_is_paused(false),
-        )
-        .assert_ok();
-
-    b_wrapper
-        .execute_query(&setup.contract_wrapper, |sc| {
-            assert_eq!(sc.is_paused().get(), false);
-        })
-        .assert_ok();
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(0),
-            |sc| sc.set_is_paused(true),
-        )
-        .assert_ok();
-
-    b_wrapper
-        .execute_query(&setup.contract_wrapper, |sc| {
-            assert_eq!(sc.is_paused().get(), true);
-        })
-        .assert_ok();
-}
-
-// Test whether the private list enabling function works as expected.
-#[test]
-fn set_whitelist_enabled_test() {
-    let mut setup = setup_contract(sftmint::contract_obj);
-    let b_wrapper = &mut setup.blockchain_wrapper;
-    let owner_address = &setup.owner_address;
-    b_wrapper
-        .execute_query(&setup.contract_wrapper, |sc| {
-            assert_eq!(sc.white_list_enabled().get(), true);
-        })
-        .assert_ok();
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(0),
-            |sc| sc.set_white_list_enabled(false),
-        )
-        .assert_ok();
-
-    b_wrapper
-        .execute_query(&setup.contract_wrapper, |sc| {
-            assert_eq!(sc.white_list_enabled().get(), false);
-        })
-        .assert_ok();
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(0),
-            |sc| sc.set_white_list_enabled(true),
-        )
-        .assert_ok();
-
-    b_wrapper
-        .execute_query(&setup.contract_wrapper, |sc| {
-            assert_eq!(sc.white_list_enabled().get(), true);
-        })
-        .assert_ok();
-}
-
-// Tests whether setting private and public sale prices works correctly.
-#[test]
-fn set_price_test() {
-    let mut setup = setup_contract(sftmint::contract_obj);
-    let b_wrapper = &mut setup.blockchain_wrapper;
-    let owner_address = &setup.owner_address;
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(0),
-            |sc| {
-                sc.set_public_price(managed_token_id_wrapped!(TOKEN_ID), managed_biguint!(7u64));
-            },
-        )
-        .assert_ok();
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(0),
-            |sc| {
-                sc.set_private_price(managed_token_id_wrapped!(TOKEN_ID), managed_biguint!(5u64));
-            },
-        )
-        .assert_ok();
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(0),
-            |sc| {
-                sc.set_public_price(managed_egld_token_id!(), managed_biguint!(0u64));
-            },
-        )
-        .assert_user_error("Value must be greater than 0");
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(0),
-            |sc| {
-                sc.set_private_price(managed_egld_token_id!(), managed_biguint!(0u64));
-            },
-        )
-        .assert_user_error("Value must be greater than 0");
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(0),
-            |sc| {
-                sc.set_private_price(managed_token_id_wrapped!("abc"), managed_biguint!(1u64));
-            },
-        )
-        .assert_user_error("Token id is not valid");
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(0),
-            |sc| {
-                sc.set_public_price(managed_token_id_wrapped!("abc"), managed_biguint!(1u64));
-            },
-        )
-        .assert_user_error("Token id is not valid");
-
-    b_wrapper
-        .execute_query(&setup.contract_wrapper, |sc| {
-            assert_eq!(
-                sc.token_private_price()
-                    .get(&managed_token_id_wrapped!(TOKEN_ID)),
-                Option::Some(managed_biguint!(5u64))
-            );
-        })
-        .assert_ok();
-
-    b_wrapper
-        .execute_query(&setup.contract_wrapper, |sc| {
-            assert_eq!(
-                sc.token_public_price()
-                    .get(&managed_token_id_wrapped!(TOKEN_ID)),
-                Option::Some(managed_biguint!(7u64))
-            );
-        })
-        .assert_ok();
-}
-
-// Tests whether minting limits setting work as expected.
-#[test]
-fn set_mint_limits_test() {
-    let mut setup = setup_contract(sftmint::contract_obj);
+#[test] // Tests whether the requirements for minting are correctly checked.
+        // Tests all possible cases for requirements.
+fn requirements_test() {
+    let mut setup = setup_contract(datanftmint::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
     let owner_address = &setup.owner_address;
 
@@ -486,471 +284,7 @@ fn set_mint_limits_test() {
         .execute_tx(
             &owner_address,
             &setup.contract_wrapper,
-            &rust_biguint!(5u64 * 10u64.pow(16u32)),
-            |sc| {
-                sc.initialize_contract(
-                    managed_buffer!(COLLECTION_NAME),
-                    managed_buffer!(COLLECTION_NAME),
-                    managed_biguint!(1000u64),
-                    managed_buffer!(MEDIA_CID),
-                    managed_buffer!(METADATA_CID),
-                    managed_biguint!(2000u64),
-                    managed_biguint!(1u64),
-                    managed_biguint!(3u64),
-                )
-            },
-        )
-        .assert_ok();
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(0),
-            |sc| {
-                sc.set_max_per_tx(managed_biguint!(2u64));
-            },
-        )
-        .assert_ok();
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(0),
-            |sc| {
-                sc.set_max_per_tx(managed_biguint!(5u64));
-            },
-        )
-        .assert_user_error("Value must be lower than or equal to max per address");
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(0),
-            |sc| {
-                sc.set_max_per_tx(managed_biguint!(0u64));
-            },
-        )
-        .assert_user_error("Value must be greater than 0");
-
-    b_wrapper
-        .execute_query(&setup.contract_wrapper, |sc| {
-            assert_eq!(sc.max_per_tx().get(), managed_biguint!(2u64));
-        })
-        .assert_ok();
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(0),
-            |sc| {
-                sc.set_max_per_address(managed_biguint!(10u64));
-            },
-        )
-        .assert_ok();
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(0),
-            |sc| {
-                sc.set_max_per_address(managed_biguint!(1u64));
-            },
-        )
-        .assert_user_error("Value must be higher than or equal to max per tx");
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(0),
-            |sc| {
-                sc.set_max_per_address(managed_biguint!(0u64));
-            },
-        )
-        .assert_user_error("Value must be greater than 0");
-
-    b_wrapper
-        .execute_query(&setup.contract_wrapper, |sc| {
-            assert_eq!(sc.max_per_address().get(), managed_biguint!(10u64));
-        })
-        .assert_ok();
-}
-
-// Test whitelist spot setting functionality.
-#[test]
-fn set_whitelist_spots_test() {
-    let mut setup = setup_contract(sftmint::contract_obj);
-    let b_wrapper = &mut setup.blockchain_wrapper;
-    let owner_address = &setup.owner_address;
-    let first_user_address = &setup.first_user_address;
-    let second_user_address = &setup.second_user_address;
-    let third_user_address = &setup.third_user_address;
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(0),
-            |sc| {
-                let args = MultiValueEncoded::new();
-                sc.set_whitelist_spots(args);
-            },
-        )
-        .assert_user_error("Given whitelist is empty");
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(0),
-            |sc| {
-                let mut args = MultiValueEncoded::new();
-                args.push(MultiValue2(
-                    (managed_address!(first_user_address), managed_biguint!(1)).into(),
-                ));
-                args.push(MultiValue2(
-                    (managed_address!(second_user_address), managed_biguint!(2)).into(),
-                ));
-                sc.set_whitelist_spots(args);
-            },
-        )
-        .assert_ok();
-
-    b_wrapper
-        .execute_query(&setup.contract_wrapper, |sc| {
-            assert_eq!(
-                sc.white_list(&managed_address!(first_user_address)).get(),
-                managed_biguint!(1u64)
-            );
-        })
-        .assert_ok();
-
-    b_wrapper
-        .execute_query(&setup.contract_wrapper, |sc| {
-            assert_eq!(
-                sc.white_list(&managed_address!(second_user_address)).get(),
-                managed_biguint!(2u64)
-            );
-        })
-        .assert_ok();
-
-    b_wrapper
-        .execute_query(&setup.contract_wrapper, |sc| {
-            assert_eq!(
-                sc.white_list(&managed_address!(third_user_address))
-                    .is_empty(),
-                true
-            );
-        })
-        .assert_ok();
-
-    b_wrapper
-        .execute_query(&setup.contract_wrapper, |sc| {
-            assert_eq!(
-                sc.white_list(&managed_address!(third_user_address)).get(),
-                managed_biguint!(0u64)
-            );
-        })
-        .assert_ok();
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(0),
-            |sc| {
-                let mut args = MultiValueEncoded::new();
-                args.push(MultiValue2(
-                    (managed_address!(first_user_address), managed_biguint!(5u64)).into(),
-                ));
-                args.push(MultiValue2(
-                    (
-                        managed_address!(second_user_address),
-                        managed_biguint!(0u64),
-                    )
-                        .into(),
-                ));
-                sc.set_whitelist_spots(args);
-            },
-        )
-        .assert_ok();
-
-    b_wrapper
-        .execute_query(&setup.contract_wrapper, |sc| {
-            assert_eq!(
-                sc.white_list(&managed_address!(first_user_address)).get(),
-                managed_biguint!(5u64)
-            );
-        })
-        .assert_ok();
-
-    b_wrapper
-        .execute_query(&setup.contract_wrapper, |sc| {
-            assert_eq!(
-                sc.white_list(&managed_address!(second_user_address)).get(),
-                managed_biguint!(0u64)
-            );
-        })
-        .assert_ok();
-
-    b_wrapper
-        .execute_query(&setup.contract_wrapper, |sc| {
-            assert_eq!(
-                sc.white_list(&managed_address!(second_user_address))
-                    .is_empty(),
-                true
-            );
-        })
-        .assert_ok();
-}
-
-// Tests whether creating the first token for the SFT sale works correctly.
-#[test]
-fn create_token_test() {
-    let mut setup = setup_contract(sftmint::contract_obj);
-    let b_wrapper = &mut setup.blockchain_wrapper;
-    let owner_address = &setup.owner_address;
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(0),
-            |sc| sc.create_token(managed_buffer!(SFT_NAME)),
-        )
-        .assert_user_error("Token id must not be empty");
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(5u64 * 10u64.pow(16u32)),
-            |sc| {
-                sc.initialize_contract(
-                    managed_buffer!(COLLECTION_NAME),
-                    managed_buffer!(COLLECTION_NAME),
-                    managed_biguint!(1000u64),
-                    managed_buffer!(MEDIA_CID),
-                    managed_buffer!(METADATA_CID),
-                    managed_biguint!(2000u64),
-                    managed_biguint!(1u64),
-                    managed_biguint!(3u64),
-                )
-            },
-        )
-        .assert_ok();
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(5u64 * 10u64.pow(16u32)),
-            |sc| sc.token_id().set_token_id(&managed_token_id!(SFT_TICKER)),
-        )
-        .assert_ok();
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(0),
-            |sc| sc.create_token(managed_buffer!(SFT_TICKER)),
-        )
-        .assert_error(10u64, "action is not allowed");
-
-    b_wrapper.set_esdt_local_roles(setup.contract_wrapper.address_ref(), SFT_TICKER, ROLES);
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(0),
-            |sc| sc.create_token(managed_buffer!(SFT_TICKER)),
-        )
-        .assert_ok();
-
-    b_wrapper
-        .execute_query(&setup.contract_wrapper, |sc| {
-            assert_eq!(sc.token_created_nonce().get(), 1u64);
-        })
-        .assert_ok();
-
-    b_wrapper.check_nft_balance(
-        setup.contract_wrapper.address_ref(),
-        SFT_TICKER,
-        1u64,
-        &rust_biguint!(1u64),
-        Option::<&Empty>::None,
-    );
-}
-
-// Tests whether the data out view works correctly.
-#[test]
-fn data_out_test() {
-    let mut setup = setup_contract(sftmint::contract_obj);
-    let b_wrapper = &mut setup.blockchain_wrapper;
-    let owner_address = &setup.owner_address;
-    let first_user_address = &setup.first_user_address;
-    let second_user_address = &setup.second_user_address;
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(5u64 * 10u64.pow(16u32)),
-            |sc| {
-                sc.initialize_contract(
-                    managed_buffer!(COLLECTION_NAME),
-                    managed_buffer!(COLLECTION_NAME),
-                    managed_biguint!(1000u64),
-                    managed_buffer!(MEDIA_CID),
-                    managed_buffer!(METADATA_CID),
-                    managed_biguint!(10u64),
-                    managed_biguint!(2u64),
-                    managed_biguint!(5u64),
-                )
-            },
-        )
-        .assert_ok();
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(5u64 * 10u64.pow(16u32)),
-            |sc| sc.token_id().set_token_id(&managed_token_id!(SFT_TICKER)),
-        )
-        .assert_ok();
-
-    b_wrapper.set_esdt_local_roles(setup.contract_wrapper.address_ref(), SFT_TICKER, ROLES);
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(0),
-            |sc| sc.create_token(managed_buffer!(SFT_TICKER)),
-        )
-        .assert_ok();
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(0),
-            |sc| sc.set_public_price(EgldOrEsdtTokenIdentifier::egld(), managed_biguint!(100)),
-        )
-        .assert_ok();
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(0),
-            |sc| sc.set_private_price(EgldOrEsdtTokenIdentifier::egld(), managed_biguint!(110)),
-        )
-        .assert_ok();
-
-    b_wrapper
-        .execute_query(&setup.contract_wrapper, |sc| {
-            let data_out = views::UserDataOut {
-                how_many_can_mint: managed_biguint!(0u64),
-                public_egld_price: managed_biguint!(100u64),
-                private_egld_price: managed_biguint!(110u64),
-                public_prices: ManagedVec::new(),
-                private_prices: ManagedVec::new(),
-                collection_size: managed_biguint!(10u64),
-                minted_for_address: managed_biguint!(0u64),
-                minted_in_total: managed_biguint!(1u64),
-                can_mint: false,
-                max_per_tx: managed_biguint!(2u64),
-            };
-            assert_eq!(
-                sc.get_user_data_out_from_contract(&managed_address!(first_user_address)),
-                data_out
-            );
-        })
-        .assert_ok();
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(0),
-            |sc| {
-                let mut args = MultiValueEncoded::new();
-                args.push(MultiValue2(
-                    (managed_address!(first_user_address), managed_biguint!(1)).into(),
-                ));
-                args.push(MultiValue2(
-                    (managed_address!(second_user_address), managed_biguint!(2)).into(),
-                ));
-                sc.set_whitelist_spots(args);
-            },
-        )
-        .assert_ok();
-
-    b_wrapper
-        .execute_query(&setup.contract_wrapper, |sc| {
-            let data_out = views::UserDataOut {
-                how_many_can_mint: managed_biguint!(1u64),
-                public_egld_price: managed_biguint!(100u64),
-                private_egld_price: managed_biguint!(110u64),
-                public_prices: ManagedVec::new(),
-                private_prices: ManagedVec::new(),
-                collection_size: managed_biguint!(10u64),
-                minted_for_address: managed_biguint!(0u64),
-                minted_in_total: managed_biguint!(1u64),
-                can_mint: false,
-                max_per_tx: managed_biguint!(2u64),
-            };
-            assert_eq!(
-                sc.get_user_data_out_from_contract(&managed_address!(first_user_address)),
-                data_out
-            );
-        })
-        .assert_ok();
-
-    b_wrapper
-        .execute_query(&setup.contract_wrapper, |sc| {
-            let data_out = views::UserDataOut {
-                how_many_can_mint: managed_biguint!(2u64),
-                public_egld_price: managed_biguint!(100u64),
-                private_egld_price: managed_biguint!(110u64),
-                public_prices: ManagedVec::new(),
-                private_prices: ManagedVec::new(),
-                collection_size: managed_biguint!(10u64),
-                minted_for_address: managed_biguint!(0u64),
-                minted_in_total: managed_biguint!(1u64),
-                can_mint: false,
-                max_per_tx: managed_biguint!(2u64),
-            };
-            assert_eq!(
-                sc.get_user_data_out_from_contract(&managed_address!(second_user_address)),
-                data_out
-            );
-        })
-        .assert_ok();
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(0),
-            |sc| {
-                sc.set_white_list_enabled(false);
-            },
-        )
-        .assert_ok();
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(0),
+            &rust_biguint!(0u64),
             |sc| {
                 sc.set_is_paused(false);
             },
@@ -959,486 +293,82 @@ fn data_out_test() {
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
-            let data_out = views::UserDataOut {
-                how_many_can_mint: managed_biguint!(5u64),
-                public_egld_price: managed_biguint!(100u64),
-                private_egld_price: managed_biguint!(110u64),
-                public_prices: ManagedVec::new(),
-                private_prices: ManagedVec::new(),
-                collection_size: managed_biguint!(10u64),
-                minted_for_address: managed_biguint!(0u64),
-                minted_in_total: managed_biguint!(1u64),
-                can_mint: true,
-                max_per_tx: managed_biguint!(2u64),
-            };
-            assert_eq!(
-                sc.get_user_data_out_from_contract(&managed_address!(first_user_address)),
-                data_out
-            );
+            sc.require_minting_is_ready();
         })
-        .assert_ok();
-
-    b_wrapper
-        .execute_tx(
-            &first_user_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(100),
-            |sc| sc.mint_token(),
-        )
-        .assert_ok();
-
-    b_wrapper
-        .execute_query(&setup.contract_wrapper, |sc| {
-            let data_out = views::UserDataOut {
-                how_many_can_mint: managed_biguint!(4u64),
-                public_egld_price: managed_biguint!(100u64),
-                private_egld_price: managed_biguint!(110u64),
-                public_prices: ManagedVec::new(),
-                private_prices: ManagedVec::new(),
-                collection_size: managed_biguint!(10u64),
-                minted_for_address: managed_biguint!(1u64),
-                minted_in_total: managed_biguint!(2u64),
-                can_mint: true,
-                max_per_tx: managed_biguint!(2u64),
-            };
-            assert_eq!(
-                sc.get_user_data_out_from_contract(&managed_address!(first_user_address)),
-                data_out
-            );
-        })
-        .assert_ok();
+        .assert_error(4, "Minting is not ready");
 
     b_wrapper
         .execute_tx(
             &owner_address,
             &setup.contract_wrapper,
-            &rust_biguint!(0),
+            &rust_biguint!(0u64),
             |sc| {
-                sc.set_public_price(managed_token_id_wrapped!(TOKEN_ID), managed_biguint!(7u64));
-            },
-        )
-        .assert_ok();
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(0),
-            |sc| {
-                sc.set_private_price(
-                    managed_token_id_wrapped!(WRONG_TOKEN_ID),
-                    managed_biguint!(5u64),
-                );
+                sc.set_is_paused(true);
             },
         )
         .assert_ok();
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
-            let mut private_prices = ManagedVec::new();
-            private_prices.push(EsdtTokenPayment::new(
-                managed_token_id!(WRONG_TOKEN_ID),
-                0u64,
-                managed_biguint!(5u64),
-            ));
-            let mut public_prices = ManagedVec::new();
-            public_prices.push(EsdtTokenPayment::new(
-                managed_token_id!(TOKEN_ID),
-                0u64,
-                managed_biguint!(7u64),
-            ));
-            let data_out = views::UserDataOut {
-                how_many_can_mint: managed_biguint!(4u64),
-                public_egld_price: managed_biguint!(100u64),
-                private_egld_price: managed_biguint!(110u64),
-                public_prices: public_prices,
-                private_prices: private_prices,
-                collection_size: managed_biguint!(10u64),
-                minted_for_address: managed_biguint!(1u64),
-                minted_in_total: managed_biguint!(2u64),
-                can_mint: true,
-                max_per_tx: managed_biguint!(2u64),
-            };
-            assert_eq!(
-                sc.get_user_data_out_from_contract(&managed_address!(first_user_address)),
-                data_out
-            );
+            sc.require_minting_is_ready();
+        })
+        .assert_error(4, "Minting is not ready");
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(5u64 * 10u64.pow(16u32)),
+            |sc| sc.token_id().set_token_id(managed_token_id!(SFT_TICKER)),
+        )
+        .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_minting_is_ready();
+        })
+        .assert_error(4, "Minting is not ready");
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.set_is_paused(false);
+            },
+        )
+        .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_minting_is_ready();
         })
         .assert_ok();
 }
 
-// Tests whether the minting flow for the public works as expected.
-#[test]
-fn mint_test() {
-    let mut setup = setup_contract(sftmint::contract_obj);
+#[test] // Tests whether minting works correctly.
+fn mint_nft_ft_test() {
+    let mut setup = setup_contract(datanftmint::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
-    let owner_address = &setup.owner_address;
     let first_user_address = &setup.first_user_address;
-    let second_user_address = &setup.second_user_address;
-    let third_user_address = &setup.third_user_address;
 
     b_wrapper
         .execute_tx(
             &first_user_address,
             &setup.contract_wrapper,
-            &rust_biguint!(100),
-            |sc| sc.mint_token(),
-        )
-        .assert_user_error("Minting is not ready");
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(5u64 * 10u64.pow(16u32)),
+            &rust_biguint!(0u64),
             |sc| {
-                sc.initialize_contract(
-                    managed_buffer!(COLLECTION_NAME),
-                    managed_buffer!(COLLECTION_NAME),
-                    managed_biguint!(1000u64),
-                    managed_buffer!(MEDIA_CID),
-                    managed_buffer!(METADATA_CID),
-                    managed_biguint!(10u64),
-                    managed_biguint!(2u64),
-                    managed_biguint!(5u64),
-                )
+                sc.mint_token(
+                    managed_buffer!(USER_NFT_NAME),
+                    managed_buffer!(MEDIA_URI),
+                    managed_buffer!(DATA_MARCHAL),
+                    managed_buffer!(DATA_STREAM),
+                    managed_buffer!(DATA_STREAM),
+                    managed_biguint!(2),
+                    managed_biguint!(10),
+                );
             },
         )
-        .assert_ok();
-
-    b_wrapper
-        .execute_tx(
-            &first_user_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(100),
-            |sc| sc.mint_token(),
-        )
-        .assert_user_error("Minting is not ready");
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(5u64 * 10u64.pow(16u32)),
-            |sc| sc.token_id().set_token_id(&managed_token_id!(SFT_TICKER)),
-        )
-        .assert_ok();
-
-    b_wrapper
-        .execute_tx(
-            &first_user_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(100),
-            |sc| sc.mint_token(),
-        )
-        .assert_user_error("Minting is not ready");
-
-    b_wrapper.set_esdt_local_roles(setup.contract_wrapper.address_ref(), SFT_TICKER, ROLES);
-
-    b_wrapper
-        .execute_tx(
-            &first_user_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(100),
-            |sc| sc.mint_token(),
-        )
-        .assert_user_error("Minting is not ready");
-
-    b_wrapper
-        .execute_query(&setup.contract_wrapper, |sc| {
-            assert_eq!(sc.minted_tokens().get(), managed_biguint!(0u64));
-        })
-        .assert_ok();
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(0),
-            |sc| sc.create_token(managed_buffer!(SFT_TICKER)),
-        )
-        .assert_ok();
-
-    b_wrapper
-        .execute_query(&setup.contract_wrapper, |sc| {
-            assert_eq!(sc.minted_tokens().get(), managed_biguint!(1u64));
-        })
-        .assert_ok();
-
-    b_wrapper
-        .execute_tx(
-            &first_user_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(100),
-            |sc| sc.mint_token(),
-        )
-        .assert_user_error("Minting is not ready");
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(0),
-            |sc| sc.set_is_paused(false),
-        )
-        .assert_ok();
-
-    b_wrapper
-        .execute_tx(
-            &first_user_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(100),
-            |sc| sc.mint_token(),
-        )
-        .assert_user_error("Cannot buy with this token");
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(0),
-            |sc| sc.set_public_price(EgldOrEsdtTokenIdentifier::egld(), managed_biguint!(100)),
-        )
-        .assert_ok();
-
-    b_wrapper
-        .execute_tx(
-            &first_user_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(100),
-            |sc| sc.mint_token(),
-        )
-        .assert_user_error("Cannot buy with this token");
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(0),
-            |sc| sc.set_private_price(EgldOrEsdtTokenIdentifier::egld(), managed_biguint!(100)),
-        )
-        .assert_ok();
-
-    b_wrapper
-        .execute_esdt_transfer(
-            &first_user_address,
-            &setup.contract_wrapper,
-            TOKEN_ID,
-            0,
-            &rust_biguint!(100),
-            |sc| sc.mint_token(),
-        )
-        .assert_user_error("Cannot buy with this token");
-
-    b_wrapper
-        .execute_tx(
-            &first_user_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(105),
-            |sc| sc.mint_token(),
-        )
-        .assert_user_error("Wrong amount of payment sent");
-
-    b_wrapper
-        .execute_tx(
-            &first_user_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(0),
-            |sc| sc.mint_token(),
-        )
-        .assert_user_error("Payment too low");
-
-    b_wrapper
-        .execute_tx(
-            &first_user_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(300),
-            |sc| sc.mint_token(),
-        )
-        .assert_user_error("Value must be lower than or equal to max per tx");
-
-    b_wrapper
-        .execute_tx(
-            &first_user_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(100),
-            |sc| sc.mint_token(),
-        )
-        .assert_user_error("Maximum number of private sale mints for this address exceeded");
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(0),
-            |sc| {
-                let mut args = MultiValueEncoded::new();
-                args.push(MultiValue2(
-                    (managed_address!(first_user_address), managed_biguint!(1)).into(),
-                ));
-                args.push(MultiValue2(
-                    (managed_address!(second_user_address), managed_biguint!(2)).into(),
-                ));
-                args.push(MultiValue2(
-                    (managed_address!(third_user_address), managed_biguint!(3)).into(),
-                ));
-                sc.set_whitelist_spots(args);
-            },
-        )
-        .assert_ok();
-
-    b_wrapper
-        .execute_tx(
-            &first_user_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(200),
-            |sc| sc.mint_token(),
-        )
-        .assert_user_error("Maximum number of private sale mints for this address exceeded");
-
-    b_wrapper
-        .execute_tx(
-            &first_user_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(100),
-            |sc| sc.mint_token(),
-        )
-        .assert_ok();
-
-    b_wrapper
-        .execute_tx(
-            &first_user_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(100),
-            |sc| sc.mint_token(),
-        )
-        .assert_user_error("Maximum number of private sale mints for this address exceeded");
-
-    b_wrapper.check_nft_balance(
-        &first_user_address,
-        SFT_TICKER,
-        1u64,
-        &rust_biguint!(1u64),
-        Option::<&Empty>::None,
-    );
-
-    b_wrapper
-        .execute_query(&setup.contract_wrapper, |sc| {
-            assert_eq!(sc.minted_tokens().get(), managed_biguint!(2u64));
-        })
-        .assert_ok();
-
-    b_wrapper
-        .execute_tx(
-            &first_user_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(100),
-            |sc| sc.mint_token(),
-        )
-        .assert_user_error("Maximum number of private sale mints for this address exceeded");
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(0),
-            |sc| sc.set_white_list_enabled(false),
-        )
-        .assert_ok();
-
-    b_wrapper
-        .execute_tx(
-            &first_user_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(200),
-            |sc| sc.mint_token(),
-        )
-        .assert_ok();
-
-    b_wrapper
-        .execute_tx(
-            &first_user_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(100),
-            |sc| sc.mint_token(),
-        )
-        .assert_ok();
-
-    b_wrapper
-        .execute_tx(
-            &first_user_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(200),
-            |sc| sc.mint_token(),
-        )
-        .assert_user_error("Value must be lower than or equal to max per address");
-
-    b_wrapper
-        .execute_tx(
-            &first_user_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(100),
-            |sc| sc.mint_token(),
-        )
-        .assert_ok();
-
-    b_wrapper
-        .execute_tx(
-            &first_user_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(200),
-            |sc| sc.mint_token(),
-        )
-        .assert_user_error("Value must be lower than or equal to max per address");
-
-    b_wrapper
-        .execute_tx(
-            &second_user_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(200),
-            |sc| sc.mint_token(),
-        )
-        .assert_ok();
-
-    b_wrapper
-        .execute_tx(
-            &second_user_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(100),
-            |sc| sc.mint_token(),
-        )
-        .assert_ok();
-
-    b_wrapper
-        .execute_tx(
-            &third_user_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(200),
-            |sc| sc.mint_token(),
-        )
-        .assert_user_error("Collection size exceeded");
-
-    b_wrapper
-        .execute_tx(
-            &third_user_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(100),
-            |sc| sc.mint_token(),
-        )
-        .assert_ok();
-
-    b_wrapper
-        .execute_tx(
-            &third_user_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(100),
-            |sc| sc.mint_token(),
-        )
-        .assert_user_error("Collection size exceeded");
-
-    b_wrapper
-        .execute_query(&setup.contract_wrapper, |sc| {
-            assert_eq!(sc.minted_tokens().get(), sc.collection_size().get());
-        })
-        .assert_ok();
+        .assert_error(4, "Minting is not ready");
 }
