@@ -183,8 +183,11 @@ pub trait DataNftMint:
         let caller = self.blockchain().get_caller();
         self.require_is_privileged(&caller);
         for item in whitelist.into_iter() {
-            self.set_whitelist_spot_event(&item);
-            self.white_list().insert(item);
+            if self.white_list().insert(item.clone()) {
+                self.set_whitelist_spot_event(&item);
+            } else {
+                sc_panic!("Address already in whitelist");
+            }
         }
     }
 
@@ -195,8 +198,11 @@ pub trait DataNftMint:
         let caller = self.blockchain().get_caller();
         self.require_is_privileged(&caller);
         for item in whitelist.into_iter() {
-            self.remove_whitelist_spot_event(&item);
-            self.white_list().remove(&item);
+            if self.white_list().remove(&item.clone()) {
+                self.remove_whitelist_spot_event(&item);
+            } else {
+                sc_panic!("Address not in whitelist");
+            }
         }
     }
 
