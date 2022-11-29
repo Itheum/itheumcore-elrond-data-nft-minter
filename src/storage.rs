@@ -8,6 +8,8 @@ pub struct DataNftAttributes<M: ManagedTypeApi> {
     pub data_marshal_url: ManagedBuffer<M>,
     pub creator: ManagedAddress<M>,
     pub creation_time: u64,
+    pub title: ManagedBuffer<M>,
+    pub description: ManagedBuffer<M>,
 }
 
 // Module that handles the common storage of the smart contract

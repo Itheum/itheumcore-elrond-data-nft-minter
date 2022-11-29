@@ -9,6 +9,7 @@ pub mod events;
 pub mod nft_mint_utils;
 pub mod requirements;
 pub mod storage;
+pub mod views;
 
 #[elrond_wasm::contract]
 pub trait DataNftMint:
@@ -17,6 +18,7 @@ pub trait DataNftMint:
     + events::EventsModule
     + requirements::RequirementsModule
     + nft_mint_utils::NftMintUtils
+    + views::ViewsModule
 {
     // When the smart contract is deployed or upgraded, minting is automatically paused and sale is set to private.
     #[init]
@@ -84,6 +86,8 @@ pub trait DataNftMint:
         data_preview: ManagedBuffer,
         royalties: BigUint,
         supply: BigUint,
+        title: ManagedBuffer,
+        description: ManagedBuffer,
     ) -> DataNftAttributes<Self::Api> {
         self.require_minting_is_ready();
         self.require_sft_is_valid(&royalties, &supply);
@@ -110,6 +114,8 @@ pub trait DataNftMint:
             data_marshal_url: data_marshal.clone(),
             data_stream_url: data_stream.clone(),
             data_preview_url: data_preview.clone(),
+            title: title.clone(),
+            description: description.clone(),
         };
 
         let token_identifier = self.token_id().get_token_id();
@@ -137,28 +143,27 @@ pub trait DataNftMint:
     fn burn_token(&self) {
         self.require_minting_is_ready();
         let payment = self.call_value().single_esdt();
-        let token_identifier = self.token_id().get_token_id();
-        require!(
-            payment.token_identifier == token_identifier,
-            "Wrong token sent"
-        );
+        self.token_id()
+            .require_same_token(&payment.token_identifier);
         self.require_value_is_positive(&payment.amount);
         self.token_id()
             .nft_burn(payment.token_nonce, &payment.amount)
     }
 
-    // Endpoint that will be used by the owner to change the mint pause value.
-    #[only_owner]
+    // Endpoint that will be used by privileged addresses to change the mint pause value.
     #[endpoint(setIsPaused)]
     fn set_is_paused(&self, is_paused: bool) {
+        let caller = self.blockchain().get_caller();
+        self.require_is_privileged(&caller);
         self.mint_pause_toggle_event(&is_paused);
         self.is_paused().set(is_paused);
     }
 
-    // Endpoint that will be used by the owner to set public sale prices.
-    #[only_owner]
+    // Endpoint that will be used by privileged addresses to set public sale prices.
     #[endpoint(setAntiSpamTax)]
     fn set_anti_spam_tax(&self, token_id: EgldOrEsdtTokenIdentifier, tax: BigUint) {
+        let caller = self.blockchain().get_caller();
+        self.require_is_privileged(&caller);
         self.set_anti_spam_tax_event(&token_id, &tax);
         self.anti_spam_tax(&token_id).set(tax);
     }
@@ -171,7 +176,7 @@ pub trait DataNftMint:
         self.white_list_enabled().set(is_enabled);
     }
 
-    // Endpoint that will be used by the owner to set whitelist spots.
+    // Endpoint that will be used by privileged addresses to set whitelist spots.
     #[endpoint(setWhiteListSpots)]
     fn set_whitelist_spots(&self, whitelist: MultiValueEncoded<ManagedAddress>) {
         require!(!whitelist.is_empty(), "Given whitelist is empty");
@@ -183,7 +188,7 @@ pub trait DataNftMint:
         }
     }
 
-    // Endpoint that will be used by the owner to unset whitelist spots.
+    // Endpoint that will be used by privileged addresses to unset whitelist spots.
     #[endpoint(removeWhiteListSpots)]
     fn remove_whitelist_spots(&self, whitelist: MultiValueEncoded<ManagedAddress>) {
         require!(!whitelist.is_empty(), "Given whitelist is empty");
@@ -212,10 +217,11 @@ pub trait DataNftMint:
         self.max_royalties().set(max_royalties);
     }
 
-    // Endpoint that will be used by the owner to set max supply.
-    #[only_owner]
+    // Endpoint that will be used by privileged addresses to set max supply.
     #[endpoint(setMaxSupply)]
     fn set_max_supply(&self, max_supply: BigUint) {
+        let caller = self.blockchain().get_caller();
+        self.require_is_privileged(&caller);
         self.set_max_supply_event(&max_supply);
         self.max_supply().set(max_supply);
     }
