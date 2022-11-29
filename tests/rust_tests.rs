@@ -3,12 +3,12 @@ use std::u8;
 use datanftmint::nft_mint_utils::*;
 use datanftmint::requirements::RequirementsModule;
 use datanftmint::storage::*;
+use datanftmint::views::{UserDataOut, ViewsModule};
 use datanftmint::*;
 use elrond_wasm::contract_base::ContractBase;
-use elrond_wasm::elrond_codec::multi_encode_iter_or_handle_err;
-use elrond_wasm::hex_literal;
-use elrond_wasm::types::{ManagedAddress, MultiValueEncoded};
+use elrond_wasm::types::MultiValueEncoded;
 use elrond_wasm::{
+    elrond_codec::Empty,
     storage::mappers::StorageTokenWrapper,
     types::{Address, EsdtLocalRole},
 };
@@ -30,7 +30,11 @@ pub const DATA_STREAM: &[u8] = b"DATA-STREAM-ECRYPTED";
 pub const MEDIA_URI: &[u8] = b"https://ipfs.io/ipfs/123456abcdef/metadata.json";
 pub const USER_NFT_NAME: &[u8] = b"USER-NFT-NAME";
 pub const MINT_TIME_LIMIT: u64 = 15;
-pub const ROLES: &[EsdtLocalRole] = &[EsdtLocalRole::NftCreate, EsdtLocalRole::NftAddQuantity];
+pub const ROLES: &[EsdtLocalRole] = &[
+    EsdtLocalRole::NftCreate,
+    EsdtLocalRole::NftAddQuantity,
+    EsdtLocalRole::NftBurn,
+];
 
 struct ContractSetup<ContractObjBuilder>
 where
@@ -696,19 +700,23 @@ fn mint_nft_ft_test() {
         .assert_error(4, "Wrong amount of payment sent");
 
     b_wrapper
-        .execute_query(&setup.contract_wrapper, |sc| {
-            sc.anti_spam_tax(&managed_token_id_wrapped!(TOKEN_ID))
-                .set(managed_biguint!(2));
-        })
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| sc.set_anti_spam_tax(managed_token_id_wrapped!(TOKEN_ID), managed_biguint!(200)),
+        )
         .assert_ok();
+
+    b_wrapper.set_esdt_local_roles(setup.contract_wrapper.address_ref(), SFT_TICKER, ROLES);
 
     b_wrapper
         .execute_esdt_transfer(
-            &first_user_address,
+            first_user_address,
             &setup.contract_wrapper,
-            &TOKEN_ID,
+            TOKEN_ID,
             0,
-            &rust_biguint!(2),
+            &rust_biguint!(200),
             |sc| {
                 sc.mint_token(
                     managed_buffer!(USER_NFT_NAME),
@@ -721,6 +729,242 @@ fn mint_nft_ft_test() {
                     managed_buffer!(USER_NFT_NAME),
                     managed_buffer!(USER_NFT_NAME),
                 );
+            },
+        )
+        .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(sc.minted_tokens().get(), 1u64);
+        })
+        .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(
+                sc.minted_per_address(&managed_address!(first_user_address))
+                    .get(),
+                1u64
+            );
+        })
+        .assert_ok();
+
+    b_wrapper
+        .execute_esdt_transfer(
+            first_user_address,
+            &setup.contract_wrapper,
+            TOKEN_ID,
+            0,
+            &rust_biguint!(200),
+            |sc| {
+                sc.mint_token(
+                    managed_buffer!(USER_NFT_NAME),
+                    managed_buffer!(MEDIA_URI),
+                    managed_buffer!(DATA_MARCHAL),
+                    managed_buffer!(DATA_STREAM),
+                    managed_buffer!(DATA_STREAM),
+                    managed_biguint!(20),
+                    managed_biguint!(5),
+                    managed_buffer!(USER_NFT_NAME),
+                    managed_buffer!(USER_NFT_NAME),
+                );
+            },
+        )
+        .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            let data_out = UserDataOut {
+                anti_spam_tax_value: sc.anti_spam_tax(&managed_token_id_wrapped!(TOKEN_ID)).get(),
+                is_paused: sc.is_paused().get(),
+                max_royalities: sc.max_royalties().get(),
+                min_royalities: sc.min_royalties().get(),
+                max_supply: sc.max_supply().get(),
+                mint_time_limit: sc.mint_time_limit().get(),
+                last_mint_time: sc
+                    .last_mint_time(&managed_address!(first_user_address))
+                    .get(),
+                whitelist_enabled: sc.white_list_enabled().get(),
+                is_whitelisted: sc
+                    .white_list()
+                    .contains(&managed_address!(first_user_address)),
+            };
+            assert_eq!(
+                sc.get_user_data_out(
+                    &managed_address!(first_user_address),
+                    &managed_token_id_wrapped!(TOKEN_ID)
+                ),
+                data_out
+            );
+        })
+        .assert_ok();
+}
+
+#[test] //Tests the whitelist functionality
+fn white_list_test() {
+    let mut setup = setup_contract(datanftmint::contract_obj);
+    let b_wrapper = &mut setup.blockchain_wrapper;
+    let owner_address = &setup.owner_address;
+    let first_user_address = &setup.first_user_address;
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            let whitelist = MultiValueEncoded::new();
+            sc.set_whitelist_spots(whitelist)
+        })
+        .assert_user_error("Given whitelist is empty");
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                let mut args = MultiValueEncoded::new();
+                args.push(managed_address!(first_user_address));
+                sc.set_whitelist_spots(args);
+            },
+        )
+        .assert_ok();
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                let mut args = MultiValueEncoded::new();
+                args.push(managed_address!(first_user_address));
+                sc.set_whitelist_spots(args);
+            },
+        )
+        .assert_user_error("Address already in whitelist");
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            let whitelist = MultiValueEncoded::new();
+            sc.remove_whitelist_spots(whitelist)
+        })
+        .assert_user_error("Given whitelist is empty");
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                let mut args = MultiValueEncoded::new();
+                args.push(managed_address!(first_user_address));
+                sc.remove_whitelist_spots(args);
+            },
+        )
+        .assert_ok();
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                let mut args = MultiValueEncoded::new();
+                args.push(managed_address!(first_user_address));
+                sc.remove_whitelist_spots(args);
+            },
+        )
+        .assert_user_error("Address not in whitelist");
+}
+
+#[test] // Tests burn functionality
+fn burn_token_tests() {
+    let mut setup = setup_contract(datanftmint::contract_obj);
+    let b_wrapper = &mut setup.blockchain_wrapper;
+    let owner_address = &setup.owner_address;
+    let first_user_address = &setup.first_user_address;
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                let mut args = MultiValueEncoded::new();
+                args.push(managed_address!(&first_user_address));
+                sc.set_whitelist_spots(args);
+            },
+        )
+        .assert_ok();
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| sc.set_anti_spam_tax(managed_token_id_wrapped!(TOKEN_ID), managed_biguint!(200)),
+        )
+        .assert_ok();
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(5u64 * 10u64.pow(16u32)),
+            |sc| sc.token_id().set_token_id(managed_token_id!(SFT_TICKER)),
+        )
+        .assert_ok();
+
+    b_wrapper.set_esdt_local_roles(setup.contract_wrapper.address_ref(), SFT_TICKER, ROLES);
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.set_is_paused(false);
+            },
+        )
+        .assert_ok();
+
+    b_wrapper
+        .execute_esdt_transfer(
+            first_user_address,
+            &setup.contract_wrapper,
+            TOKEN_ID,
+            0,
+            &rust_biguint!(200),
+            |sc| {
+                sc.mint_token(
+                    managed_buffer!(USER_NFT_NAME),
+                    managed_buffer!(MEDIA_URI),
+                    managed_buffer!(DATA_MARCHAL),
+                    managed_buffer!(DATA_STREAM),
+                    managed_buffer!(DATA_STREAM),
+                    managed_biguint!(20),
+                    managed_biguint!(5),
+                    managed_buffer!(USER_NFT_NAME),
+                    managed_buffer!(USER_NFT_NAME),
+                );
+            },
+        )
+        .assert_ok();
+
+    b_wrapper.check_nft_balance(
+        first_user_address,
+        SFT_TICKER,
+        1u64,
+        &rust_biguint!(5),
+        Option::<&Empty>::None,
+    );
+
+    b_wrapper
+        .execute_esdt_transfer(
+            &first_user_address,
+            &setup.contract_wrapper,
+            SFT_TICKER,
+            1u64,
+            &rust_biguint!(1),
+            |sc| {
+                sc.burn_token();
             },
         )
         .assert_ok();
