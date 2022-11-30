@@ -64,4 +64,22 @@ pub trait RequirementsModule: crate::storage::StorageModule {
             "Address is not privileged"
         );
     }
+
+    // Checks wheter the uris are valid
+    fn require_url_is_valid(&self, url: &ManagedBuffer) {
+        let url_length = url.len();
+        let starts_with: &[u8] = b"https://";
+        require!(!url.is_empty(), "URL is empty");
+        require!(url_length <= 300, "URL length is too big");
+        require!(url_length >= 20, "URL length is too small");
+        let url_vec = url.to_boxed_bytes().into_vec();
+        for i in 0..starts_with.len() {
+            require!(url_vec[i] == starts_with[i], "URL must start with https://");
+        }
+        for i in 0..url_length {
+            if url_vec[i] == 32 || url_vec[i] == 10 || url_vec[i] == 13 {
+                sc_panic!("URL contains invalid characters");
+            }
+        }
+    }
 }
