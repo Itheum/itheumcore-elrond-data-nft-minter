@@ -36,7 +36,7 @@ pub trait RequirementsModule: crate::storage::StorageModule {
 
     // Checks whether a value is bigger than zero
     fn require_value_is_positive(&self, value: &BigUint) {
-        require!(value > &BigUint::zero(), "Value must be positive");
+        require!(value > &BigUint::zero(), "Value must be higher than zero");
     }
 
     // Checks whether SFT creation conditions are met
