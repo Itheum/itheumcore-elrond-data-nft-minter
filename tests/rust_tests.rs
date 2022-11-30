@@ -49,7 +49,6 @@ where
         ContractObjWrapper<datanftmint::ContractObj<DebugApi>, ContractObjBuilder>,
     pub first_user_address: Address,
     pub second_user_address: Address,
-    pub third_user_address: Address,
 }
 
 fn setup_contract<ContractObjBuilder>(
@@ -64,7 +63,6 @@ where
         blockchain_wrapper.create_user_account(&rust_biguint!(OWNER_EGLD_BALANCE / 10u128));
     let second_user_address =
         blockchain_wrapper.create_user_account(&rust_biguint!(OWNER_EGLD_BALANCE / 100u128));
-    let third_user_address = blockchain_wrapper.create_user_account(&rust_biguint!(200u64));
     let owner_address = blockchain_wrapper.create_user_account(&rust_biguint!(OWNER_EGLD_BALANCE));
     let cf_wrapper = blockchain_wrapper.create_sc_account(
         &rust_zero,
@@ -81,7 +79,6 @@ where
     blockchain_wrapper.set_esdt_balance(&first_user_address, TOKEN_ID, &rust_biguint!(10_000));
     blockchain_wrapper.set_esdt_balance(&owner_address, ANOTHER_TOKEN_ID, &rust_biguint!(10_000));
     blockchain_wrapper.set_esdt_balance(&second_user_address, TOKEN_ID, &rust_biguint!(0));
-    blockchain_wrapper.set_esdt_balance(&third_user_address, TOKEN_ID, &rust_biguint!(1_000));
 
     blockchain_wrapper
         .execute_tx(&owner_address, &cf_wrapper, &rust_zero, |sc| {
@@ -94,7 +91,6 @@ where
         owner_address,
         first_user_address,
         second_user_address,
-        third_user_address,
         contract_wrapper: cf_wrapper,
     }
 }
