@@ -53,7 +53,7 @@ pub trait RequirementsModule: crate::storage::StorageModule {
             "Royalties are smaller than min royalties"
         );
         require!(supply <= &max_supply, "Max supply exceeded");
-        require!(supply > &BigUint::zero(), "Supply must be positive");
+        require!(supply > &BigUint::zero(), "Supply must be higher than zero");
     }
 
     // Checks whether address is privileged

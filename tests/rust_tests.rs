@@ -25,9 +25,12 @@ pub const ANOTHER_TOKEN_ID: &[u8] = b"ANOTHER-123456";
 pub const COLLECTION_NAME: &[u8] = b"DATANFT-FT";
 pub const SFT_TICKER: &[u8] = b"DATANFTFT-1a2b3c";
 pub const SFT_NAME: &[u8] = b"DATA NFT-FT";
-pub const DATA_MARCHAL: &[u8] = b"DATA-MARCHAL-ENCRYPTED";
-pub const DATA_STREAM: &[u8] = b"DATA-STREAM-ECRYPTED";
+pub const DATA_MARCHAL: &[u8] = b"https://DATA-MARCHAL-ENCRYPTED/marshal";
+pub const DATA_STREAM: &[u8] = b"https://DATA-STREAM-ECRYPTED/stream";
 pub const MEDIA_URI: &[u8] = b"https://ipfs.io/ipfs/123456abcdef/metadata.json";
+pub const URL_WITH_SPACES: &[u8] = b"https://DATA-MARCHAL-ENCRYPTED/marshal with spaces";
+pub const URL_WITH_RETURN: &[u8] = b"https://DATA-MARCHAL-ENCRYPTED/marshal\r";
+pub const URL_WITHOUT_PROTOCOL: &[u8] = b"DATA-MARCHAL-ENCRYPTED/marshal/test/test/test";
 pub const USER_NFT_NAME: &[u8] = b"USER-NFT-NAME";
 pub const MINT_TIME_LIMIT: u64 = 15;
 pub const ROLES: &[EsdtLocalRole] = &[
@@ -118,6 +121,18 @@ fn pause_test() {
     let mut setup = setup_contract(datanftmint::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
     let owner_address = &setup.owner_address;
+    let first_user_address = &setup.first_user_address;
+
+    b_wrapper
+        .execute_tx(
+            owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.set_administrator(managed_address!(first_user_address));
+            },
+        )
+        .assert_ok();
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
@@ -135,13 +150,27 @@ fn pause_test() {
             },
         )
         .assert_ok();
+
+    b_wrapper
+        .execute_tx(
+            &first_user_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.set_is_paused(false);
+            },
+        )
+        .assert_ok();
 }
 
-#[test] // Tests if the contract has whitelist enabled and is empty
-        // Tests if the royalties and supply are set accordingly
-fn whitelist_test() {
+#[test] // Tests if the contract has whitelist enabled and is empty by default after deployment
+        // Tests if other values are set correctly after deployment
+        // Tests if the owner and administrator can change the max supply and royalties
+fn value_setters_test() {
     let mut setup = setup_contract(datanftmint::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
+    let owner_address = &setup.owner_address;
+    let administrator_address = &setup.first_user_address;
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
@@ -171,6 +200,61 @@ fn whitelist_test() {
         .execute_query(&setup.contract_wrapper, |sc| {
             assert_eq!(sc.max_supply().get(), 20u64)
         })
+        .assert_ok();
+
+    b_wrapper
+        .execute_tx(
+            owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.set_administrator(managed_address!(administrator_address));
+            },
+        )
+        .assert_ok();
+
+    b_wrapper
+        .execute_tx(
+            owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.set_max_supply(managed_biguint!(100u64));
+            },
+        )
+        .assert_ok();
+
+    b_wrapper
+        .execute_tx(
+            owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.set_royalties_limits(managed_biguint!(0u64), managed_biguint!(100u64));
+            },
+        )
+        .assert_ok();
+
+    b_wrapper
+        .execute_tx(
+            administrator_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.set_royalties_limits(managed_biguint!(0u64), managed_biguint!(100u64));
+            },
+        )
+        .assert_ok();
+
+    b_wrapper
+        .execute_tx(
+            administrator_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.set_max_supply(managed_biguint!(100u64));
+            },
+        )
         .assert_ok();
 }
 
@@ -241,12 +325,24 @@ fn setup_contract_test() {
         .assert_user_error("Contract was already initialized");
 }
 
-#[test] // Tests whether the owner can change the anti spam tax token
-        // Tests whether the owner can change the anti spam tax value
+#[test] // Tests whether the owner and administrator can change the anti spam tax token
+        // Tests whether the owner and administrator can change the anti spam tax value
 fn anti_spam_tax_test() {
     let mut setup = setup_contract(datanftmint::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
     let owner_address = &setup.owner_address;
+    let administrator_address = &setup.first_user_address;
+
+    b_wrapper
+        .execute_tx(
+            owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.set_administrator(managed_address!(administrator_address));
+            },
+        )
+        .assert_ok();
 
     b_wrapper
         .execute_tx(
@@ -265,6 +361,34 @@ fn anti_spam_tax_test() {
     b_wrapper
         .execute_tx(
             &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.set_anti_spam_tax(
+                    managed_token_id_wrapped!(TOKEN_ID),
+                    managed_biguint!(2_000_000),
+                )
+            },
+        )
+        .assert_ok();
+
+    b_wrapper
+        .execute_tx(
+            &administrator_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.set_anti_spam_tax(
+                    managed_token_id_wrapped!(ANOTHER_TOKEN_ID),
+                    managed_biguint!(2_000_000),
+                )
+            },
+        )
+        .assert_ok();
+
+    b_wrapper
+        .execute_tx(
+            &administrator_address,
             &setup.contract_wrapper,
             &rust_biguint!(0u64),
             |sc| {
@@ -467,8 +591,41 @@ fn requirements_test() {
         .assert_user_error("Address is not privileged");
 
     b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                sc.set_administrator(managed_address!(second_user_address));
+            },
+        )
+        .assert_ok();
+
+    b_wrapper
+        .execute_tx(
+            &second_user_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                sc.set_is_paused(true);
+            },
+        )
+        .assert_ok();
+
+    b_wrapper
+        .execute_tx(
+            &first_user_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                sc.set_is_paused(true);
+            },
+        )
+        .assert_user_error("Address is not privileged");
+
+    b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
-            sc.require_is_privileged(&managed_address!(second_user_address))
+            sc.require_is_privileged(&managed_address!(first_user_address))
         })
         .assert_user_error("Address is not privileged");
 
@@ -476,7 +633,7 @@ fn requirements_test() {
         .execute_query(&setup.contract_wrapper, |sc| {
             sc.require_value_is_positive(&managed_biguint!(0u64));
         })
-        .assert_error(4, "Value must be positive");
+        .assert_error(4, "Value must be higher than zero");
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
@@ -500,7 +657,7 @@ fn requirements_test() {
         .execute_query(&setup.contract_wrapper, |sc| {
             sc.require_sft_is_valid(&managed_biguint!(u8::MIN), &managed_biguint!(0u64));
         })
-        .assert_error(4, "Supply must be positive");
+        .assert_error(4, "Supply must be higher than zero");
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
@@ -601,7 +758,7 @@ fn mint_nft_ft_test() {
                 );
             },
         )
-        .assert_error(4, "Supply must be positive");
+        .assert_error(4, "Supply must be higher than zero");
 
     b_wrapper
         .execute_tx(
@@ -720,7 +877,7 @@ fn mint_nft_ft_test() {
                 );
             },
         )
-        .assert_error(4, "Value must be positive");
+        .assert_error(4, "Value must be higher than zero");
 
     b_wrapper
         .execute_tx(
@@ -844,12 +1001,24 @@ fn mint_nft_ft_test() {
         .assert_ok();
 }
 
-#[test] //Tests the whitelist functionality
+#[test] //Tests wheter the whitelist functionality works as expected
 fn white_list_test() {
     let mut setup = setup_contract(datanftmint::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
     let owner_address = &setup.owner_address;
     let first_user_address = &setup.first_user_address;
+    let second_user_address = &setup.second_user_address;
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                sc.set_administrator(managed_address!(second_user_address));
+            },
+        )
+        .assert_ok();
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
@@ -873,7 +1042,7 @@ fn white_list_test() {
 
     b_wrapper
         .execute_tx(
-            &owner_address,
+            &second_user_address,
             &setup.contract_wrapper,
             &rust_biguint!(0),
             |sc| {
@@ -918,8 +1087,8 @@ fn white_list_test() {
         .assert_user_error("Address not in whitelist");
 }
 
-#[test] // Tests burn functionality
-fn burn_token_tests() {
+#[test] // Tests wheter the burn functionality works as expected
+fn burn_token_test() {
     let mut setup = setup_contract(datanftmint::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
     let owner_address = &setup.owner_address;
@@ -1011,5 +1180,65 @@ fn burn_token_tests() {
                 sc.burn_token();
             },
         )
+        .assert_ok();
+}
+
+#[test] // Tests wheter the url is valid
+fn url_validation_test() {
+    let mut setup = setup_contract(datanftmint::contract_obj);
+    let b_wrapper = &mut setup.blockchain_wrapper;
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_url_is_valid(&managed_buffer!(URL_WITHOUT_PROTOCOL))
+        })
+        .assert_user_error("URL must start with https://");
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_url_is_valid(&managed_buffer!(URL_WITH_SPACES))
+        })
+        .assert_user_error("URL contains invalid characters");
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_url_is_valid(&managed_buffer!(URL_WITH_RETURN))
+        })
+        .assert_user_error("URL contains invalid characters");
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_url_is_valid(&managed_buffer!(SFT_TICKER))
+        })
+        .assert_user_error("URL length is too small");
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_url_is_valid(&managed_buffer!(&[
+                SFT_TICKER,
+                DATA_MARCHAL,
+                DATA_STREAM,
+                MEDIA_URI,
+                DATA_STREAM,
+                MEDIA_URI,
+                DATA_STREAM,
+                MEDIA_URI,
+                SFT_TICKER,
+                DATA_MARCHAL,
+                DATA_STREAM,
+                MEDIA_URI,
+                DATA_STREAM,
+                MEDIA_URI,
+                DATA_STREAM,
+                MEDIA_URI
+            ]
+            .concat()))
+        })
+        .assert_user_error("URL length is too big");
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_url_is_valid(&managed_buffer!(MEDIA_URI))
+        })
         .assert_ok();
 }
