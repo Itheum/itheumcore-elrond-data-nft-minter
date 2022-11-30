@@ -6,12 +6,15 @@ WALLET="./wallet.pem"
 ADDRESS=$(erdpy data load --key=address-devnet)
 DEPLOY_TRANSACTION=$(erdpy data load --key=deployTransaction-devnet)
 
+TOKEN="ITHEUM-a61317"
+TOKEN_HEX="0x$(echo -n ${TOKEN} | xxd -p -u | tr -d '\n')"
+
 deploy(){
     erdpy --verbose contract deploy \
     --bytecode output/datanftmint.wasm \
     --outfile deployOutput \
     --metadata-not-readable \
-    --pem wallet.pem \
+    --pem ${WALLET} \
     --proxy ${PROXY} \
     --chain ${CHAIN_ID} \
     --gas-limit 150000000 \
@@ -29,21 +32,15 @@ deploy(){
 initializeContract(){
     # $1 = collection name
     # $2 = collection ticker
-    # $3 = token royalties
-    # $4 = media cid
-    # $5 = metadata cid
-    # $6 = collection size
-    # $7 = max per transaction
-    # $8 = max per address
+    # #3 = anti spam tax
+    # $4 = mint time limit
 
     collection_name="0x$(echo -n ${1} | xxd -p -u | tr -d '\n')"
     collection_ticker="0x$(echo -n ${2} | xxd -p -u | tr -d '\n')"
-    royalties=${3}
-    media_cid="0x$(echo -n ${4} | xxd -p -u | tr -d '\n')"
-    metadata_cid="0x$(echo -n ${5} | xxd -p -u | tr -d '\n')"
-    collection_size=${6}
-    max_per_transaction=${7}
-    max_per_address=${8}
+    token_identifier=${TOKEN_HEX}
+    anti_spam_tax=${3}
+    mint_time_limit=${4}
+    
 
     erdpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
@@ -51,26 +48,31 @@ initializeContract(){
     --gas-limit=80000000 \
     --value=50000000000000000 \
     --function "initializeContract" \
-    --arguments $collection_name $collection_ticker $royalties $media_cid $metadata_cid $collection_size $max_per_transaction $max_per_address \
+    --arguments $collection_name $collection_ticker $token_identifier $anti_spam_tax $mint_time_limit \
     --proxy ${PROXY} \
     --chain ${CHAIN_ID} \
     --send || return
 }
 
-createToken(){
-    # $1 = SFT name
 
-    sft_name="0x$(echo -n ${1} | xxd -p -u | tr -d '\n')"
+burn() {
+    #   $1 = NFT/SFT Token Identifier,
+    #   $2 = NFT/SFT Token Nonce,
+    #   $3 = NFT/SFT Token Amount,
 
-    erdpy --verbose contract call ${ADDRESS} \
-    --recall-nonce \
-    --pem=${WALLET} \
-    --gas-limit=10000000 \
-    --function "createToken" \
-    --arguments $sft_name \
-    --proxy ${PROXY} \
-    --chain ${CHAIN_ID} \
-    --send || return
+    user_address="$(erdpy wallet pem-address $WALLET)"
+    method="0x$(echo -n 'burn' | xxd -p -u | tr -d '\n')"
+    sft_token="0x$(echo -n ${1} | xxd -p -u | tr -d '\n')"
+
+    erdpy --verbose contract call $user_address \
+        --recall-nonce \
+        --pem=${WALLET} \
+        --gas-limit=100000000 \
+        --function="ESDTNFTTransfer" \
+        --arguments $sft_token $2 $3 ${ADDRESS} $method  \
+        --proxy=${PROXY} \
+        --chain=${CHAIN_ID} \
+        --send || return
 }
 
 pause(){
@@ -92,6 +94,23 @@ unpause(){
     --gas-limit=6000000 \
     --function "setIsPaused" \
     --arguments 0 \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return
+}
+
+setAntiSpamTax(){
+    # $1 = anti spam tax value
+
+    token_identifier=${TOKEN_HEX}
+    anti_spam_tax=${2}
+
+    erdpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=6000000 \
+    --function "setAntiSpamTax" \
+    --arguments ${TOKEN_HEX} ${1} \
     --proxy ${PROXY} \
     --chain ${CHAIN_ID} \
     --send || return
@@ -121,71 +140,8 @@ disableWhitelist(){
     --send || return
 }
 
-setPrivatePrice(){
-    # $1 = token of the price
-    # $2 = price
-
-    token_of_price="0x$(echo -n ${1} | xxd -p -u | tr -d '\n')"
-
-    erdpy --verbose contract call ${ADDRESS} \
-    --recall-nonce \
-    --pem=${WALLET} \
-    --gas-limit=6000000 \
-    --function "setPrivatePrice" \
-    --arguments $token_of_price $2 \
-    --proxy ${PROXY} \
-    --chain ${CHAIN_ID} \
-    --send || return
-}
-
-setPublicPrice(){
-    # $1 = token of the price
-    # $2 = price
-
-    token_of_price="0x$(echo -n ${1} | xxd -p -u | tr -d '\n')"
-
-    erdpy --verbose contract call ${ADDRESS} \
-    --recall-nonce \
-    --pem=${WALLET} \
-    --gas-limit=6000000 \
-    --function "setPublicPrice" \
-    --arguments $token_of_price $2 \
-    --proxy ${PROXY} \
-    --chain ${CHAIN_ID} \
-    --send || return
-}
-
-setMaxPerAddress(){
-    # $1 = amount
-
-    erdpy --verbose contract call ${ADDRESS} \
-    --recall-nonce \
-    --pem=${WALLET} \
-    --gas-limit=6000000 \
-    --function "setMaxPerAddress" \
-    --arguments $1 \
-    --proxy ${PROXY} \
-    --chain ${CHAIN_ID} \
-    --send || return
-}
-
-setMaxPerTx(){
-    # $1 = amount
-
-    erdpy --verbose contract call ${ADDRESS} \
-    --recall-nonce \
-    --pem=${WALLET} \
-    --gas-limit=6000000 \
-    --function "setMaxPerTx" \
-    --arguments $1 \
-    --proxy ${PROXY} \
-    --chain ${CHAIN_ID} \
-    --send || return
-}
-
-setWhiteListSpot(){
+setWhiteListSpots(){
     # $1 = address
-    # $2 = amount
 
     address="0x$(erdpy wallet bech32 --decode ${1})"
 
@@ -193,40 +149,117 @@ setWhiteListSpot(){
     --recall-nonce \
     --pem=${WALLET} \
     --gas-limit=6000000 \
-    --function "setWhitelistSpots" \
-    --arguments $address $2 \
+    --function "setWhiteListSpots" \
+    --arguments $address \
     --proxy ${PROXY} \
     --chain ${CHAIN_ID} \
     --send || return
 }
 
-mintTokenUsingEgld(){
-    # $1 = amount of egld to send
+
+removeWhiteListSpots(){
+    # $1 = address
+
+    address="0x$(erdpy wallet bech32 --decode ${1})"
 
     erdpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
-    --gas-limit=10000000 \
-    --value=$1 \
-    --function "mint" \
+    --gas-limit=6000000 \
+    --function "removeWhiteListSpots" \
+    --arguments $address \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return
+}
+
+
+setMintTimeLimit(){
+    # $1 = mint time limit value u64
+
+    erdpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=6000000 \
+    --function "setMintTimeLimit" \
+    --arguments ${1} \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return
+}
+
+setRoyaltiesLimits(){
+    # $1 = min royalties value
+    # $2 = max royalties value
+
+    erdpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=6000000 \
+    --function "setRoyaltiesLimits" \
+    --arguments ${1} ${2} \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return
+}
+
+setMaxSupply(){
+    # $1 = max supply value
+
+    erdpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=6000000 \
+    --function "setMaxSupply" \
+    --arguments ${1} \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return
+}
+
+setAdministrator(){
+    # $1 = address
+
+    address="0x$(erdpy wallet bech32 --decode ${1})"
+
+    erdpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=6000000 \
+    --function "setAdministrator" \
+    --arguments $address \
     --proxy ${PROXY} \
     --chain ${CHAIN_ID} \
     --send || return
 }
 
 mintTokenUsingEsdt(){
-    # $1 = esdt to send
-    # $2 = amount of esdt to send
+    # $1 = amount of esdt to send
+    # $2 = name
+    # $3 = media
+    # $4 = data marshal
+    # $5 = data stream
+    # $6 = data preview
+    # $7 = royalties
+    # $8 = supply
+    # $9 = title
+    # $10 = description
 
     method="0x$(echo -n 'mint' | xxd -p -u | tr -d '\n')"
-    token="0x$(echo -n ${1} | xxd -p -u | tr -d '\n')"
+    name="0x$(echo -n ${2} | xxd -p -u | tr -d '\n')"
+    media="0x$(echo -n ${3} | xxd -p -u | tr -d '\n')"
+    data_marshal="0x$(echo -n ${4} | xxd -p -u | tr -d '\n')"
+    data_stream="0x$(echo -n ${5} | xxd -p -u | tr -d '\n')"
+    data_preview="0x$(echo -n ${6} | xxd -p -u | tr -d '\n')"
+    title="0x$(echo -n ${9} | xxd -p -u | tr -d '\n')"
+    description="0x$(echo -n ${10} | xxd -p -u | tr -d '\n')"
 
-    erdpy --verbose contract call ${ADDRESS} \
+    erdpy --verbose contract call $ADDRESS \
     --recall-nonce \
     --pem=${WALLET} \
     --gas-limit=10000000 \
     --function "ESDTTransfer" \
-    --arguments $token $2 $method \
+    --arguments ${TOKEN_HEX} $1 $method $name $media $data_marshal $data_stream $data_preview $7 $8 $title $description \
     --proxy ${PROXY} \
     --chain ${CHAIN_ID} \
     --send || return
