@@ -103,7 +103,7 @@ setAntiSpamTax(){
     # $1 = anti spam tax value
 
     token_identifier=${TOKEN_HEX}
-    anti_spam_tax=${2}
+    anti_spam_tax=${1}
 
     erdpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
@@ -116,7 +116,7 @@ setAntiSpamTax(){
     --send || return
 }
 
-enableWhitelist(){
+enableWhiteList(){
     erdpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
@@ -128,7 +128,7 @@ enableWhitelist(){
     --send || return
 }
 
-disableWhitelist(){
+disableWhiteList(){
     erdpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
