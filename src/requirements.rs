@@ -36,7 +36,7 @@ pub trait RequirementsModule: crate::storage::StorageModule {
 
     // Checks whether a value is bigger than zero
     fn require_value_is_positive(&self, value: &BigUint) {
-        require!(value > &BigUint::zero(), "Value must be positive");
+        require!(value > &BigUint::zero(), "Value must be higher than zero");
     }
 
     // Checks whether SFT creation conditions are met
@@ -53,7 +53,7 @@ pub trait RequirementsModule: crate::storage::StorageModule {
             "Royalties are smaller than min royalties"
         );
         require!(supply <= &max_supply, "Max supply exceeded");
-        require!(supply > &BigUint::zero(), "Supply must be positive");
+        require!(supply > &BigUint::zero(), "Supply must be higher than zero");
     }
 
     // Checks whether address is privileged
