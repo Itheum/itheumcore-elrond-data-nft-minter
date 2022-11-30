@@ -331,6 +331,7 @@ fn requirements_test() {
     let b_wrapper = &mut setup.blockchain_wrapper;
     let owner_address = &setup.owner_address;
     let first_user_address = &setup.first_user_address;
+    let second_user_address = &setup.second_user_address;
 
     b_wrapper
         .execute_tx(
@@ -421,12 +422,55 @@ fn requirements_test() {
         })
         .assert_ok();
 
-    // // ????
-    // b_wrapper
-    //     .execute_query(&setup.contract_wrapper, |sc| {
-    //         sc.require_is_privileged(&managed_address!(first_user_address))
-    //     })
-    //     .assert_user_error("Address is not privileged");
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                sc.set_administrator(managed_address!(first_user_address));
+            },
+        )
+        .assert_ok();
+
+    b_wrapper
+        .execute_tx(
+            &first_user_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                sc.set_max_supply(managed_biguint!(20));
+            },
+        )
+        .assert_ok();
+
+    b_wrapper
+        .execute_tx(
+            &first_user_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                sc.set_is_paused(true);
+            },
+        )
+        .assert_ok();
+
+    b_wrapper
+        .execute_tx(
+            &second_user_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                sc.set_is_paused(true);
+            },
+        )
+        .assert_user_error("Address is not privileged");
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_is_privileged(&managed_address!(second_user_address))
+        })
+        .assert_user_error("Address is not privileged");
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
