@@ -100,17 +100,17 @@ unpause(){
 }
 
 setAntiSpamTax(){
-    # $1 = anti spam tax value
+    # $1 = token identifier
+    # $2 = anti spam tax value
 
-    token_identifier=${TOKEN_HEX}
-    anti_spam_tax=${1}
+    token_identifier="0x$(echo -n ${1} | xxd -p -u | tr -d '\n')"
 
     erdpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
     --gas-limit=6000000 \
     --function "setAntiSpamTax" \
-    --arguments ${TOKEN_HEX} ${1} \
+    --arguments $token_identifier ${2} \
     --proxy ${PROXY} \
     --chain ${CHAIN_ID} \
     --send || return
@@ -263,4 +263,49 @@ mintTokenUsingEsdt(){
     --proxy ${PROXY} \
     --chain ${CHAIN_ID} \
     --send || return
+}
+
+mintTokenUsingEgld(){
+    # $1 = amount of egld to send
+    # $2 = name
+    # $3 = media
+    # $4 = data marshal
+    # $5 = data stream
+    # $6 = data preview
+    # $7 = royalties
+    # $8 = supply
+    # $9 = title
+    # $10 = description
+
+    name="0x$(echo -n ${2} | xxd -p -u | tr -d '\n')"
+    media="0x$(echo -n ${3} | xxd -p -u | tr -d '\n')"
+    data_marshal="0x$(echo -n ${4} | xxd -p -u | tr -d '\n')"
+    data_stream="0x$(echo -n ${5} | xxd -p -u | tr -d '\n')"
+    data_preview="0x$(echo -n ${6} | xxd -p -u | tr -d '\n')"
+    title="0x$(echo -n ${9} | xxd -p -u | tr -d '\n')"
+    description="0x$(echo -n ${10} | xxd -p -u | tr -d '\n')"
+
+    erdpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=10000000 \
+    --value=${1} \
+    --function "mint" \
+    --arguments $name $media $data_marshal $data_stream $data_preview $7 $8 $title $description \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return
+}
+
+getUserDataOut(){
+    # $1 = address
+    # $2 = token identifier
+
+    address="0x$(erdpy wallet bech32 --decode ${1})"
+    token_identifier="0x$(echo -n ${2} | xxd -p -u | tr -d '\n')"
+
+    erdpy --verbose contract query ${ADDRESS} \
+    --proxy ${PROXY} \
+    --function 'getUserDataOut' \
+    --arguments $address $token_identifier     
 }
