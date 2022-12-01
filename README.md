@@ -2,11 +2,11 @@
 
 ## Abstract
 
-The SFT Mint & Sale smart contract is a tool that can be used in order to pre-order or pre-sell a future collection of NFTs that is yet to be created. Moreover, it can simply be used to mint and then sell a single SFT to multiple wallets.
+The Data NFT Minting contract is a tool that can be used in order to tokenize and sell the right to use different forms of data in the form of an SFT with different supplies.
 
 ## Introduction
 
-This contract allows the owner of it to create an SFT collection that contains only one type of SFT in it, available to mint in a pre-set quantity which can be changed at any time. Moreove, it allows the owner to sell that collection of SFTs to multiple wallets under certain conditions (private sale, public sale, given prices, etc).
+This contract allows the owner of it to create an SFT collection towards which anyone can contribute by creating Data NFTs. The creators can even choose their own royalties or supply
 
 ## Prerequisites
 
