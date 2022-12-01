@@ -6,7 +6,7 @@ The Data NFT Minting contract is a tool that can be used in order to tokenize an
 
 ## Introduction
 
-This contract allows the owner of it to create an SFT collection towards which anyone can contribute by creating Data NFTs. The creators can even choose their own royalties or supply
+This contract allows the owner of it to create an SFT collection towards which anyone can contribute by creating Data NFTs. The creators can even choose their own royalties or supply.
 
 ## Prerequisites
 
