@@ -56,8 +56,10 @@ The init function is called when deploying or upgrading the smart contract. It r
     );
 ```
 
-Endpoint that initializes all the data needed for the smart contract to issue the token, anti spam tax and mint time limit used for minting the Data NFT-FT. It can only be used once and it can only be called by the owner of the smart contract. In order for the call to work, the caller must also send 0.05 eGLD when calling the endpoint. This is to cover the cost of creating the Data NFT-FT collection. Call structure: "initializeContract" + "@" + collection_name hex encoded + "@" + token_ticker hex encoded + "@" + token_identifier hex encoded + "@" + anti_spam_tax + "@" + mint_time_limit hex encoded. Example:
-"initializeContrct@436f6c6c656374696f6e4e616d65@4e46544654@2049544845554d2d613631333137@015af1d78b58c40000@0384"
+Endpoint that initializes all the data needed for the smart contract to issue the token, anti spam tax and mint time limit used for minting the Data NFT-FT. It can only be used once and it can only be called by the owner of the smart contract. In order for the call to work, the caller must also send 0.05 eGLD when calling the endpoint. This is to cover the cost of creating the Data NFT-FT collection.
+
+Call structure: "initializeContract" + "@" + collection_name hex encoded + "@" + token_ticker hex encoded + "@" + token_identifier hex encoded + "@" + anti_spam_tax + "@" + mint_time_limit hex encoded.
+Example: "initializeContract@436f6c6c656374696f6e4e616d65@4e46544654@2049544845554d2d613631333137@015af1d78b58c40000@0384"
 
 #### setWhiteListEnabled
 
@@ -70,7 +72,9 @@ Endpoint that initializes all the data needed for the smart contract to issue th
 ```
 
 Endpoint that sets wether the contract lets only whitelisted addresses to mint or not. If the contract has whitelist disabled, all addresses can mint.
-Call structure: "setWhiteListEnabled" + "@" + is_enabled hex encoded
+
+Call structure: "setWhiteListEnabled" + "@" + is_enabled hex encoded.
+
 Example: "setWhiteListEnabled@01"
 
 #### setMintTimeLimit
@@ -84,7 +88,9 @@ Example: "setWhiteListEnabled@01"
 ```
 
 Endpoint that sets a time limit for the mint. An address can mint only once in the time limit.
-Call structure: "setMintTimeLimit" +"@" + mint_time_limit hex encoded
+
+Call structure: "setMintTimeLimit" +"@" + mint_time_limit hex encoded.
+
 Example: "setWhitelistSpots@0384"
 
 #### setRoyaltiesLimits
@@ -99,7 +105,9 @@ Example: "setWhitelistSpots@0384"
 ```
 
 Endpoint that sets the minimum and maximum royalties that can be set by the public when minting a Data NFT-FT.
-Call structure: "setRoyaltiesLimits" + "@" + min_royalties hex encoded + "@" + max_royalties hex encoded
+
+Call structure: "setRoyaltiesLimits" + "@" + min_royalties hex encoded + "@" + max_royalties hex encoded.
+
 Example: "setRoyaltiesLimits@00@01f40"
 
 #### setAdministrator
@@ -113,7 +121,9 @@ Example: "setRoyaltiesLimits@00@01f40"
 ```
 
 Endpoint that sets the administrator of the contract. The administrator has different privileges that will be presented in the Owner and administrator endpoints section.
-Call structure: "setAdministrator" + "@" + administrator hex encoded
+
+Call structure: "setAdministrator" + "@" + administrator hex encoded.
+
 Example: "setAdministrator@afb9aa109340a83cdb2129635b060a3a2d67ba2659ad86bf6ef49f948c43572c"
 
 ### Owner and administrator endpoints
@@ -129,7 +139,9 @@ Example: "setAdministrator@afb9aa109340a83cdb2129635b060a3a2d67ba2659ad86bf6ef49
 ```
 
 Endpoint that sets the value of the pause variable. This variable is used to determined whether minting Data NFT-FT is activated or not.
-Call structure: "setIsPaused" + "@" + is_paused hex encoded
+
+Call structure: "setIsPaused" + "@" + is_paused hex encoded.
+
 Example: "setIsPaused@00"
 
 #### setAntiSpamTax
@@ -144,7 +156,9 @@ Example: "setIsPaused@00"
 ```
 
 Endpoint that sets the token identifier and the tax value that will be used for minting Data NFT-FT, it will act also as an anti spam tax. The endpoint can take any token identifier, but be aware that diferent tokens have diferent decimals.
-Call structure: "setAntiSpamTax" + "@" + token_id hex encoded + "@" + tax hex encoded
+
+Call structure: "setAntiSpamTax" + "@" + token_id hex encoded + "@" + tax hex encoded.
+
 Example: "setAntiSpamTax@45474c44@015af1d78b58c40000"
 
 #### setWhiteListSpots
@@ -158,8 +172,10 @@ Example: "setAntiSpamTax@45474c44@015af1d78b58c40000"
 ```
 
 Endpoint that sets whitelist spots for given addresses. The argument can take a list of addreses.
+
 Call structure: "setWhiteListSpots" + "@" + address1 hex encoded
-(can add as many addresses as needed)
+(can add as many addresses as needed).
+
 Example: "setWhitelistSpots@8bc1730b9afdd4546a039c3baa043f37525822100e04cfc986b6955e05cbf101"
 
 #### removeWhiteListSpots
@@ -173,22 +189,26 @@ Example: "setWhitelistSpots@8bc1730b9afdd4546a039c3baa043f37525822100e04cfc986b6
 ```
 
 Endpoint that removes whitelist spots for given addresses. The argument can take a list of addreses.
+
 Call structure: "removeWhiteListSpots" + "@" + address1 hex encoded
-(can add as many addresses as needed)
+(can add as many addresses as needed).
+
 Example: "removeWhiteListSpots@8bc1730b9afdd4546a039c3baa043f37525822100e04cfc986b6955e05cbf101"
 
 #### setMaxSupply
 
-    ```rust
-        #[endpoint(setMaxSupply)]
-        fn set_max_supply(
-            &self,
-            max_supply: BigUint
-        );
-    ```
+```rust
+    #[endpoint(setMaxSupply)]
+    fn set_max_supply(
+        &self,
+        max_supply: BigUint
+    );
+```
 
 Endpoint that sets the value of the max supply variable. This variable is used to determined the maximum supply of the Data NFT-FTs an user can mint.
-Call structure: "setMaxSupply" + "@" + max_supply hex encoded
+
+Call structure: "setMaxSupply" + "@" + max_supply hex encoded.
+
 Example: "setMaxSupply@05"
 
 ### Public endpoints
@@ -213,10 +233,12 @@ Example: "setMaxSupply@05"
 ```
 
 Endpoint that allows anyone to mint Data NFT-FT. The endpoint takes as arguments the name (NFT-FT name), media (NFT-FT media url), data_marshal (marshal service url), data_stream (data stream url), data_preview (data preview url), royalties (royalties value between min_royalties and max_royalties), supply (supply value between 1 and max_supply), title (longer title describing NFT-FT) and description (NFT-FT description).
-Call structure for EGLD payment: "mint" + "@" + name hex encoded + "@" + media hex encoded + "@" + data_marshal hex encoded + "@" + data_stream hex encoded + "@" + data_preview hex encoded + "@" + royalties hex encoded + "@" + supply hex encoded + "@" + title hex encoded + "@" + description hex encoded
+
+Call structure for EGLD payment: "mint" + "@" + name hex encoded + "@" + media hex encoded + "@" + data_marshal hex encoded + "@" + data_stream hex encoded + "@" + data_preview hex encoded + "@" + royalties hex encoded + "@" + supply hex encoded + "@" + title hex encoded + "@" + description hex encoded.
+
 Example: "mint@4d792044617461204e4654@68747470733a2f2f69746865756d2e696f2f746573742f746573742f746573742f746573742f6d65646961@68747470733a2f2f69746865756d2e696f2f746573742f746573742f746573742f746573742f6d65646961@68747470733a2f2f69746865756d2e696f2f746573742f746573742f746573742f746573742f6d65646961@68747470733a2f2f69746865756d2e696f2f746573742f746573742f746573742f746573742f6d65646961@3c@05@4e46542d4654205469746c65@4e46542d4654204465736372697074696f6e"
 
-Call structure for ESDT payment: "ESDTTransfer" + "@" + token to send hex encoded + "@" + number of tokens to send hex encoded + "@" + "mint" hex encoded + "@" + name hex encoded + "@" + media hex encoded + "@" + data_marshal hex encoded + "@" + data_stream hex encoded + "@" + data_preview hex encoded + "@" + royalties hex encoded + "@" + supply hex encoded + "@" + title hex encoded + "@" + description hex encoded
+Call structure for ESDT payment: "ESDTTransfer" + "@" + token to send hex encoded + "@" + number of tokens to send hex encoded + "@" + "mint" hex encoded + "@" + name hex encoded + "@" + media hex encoded + "@" + data_marshal hex encoded + "@" + data_stream hex encoded + "@" + data_preview hex encoded + "@" + royalties hex encoded + "@" + supply hex encoded + "@" + title hex encoded + "@" + description hex encoded.
 
 Example: "ESDTTransfer@49544845554d2d613631333137@015af1d78b58c40000@6d696e74@53616d706c65546f6b656e4e616d65@68747470733a2f2f697066732e696f2f697066732f62616679726569647835367968706f7371626e6b616432767970363734713574776a637666356a67767473626579686f6366346b6a657835776f34@68747470733a2f2f69746865756d6170692e636f6d2f646465782f646174616d61727368616c2f76312f73657276696365732f67656e6572617465@68747470733a2f2f69746865756d2d7265736f75726365732e73332e61702d736f757468656173742d322e616d617a6f6e6177732e636f6d2f6a736f6e2f54484f525f45636f47505f52616365312e637376@68747470733a2f2f69746865756d2d7265736f75726365732e73332e61702d736f757468656173742d322e616d617a6f6e6177732e636f6d2f6a736f6e2f54484f525f45636f47505f52616365312e637376@@01@53616d706c65205469746c65@53616d706c65204465736372697074696f6e"
 
@@ -229,7 +251,9 @@ Example: "ESDTTransfer@49544845554d2d613631333137@015af1d78b58c40000@6d696e74@53
 ```
 
 Endpoint that allows anyone to burn sent amount of Data NFT-FTs.
-Call structure: "ESDTTransfer" + "@" + NFT-FT token identifier hex encoded + "@" + token nonce hex encoded + "@" + number of tokens to burn hex encoded + "@" + contract address hex encoded + "@" +"burn" hex encoded
+
+Call structure: "ESDTTransfer" + "@" + NFT-FT token identifier hex encoded + "@" + token nonce hex encoded + "@" + number of tokens to burn hex encoded + "@" + contract address hex encoded + "@" +"burn" hex encoded.
+
 Example: "ESDTNFTTransfer@4e465446542d373736336637@01@1e@00000000000000000500c72532eb1c8f5e32034b46b5041babade020fdefd5fd@6275726e"
 
 ### Views
@@ -246,19 +270,19 @@ Example: "ESDTNFTTransfer@4e465446542d373736336637@01@1e@00000000000000000500c72
 
 Main view of the contract. Receives an address and a token identifier as arguments and returns a structure that contains all the data needed by the frontend in order to limit the user from wrongly intteracting with the contract. The structure contains the following fields:
 
-- anti_spam_tax_value: the value of the anti spam tax for the given token identifier
-- is_paused: a boolean that indicates if the contract is paused or not
-- max_royalties: the maximum royalties value that can be set by the user
-- min_royalties: the minimum royalties value that can be set by the user
-- max_supply: the maximum supply value that can be set by the user
-- mint_time_limit: the time limit for minting a data NFT-FT.
-- last_mint_time: the last time a data NFT-FT was minted by the given address
-- whitelist_enabled: a boolean that indicates if the whitelist is enabled or not
-  -is_whitelisted: a boolean that indicates if the given address is whitelisted or not
+- **anti_spam_tax_value**: the value of the anti spam tax for the given token identifier
+- **is_paused**: a boolean that indicates if the contract is paused or not
+- **max_royalties**: the maximum royalties value that can be set by the user
+- **min_royalties**: the minimum royalties value that can be set by the user
+- **max_supply**: the maximum supply value that can be set by the user
+- **mint_time_limit**: the time limit for minting a data NFT-FT.
+- **last_mint_time**: the last time a data NFT-FT was minted by the given address
+- **whitelist_enabled**: a boolean that indicates if the whitelist is enabled or not
+- **is_whitelisted**: a boolean that indicates if the given address is whitelisted or not
 
 ## Development
 
-This smart contract aims to offer the Elrond community an audited SFT sale smart contract that is easy to use, well documented and secure.
+This smart contract aims to offer the Elrond community an audited NFT minter smart contract that is easy to use, well documented and secure.
 
 ### Architecture
 
