@@ -1,4 +1,4 @@
-# Itheum Core Elrond - SFT Mint & Sale Smart Contract
+# Itheum Core Elrond - NFT-FT Minter Smart Contract
 
 ## Abstract
 
