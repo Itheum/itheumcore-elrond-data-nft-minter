@@ -37,7 +37,7 @@ The setup workflow for the smart contract is as follows:
     fn init(&self);
 ```
 
-The init function is called when deploying or upgrading the smart contract. It receives no arguments and what it does for the data nft minter smart contract is to pause it, enable whitelist and setting the default values for minimum royalties, maximum royalties and maximum supply
+The init function is called when deploying or upgrading the smart contract. It receives no arguments and does the following: pauses the contract, enable whitelist and sets the default values for minimum royalties, maximum royalties and maximum supply.
 
 ### Only owner endpoints
 
@@ -56,7 +56,7 @@ The init function is called when deploying or upgrading the smart contract. It r
     );
 ```
 
-Endpoint that initializes all the data needed for the smart contract to issue the token, anti spam tax and mint time limit used for minting the Data NFT-FT. It can only be used once and it can only be called by the owner of the smart contract. In order for the call to work, the caller must also send 0.05 eGLD when calling the endpoint. This is to cover the cost of creating the Data NFT-FT collection.
+Endpoint that initializes all the data needed for the smart contract to issue the token.The anti spam tax and mint time limit variables are used for regulating the minting of Data NFT-FTs.It can only be used once and it can only be called by the owner of the smart contract. In order for the call to work, the caller must also send 0.05 eGLD when calling the endpoint. This is to cover the cost of creating the Data NFT-FT collection.
 
 Call structure: "initializeContract" + "@" + collection_name hex encoded + "@" + token_ticker hex encoded + "@" + token_identifier hex encoded + "@" + anti_spam_tax + "@" + mint_time_limit hex encoded.
 Example: "initializeContract@436f6c6c656374696f6e4e616d65@4e46544654@2049544845554d2d613631333137@015af1d78b58c40000@0384"
@@ -104,7 +104,7 @@ Example: "setWhitelistSpots@0384"
     );
 ```
 
-Endpoint that sets the minimum and maximum royalties that can be set by the public when minting a Data NFT-FT.
+Endpoint that sets the minimum and maximum royalties that can be set by the users when minting a Data NFT-FT.
 
 Call structure: "setRoyaltiesLimits" + "@" + min_royalties hex encoded + "@" + max_royalties hex encoded.
 
@@ -120,7 +120,7 @@ Example: "setRoyaltiesLimits@00@01f40"
     );
 ```
 
-Endpoint that sets the administrator of the contract. The administrator has different privileges that will be presented in the Owner and administrator endpoints section.
+Endpoint that sets the administrator of the contract. The administrator has some privileges that will be presented in the [Owner and administrator endpoints section](#owner-and-administrator-endpoints).
 
 Call structure: "setAdministrator" + "@" + administrator hex encoded.
 
@@ -155,7 +155,7 @@ Example: "setIsPaused@00"
     );
 ```
 
-Endpoint that sets the token identifier and the tax value that will be used for minting Data NFT-FT, it will act also as an anti spam tax. The endpoint can take any token identifier, but be aware that diferent tokens have diferent decimals.
+Endpoint that sets the token identifier and the tax value that will be used as a price for minting Data NFT-FTs, it will act also as an anti spam tax. The endpoint can take any token identifier, but be aware that diferent tokens have diferent decimals.
 
 Call structure: "setAntiSpamTax" + "@" + token_id hex encoded + "@" + tax hex encoded.
 
@@ -232,7 +232,7 @@ Example: "setMaxSupply@05"
     );
 ```
 
-Endpoint that allows anyone to mint Data NFT-FT. The endpoint takes as arguments the name (NFT-FT name), media (NFT-FT media url), data_marshal (marshal service url), data_stream (data stream url), data_preview (data preview url), royalties (royalties value between min_royalties and max_royalties), supply (supply value between 1 and max_supply), title (longer title describing NFT-FT) and description (NFT-FT description).
+Endpoint that allows anyone to mint Data NFT-FTs. The endpoint takes as arguments the name (NFT-FT name), media (NFT-FT media url), data_marshal (marshal service url), data_stream (data stream url), data_preview (data preview url), royalties (royalties value between min_royalties and max_royalties), supply (supply value between 1 and max_supply), title (longer title describing the data NFT-FT dataset) and description (Dataset description).
 
 Call structure for EGLD payment: "mint" + "@" + name hex encoded + "@" + media hex encoded + "@" + data_marshal hex encoded + "@" + data_stream hex encoded + "@" + data_preview hex encoded + "@" + royalties hex encoded + "@" + supply hex encoded + "@" + title hex encoded + "@" + description hex encoded.
 
@@ -250,7 +250,7 @@ Example: "ESDTTransfer@49544845554d2d613631333137@015af1d78b58c40000@6d696e74@53
     fn burn_token(&self);
 ```
 
-Endpoint that allows anyone to burn sent amount of Data NFT-FTs.
+Endpoint that allows anyone to burn the sent amount of Data NFT-FTs.
 
 Call structure: "ESDTTransfer" + "@" + NFT-FT token identifier hex encoded + "@" + token nonce hex encoded + "@" + number of tokens to burn hex encoded + "@" + contract address hex encoded + "@" +"burn" hex encoded.
 
@@ -268,7 +268,7 @@ Example: "ESDTNFTTransfer@4e465446542d373736336637@01@1e@00000000000000000500c72
     );
 ```
 
-Main view of the contract. Receives an address and a token identifier as arguments and returns a structure that contains all the data needed by the frontend in order to limit the user from wrongly intteracting with the contract. The structure contains the following fields:
+Main view of the contract. Receives an address and a token identifier as arguments and returns a structure that contains all the data needed by the frontend in order to limit the user from wrongly intteracting with the smart contract. The structure contains the following fields:
 
 - **anti_spam_tax_value**: the value of the anti spam tax for the given token identifier
 - **is_paused**: a boolean that indicates if the contract is paused or not
