@@ -61,22 +61,6 @@ Endpoint that initializes all the data needed for the smart contract to issue th
 Call structure: "initializeContract" + "@" + collection_name hex encoded + "@" + token_ticker hex encoded + "@" + token_identifier hex encoded + "@" + anti_spam_tax + "@" + mint_time_limit hex encoded.
 Example: "initializeContract@436f6c6c656374696f6e4e616d65@4e46544654@2049544845554d2d613631333137@015af1d78b58c40000@0384"
 
-#### setWhiteListEnabled
-
-```rust
-    #[endpoint(setWhiteListEnabled)]
-    fn set_white_list_enabled(
-        &self,
-        is_enabled: bool
-    );
-```
-
-Endpoint that sets wether the contract lets only whitelisted addresses to mint or not. If the contract has whitelist disabled, all addresses can mint.
-
-Call structure: "setWhiteListEnabled" + "@" + is_enabled hex encoded.
-
-Example: "setWhiteListEnabled@01"
-
 #### setMintTimeLimit
 
 ```rust
@@ -92,23 +76,6 @@ Endpoint that sets a time limit for the mint. An address can mint only once in t
 Call structure: "setMintTimeLimit" +"@" + mint_time_limit hex encoded.
 
 Example: "setMintTimeLimit@0384"
-
-#### setRoyaltiesLimits
-
-```rust
-    #[endpoint(setRoyaltiesLimits)]
-    fn set_royalties_limits(
-        &self,
-        min_royalties: BigUint,
-        max_royalties: BigUint
-    );
-```
-
-Endpoint that sets the minimum and maximum royalties that can be set by the users when minting a Data NFT-FT.
-
-Call structure: "setRoyaltiesLimits" + "@" + min_royalties hex encoded + "@" + max_royalties hex encoded.
-
-Example: "setRoyaltiesLimits@00@01f40"
 
 #### setAdministrator
 
@@ -161,6 +128,22 @@ Call structure: "setAntiSpamTax" + "@" + token_id hex encoded + "@" + tax hex en
 
 Example: "setAntiSpamTax@45474c44@015af1d78b58c40000"
 
+#### setWhiteListEnabled
+
+```rust
+    #[endpoint(setWhiteListEnabled)]
+    fn set_white_list_enabled(
+        &self,
+        is_enabled: bool
+    );
+```
+
+Endpoint that sets wether the contract lets only whitelisted addresses to mint or not. If the contract has whitelist disabled, all addresses can mint.
+
+Call structure: "setWhiteListEnabled" + "@" + is_enabled hex encoded.
+
+Example: "setWhiteListEnabled@01"
+
 #### setWhiteListSpots
 
 ```rust
@@ -194,6 +177,23 @@ Call structure: "removeWhiteListSpots" + "@" + address1 hex encoded
 (can add as many addresses as needed).
 
 Example: "removeWhiteListSpots@8bc1730b9afdd4546a039c3baa043f37525822100e04cfc986b6955e05cbf101"
+
+#### setRoyaltiesLimits
+
+```rust
+    #[endpoint(setRoyaltiesLimits)]
+    fn set_royalties_limits(
+        &self,
+        min_royalties: BigUint,
+        max_royalties: BigUint
+    );
+```
+
+Endpoint that sets the minimum and maximum royalties that can be set by the users when minting a Data NFT-FT.
+
+Call structure: "setRoyaltiesLimits" + "@" + min_royalties hex encoded + "@" + max_royalties hex encoded.
+
+Example: "setRoyaltiesLimits@00@01f40"
 
 #### setMaxSupply
 
