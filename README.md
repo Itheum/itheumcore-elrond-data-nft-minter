@@ -10,9 +10,9 @@ This contract allows the owner of it to create an SFT collection towards which a
 
 ## Prerequisites
 
-This documentation assumes the user has previous programming experience. Moreover, the user should have a basic understanding of the Elrond blockchain. If you are new to the blockchain, please refer to the [Elrond documentation](https://docs.elrond.com/). In order to develop Elrond smart contract related solutions, one needs to have installed [erdpy](https://docs.elrond.com/sdk-and-tools/erdpy/installing-erdpy/).
+This documentation assumes the user has previous programming experience. Moreover, the user should have a basic understanding of the Elrond blockchain. If you are new to the blockchain, please refer to the [Elrond documentation](https://docs. elrond. com/). In order to develop Elrond smart contract related solutions, one needs to have installed [erdpy](https://docs. elrond. com/sdk-and-tools/erdpy/installing-erdpy/).
 
-Understanding this document is also easier if one knows how [ESDT token transactions](https://docs.elrond.com/developers/esdt-tokens/#transfers-to-a-smart-contract) are structured on the Elrond blockchain and how [NFT tokens](https://docs.elrond.com/tokens/nft-tokens/) work on the Elrond Blockchain.
+Understanding this document is also easier if one knows how [ESDT token transactions](https://docs. elrond. com/developers/esdt-tokens/#transfers-to-a-smart-contract) are structured on the Elrond blockchain and how [NFT tokens](https://docs. elrond. com/tokens/nft-tokens/) work on the Elrond Blockchain.
 
 ## Itheum deployed SFT mint & sale contract addresses
 
@@ -56,7 +56,7 @@ The init function is called when deploying or upgrading the smart contract. It r
     );
 ```
 
-Endpoint that initializes all the data needed for the smart contract to issue the token.The anti spam tax and mint time limit variables are used for regulating the minting of Data NFT-FTs.It can only be used once and it can only be called by the owner of the smart contract. In order for the call to work, the caller must also send 0.05 eGLD when calling the endpoint. This is to cover the cost of creating the Data NFT-FT collection.
+Endpoint that initializes all the data needed for the smart contract to issue the token. The anti spam tax and mint time limit variables are used for regulating the minting of Data NFT-FTs. It can only be used once and it can only be called by the owner of the smart contract. In order for the call to work, the caller must also send 0.05 eGLD when calling the endpoint. This is to cover the cost of creating the Data NFT-FT collection.
 
 Call structure: "initializeContract" + "@" + collection_name hex encoded + "@" + token_ticker hex encoded + "@" + token_identifier hex encoded + "@" + anti_spam_tax + "@" + mint_time_limit hex encoded.
 Example: "initializeContract@436f6c6c656374696f6e4e616d65@4e46544654@2049544845554d2d613631333137@015af1d78b58c40000@0384"
@@ -91,7 +91,7 @@ Endpoint that sets a time limit for the mint. An address can mint only once in t
 
 Call structure: "setMintTimeLimit" +"@" + mint_time_limit hex encoded.
 
-Example: "setWhitelistSpots@0384"
+Example: "setMintTimeLimit@0384"
 
 #### setRoyaltiesLimits
 
@@ -113,14 +113,14 @@ Example: "setRoyaltiesLimits@00@01f40"
 #### setAdministrator
 
 ```rust
-   #[endpoint(setAdministrator)]
+    #[endpoint(setAdministrator)]
     fn set_administrator(
-    &self,
-    administrator: ManagedAddress
+        &self,
+        administrator: ManagedAddress
     );
 ```
 
-Endpoint that sets the administrator of the contract. The administrator has some privileges that will be presented in the [Owner and administrator endpoints section](#owner-and-administrator-endpoints).
+Endpoint that sets the administrator of the contract. The administrator has some privileges that will be presented in the [Owner and administrator endpoints](#owner-and-administrator-endpoints) section.
 
 Call structure: "setAdministrator" + "@" + administrator hex encoded.
 
@@ -275,7 +275,7 @@ Main view of the contract. Receives an address and a token identifier as argumen
 - **max_royalties**: the maximum royalties value that can be set by the user
 - **min_royalties**: the minimum royalties value that can be set by the user
 - **max_supply**: the maximum supply value that can be set by the user
-- **mint_time_limit**: the time limit for minting a data NFT-FT.
+- **mint_time_limit**: the time limit for minting a data NFT-FT
 - **last_mint_time**: the last time a data NFT-FT was minted by the given address
 - **whitelist_enabled**: a boolean that indicates if the whitelist is enabled or not
 - **is_whitelisted**: a boolean that indicates if the given address is whitelisted or not
@@ -313,7 +313,7 @@ Note: In order to run the tests, one has to use the rust nightly version. One ca
 
 ### How to deploy
 
-In order to deploy the smart contract on devnet one can use the interaction snippets present in the devnet.snippets file (which is located in the interactions folder). Before using the snippets, make sure to add your pem file in the root of the project under the name "wallet.pem" (or change the name to whichever one you wish to use in the interaction snippets). If you need info about how to derive a pem file you can find them [here](https://docs.elrond.com/sdk-and-tools/erdpy/deriving-the-wallet-pem-file/). To run the functions from the interaction file, one can use:
+In order to deploy the smart contract on devnet one can use the interaction snippets present in the devnet. snippets file (which is located in the interactions folder). Before using the snippets, make sure to add your pem file in the root of the project under the name "wallet.pem" (or change the name to whichever one you wish to use in the interaction snippets). If you need info about how to derive a pem file you can find them [here](https://docs.elrond.com/sdk-and-tools/erdpy/deriving-the-wallet-pem-file/). To run the functions from the interaction file, one can use:
 
 ```shell
     source interaction/devnet.snippets.sh
