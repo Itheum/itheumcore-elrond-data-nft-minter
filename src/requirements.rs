@@ -58,11 +58,16 @@ pub trait RequirementsModule: crate::storage::StorageModule {
 
     // Checks whether address is privileged
     fn require_is_privileged(&self, address: &ManagedAddress) {
-        require!(
-            &self.blockchain().get_owner_address() == address
-                || &self.administrator().get() == address,
-            "Address is not privileged"
-        );
+        if &self.blockchain().get_owner_address() != address {
+            require!(
+                !&self.administrator().is_empty(),
+                "Address is not privileged"
+            );
+            require!(
+                &self.administrator().get() == address,
+                "Address is not privileged"
+            );
+        }
     }
 
     // Checks wheter the uris are valid

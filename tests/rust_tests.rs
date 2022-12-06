@@ -1017,6 +1017,28 @@ fn white_list_test() {
         .assert_ok();
 
     b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                sc.set_white_list_enabled(true);
+            },
+        )
+        .assert_ok();
+
+    b_wrapper
+        .execute_tx(
+            &second_user_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                sc.set_white_list_enabled(true);
+            },
+        )
+        .assert_ok();
+
+    b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
             let whitelist = MultiValueEncoded::new();
             sc.set_whitelist_spots(whitelist)
@@ -1058,7 +1080,7 @@ fn white_list_test() {
 
     b_wrapper
         .execute_tx(
-            &owner_address,
+            &second_user_address,
             &setup.contract_wrapper,
             &rust_biguint!(0),
             |sc| {
@@ -1237,4 +1259,84 @@ fn url_validation_test() {
             sc.require_url_is_valid(&managed_buffer!(MEDIA_URI))
         })
         .assert_ok();
+}
+
+#[test] // Tests wheter an user cannont interact with functions that require privileges
+fn privileges_test() {
+    let mut setup = setup_contract(datanftmint::contract_obj);
+    let b_wrapper = &mut setup.blockchain_wrapper;
+    let user_address = &setup.first_user_address;
+
+    b_wrapper
+        .execute_tx(
+            &user_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.set_is_paused(false);
+            },
+        )
+        .assert_user_error("Address is not privileged");
+
+    b_wrapper
+        .execute_tx(
+            &user_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| sc.set_anti_spam_tax(managed_token_id_wrapped!(TOKEN_ID), managed_biguint!(200)),
+        )
+        .assert_user_error("Address is not privileged");
+
+    b_wrapper
+        .execute_tx(
+            &user_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| sc.set_white_list_enabled(false),
+        )
+        .assert_user_error("Address is not privileged");
+
+    b_wrapper
+        .execute_tx(
+            &user_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                let mut args = MultiValueEncoded::new();
+                args.push(managed_address!(user_address));
+                sc.set_whitelist_spots(args);
+            },
+        )
+        .assert_user_error("Address is not privileged");
+
+    b_wrapper
+        .execute_tx(
+            &user_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                let mut args = MultiValueEncoded::new();
+                args.push(managed_address!(user_address));
+                sc.remove_whitelist_spots(args);
+            },
+        )
+        .assert_user_error("Address is not privileged");
+
+    b_wrapper
+        .execute_tx(
+            &user_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| sc.set_royalties_limits(managed_biguint!(200), managed_biguint!(200)),
+        )
+        .assert_user_error("Address is not privileged");
+
+    b_wrapper
+        .execute_tx(
+            &user_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| sc.set_max_supply(managed_biguint!(200)),
+        )
+        .assert_user_error("Address is not privileged");
 }
