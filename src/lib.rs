@@ -172,10 +172,11 @@ pub trait DataNftMint:
         self.anti_spam_tax(&token_id).set(tax);
     }
 
-    // Endpoint that will be used by the owner to change the whitelist enable value.
-    #[only_owner]
+    // Endpoint that will be used by the owner and privileged addresses to change the whitelist enable value.
     #[endpoint(setWhiteListEnabled)]
     fn set_white_list_enabled(&self, is_enabled: bool) {
+        let caller = self.blockchain().get_caller();
+        self.require_is_privileged(&caller);
         self.whitelist_enable_toggle_event(&is_enabled);
         self.white_list_enabled().set(is_enabled);
     }
@@ -219,9 +220,10 @@ pub trait DataNftMint:
     }
 
     // Endpoint that will be used by the owner to set min and max royalties
-    #[only_owner]
     #[endpoint(setRoyaltiesLimits)]
     fn set_royalties_limits(&self, min_royalties: BigUint, max_royalties: BigUint) {
+        let caller = self.blockchain().get_caller();
+        self.require_is_privileged(&caller);
         self.set_royalties_limits_event(&min_royalties, &max_royalties);
         self.min_royalties().set(min_royalties);
         self.max_royalties().set(max_royalties);
