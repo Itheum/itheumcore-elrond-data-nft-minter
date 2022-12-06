@@ -142,6 +142,53 @@ pub trait DataNftMint:
         attributes
     }
 
+    //Endpoint used by the owner to freeze addresses
+    #[only_owner]
+    #[endpoint(freeze)]
+    fn freeze_address(&self, address: &ManagedAddress) {
+        let token_identifier = self.token_id().get_token_id();
+        if self.black_list().insert(address.clone()) {
+            self.set_blacklist_spot_event(&address);
+            self.send()
+                .esdt_system_sc_proxy()
+                .freeze(&token_identifier, &address)
+                .transfer_execute()
+        } else {
+            sc_panic!("Address already in blacklist");
+        }
+    }
+
+    //Endpoint used by the owner to unfreeze addresses
+    #[only_owner]
+    #[endpoint(unFreeze)]
+    fn unfreeze_address(&self, address: &ManagedAddress) {
+        let token_identifier = self.token_id().get_token_id();
+        if self.black_list().remove(address) {
+            self.set_whitelist_spot_event(&address);
+            self.send()
+                .esdt_system_sc_proxy()
+                .unfreeze(&token_identifier, &address)
+                .transfer_execute();
+        } else {
+            sc_panic!("Address not in blacklist");
+        }
+    }
+
+    //Endpoint used by the owner to wipe Data NFT-FTs
+    #[only_owner]
+    #[endpoint(wipe)]
+    fn wipe_token(&self, address: &ManagedAddress) {
+        let token_identifier = self.token_id().get_token_id();
+        if self.black_list().contains(&address) {
+            self.send()
+                .esdt_system_sc_proxy()
+                .wipe(&token_identifier, &address)
+                .transfer_execute();
+        } else {
+            sc_panic!("Address is not freezed");
+        }
+    }
+
     // Endpoint used to burn Data NFT-FTs.
     #[payable("*")]
     #[endpoint(burn)]
@@ -152,7 +199,7 @@ pub trait DataNftMint:
             .require_same_token(&payment.token_identifier);
         self.require_value_is_positive(&payment.amount);
         self.token_id()
-            .nft_burn(payment.token_nonce, &payment.amount)
+            .nft_burn(payment.token_nonce, &payment.amount);
     }
 
     // Endpoint that will be used by privileged address to change the contract pause value.

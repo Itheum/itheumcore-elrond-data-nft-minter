@@ -11,6 +11,7 @@ elrond_wasm_node::wasm_endpoints! {
         burn
         getAdministrator
         getAntiSpamTax
+        getBlackList
         getContractInitialized
         getIsPaused
         getMaxRoyalties
@@ -29,6 +30,7 @@ elrond_wasm_node::wasm_endpoints! {
         removeWhiteListSpots
         setAdministrator
         setAntiSpamTax
+        setBlackListSpots
         setIsPaused
         setMaxSupply
         setMintTimeLimit

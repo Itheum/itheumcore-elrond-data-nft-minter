@@ -15,6 +15,9 @@ pub trait EventsModule {
     #[event("whitelistSpotSet")]
     fn set_whitelist_spot_event(&self, #[indexed] address: &ManagedAddress);
 
+    #[event("blacklistSpotSet")]
+    fn set_blacklist_spot_event(&self, #[indexed] address: &ManagedAddress);
+
     // Emitted whenever a whitelist spot is removed
     #[event("whitelistSpotRemoved")]
     fn remove_whitelist_spot_event(&self, #[indexed] address: &ManagedAddress);

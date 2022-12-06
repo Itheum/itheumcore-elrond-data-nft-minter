@@ -75,6 +75,10 @@ pub trait StorageModule {
     #[storage_mapper("white_list")]
     fn white_list(&self) -> SetMapper<ManagedAddress>;
 
+    #[view(getBlackList)]
+    #[storage_mapper("black_list")]
+    fn black_list(&self) -> SetMapper<ManagedAddress>;
+
     // Stores whether the contract is in private sale mode or not
     #[view(isWhiteListEnabled)]
     #[storage_mapper("white_list_enabled")]
