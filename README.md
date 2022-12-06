@@ -10,9 +10,9 @@ This contract allows the owner of it to create an SFT collection towards which a
 
 ## Prerequisites
 
-This documentation assumes the user has previous programming experience. Moreover, the user should have a basic understanding of the Elrond blockchain. If you are new to the blockchain, please refer to the [Elrond documentation](https://docs. elrond. com/). In order to develop Elrond smart contract related solutions, one needs to have installed [erdpy](https://docs. elrond. com/sdk-and-tools/erdpy/installing-erdpy/).
+This documentation assumes the user has previous programming experience. Moreover, the user should have a basic understanding of the Elrond blockchain. If you are new to the blockchain, please refer to the [Elrond documentation](https://docs.elrond.com/). In order to develop Elrond smart contract related solutions, one needs to have installed [erdpy](https://docs.elrond.com/sdk-and-tools/erdpy/installing-erdpy/).
 
-Understanding this document is also easier if one knows how [ESDT token transactions](https://docs. elrond. com/developers/esdt-tokens/#transfers-to-a-smart-contract) are structured on the Elrond blockchain and how [NFT tokens](https://docs. elrond. com/tokens/nft-tokens/) work on the Elrond Blockchain.
+Understanding this document is also easier if one knows how [ESDT token transactions](https://docs.elrond.com/developers/esdt-tokens/#transfers-to-a-smart-contract) are structured on the Elrond blockchain and how [NFT tokens](https://docs.elrond.com/tokens/nft-tokens/) work on the Elrond Blockchain.
 
 ## Itheum deployed SFT mint & sale contract addresses
 
