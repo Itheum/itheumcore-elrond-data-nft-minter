@@ -20,7 +20,7 @@ pub trait DataNftMint:
     + nft_mint_utils::NftMintUtils
     + views::ViewsModule
 {
-    // When the smart contract is deployed or upgraded, minting is automatically paused and sale is set to private.
+    // When the smart contract is deployed or upgraded, minting is automatically paused, whitelisting is enabled and default values are set
     #[init]
     fn init(&self) {
         self.is_paused().set(true);
@@ -35,7 +35,7 @@ pub trait DataNftMint:
         self.max_supply().set(&BigUint::from(20u64));
     }
 
-    // Endpoint used by the owner in the first place to initialize the contract with all the data needed for the token creation to begin.
+    // Endpoint used by the owner in the first place to initialize the contract with all the data needed for the SFT token creation
     #[only_owner]
     #[payable("EGLD")]
     #[endpoint(initializeContract)]
@@ -74,7 +74,7 @@ pub trait DataNftMint:
         )
     }
 
-    // Public endpoint used to mint and buy SFTs.
+    // Public endpoint used to mint Data NFT-FTs.
     #[payable("*")]
     #[endpoint(mint)]
     fn mint_token(
@@ -142,6 +142,7 @@ pub trait DataNftMint:
         attributes
     }
 
+    // Endpoint used to burn Data NFT-FTs.
     #[payable("*")]
     #[endpoint(burn)]
     fn burn_token(&self) {
@@ -154,7 +155,7 @@ pub trait DataNftMint:
             .nft_burn(payment.token_nonce, &payment.amount)
     }
 
-    // Endpoint that will be used by privileged addresses to change the mint pause value.
+    // Endpoint that will be used by privileged address to change the contract pause value.
     #[endpoint(setIsPaused)]
     fn set_is_paused(&self, is_paused: bool) {
         let caller = self.blockchain().get_caller();
@@ -163,7 +164,7 @@ pub trait DataNftMint:
         self.is_paused().set(is_paused);
     }
 
-    // Endpoint that will be used by privileged addresses to set public sale prices.
+    // Endpoint that will be used by privileged address to set the anti spam tax for a specific token identifier.
     #[endpoint(setAntiSpamTax)]
     fn set_anti_spam_tax(&self, token_id: EgldOrEsdtTokenIdentifier, tax: BigUint) {
         let caller = self.blockchain().get_caller();
@@ -172,15 +173,16 @@ pub trait DataNftMint:
         self.anti_spam_tax(&token_id).set(tax);
     }
 
-    // Endpoint that will be used by the owner to change the whitelist enable value.
-    #[only_owner]
+    // Endpoint that will be used by the owner and privileged address to change the whitelist enable value.
     #[endpoint(setWhiteListEnabled)]
     fn set_white_list_enabled(&self, is_enabled: bool) {
+        let caller = self.blockchain().get_caller();
+        self.require_is_privileged(&caller);
         self.whitelist_enable_toggle_event(&is_enabled);
         self.white_list_enabled().set(is_enabled);
     }
 
-    // Endpoint that will be used by privileged addresses to set whitelist spots.
+    // Endpoint that will be used by the owner and privileged address to set whitelist spots.
     #[endpoint(setWhiteListSpots)]
     fn set_whitelist_spots(&self, whitelist: MultiValueEncoded<ManagedAddress>) {
         require!(!whitelist.is_empty(), "Given whitelist is empty");
@@ -195,7 +197,7 @@ pub trait DataNftMint:
         }
     }
 
-    // Endpoint that will be used by privileged addresses to unset whitelist spots.
+    // Endpoint that will be used by the owner privileged address to unset whitelist spots.
     #[endpoint(removeWhiteListSpots)]
     fn remove_whitelist_spots(&self, whitelist: MultiValueEncoded<ManagedAddress>) {
         require!(!whitelist.is_empty(), "Given whitelist is empty");
@@ -218,16 +220,17 @@ pub trait DataNftMint:
         self.mint_time_limit().set(mint_time_limit);
     }
 
-    // Endpoint that will be used by the owner to set min and max royalties
-    #[only_owner]
+    // Endpoint that will be used by the owner and privileged address to set min and max royalties
     #[endpoint(setRoyaltiesLimits)]
     fn set_royalties_limits(&self, min_royalties: BigUint, max_royalties: BigUint) {
+        let caller = self.blockchain().get_caller();
+        self.require_is_privileged(&caller);
         self.set_royalties_limits_event(&min_royalties, &max_royalties);
         self.min_royalties().set(min_royalties);
         self.max_royalties().set(max_royalties);
     }
 
-    // Endpoint that will be used by privileged addresses to set max supply.
+    // Endpoint that will be used by the owner and privileged address to set max supply.
     #[endpoint(setMaxSupply)]
     fn set_max_supply(&self, max_supply: BigUint) {
         let caller = self.blockchain().get_caller();
@@ -236,7 +239,7 @@ pub trait DataNftMint:
         self.max_supply().set(max_supply);
     }
 
-    // Endpoint that will be used by the owner to change the administrator
+    // Endpoint that will be used by the owner to change the administrator (privileged) address.
     #[only_owner]
     #[endpoint(setAdministrator)]
     fn set_administrator(&self, administrator: ManagedAddress) {

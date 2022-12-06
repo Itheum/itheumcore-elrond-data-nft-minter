@@ -19,6 +19,7 @@ elrond_wasm_node::wasm_endpoints! {
         getMintedPerAddress
         getMintedTokens
         getTokenId
+        getUserDataOut
         getWhiteList
         initializeContract
         isWhiteListEnabled
