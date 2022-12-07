@@ -9,6 +9,7 @@ elrond_wasm_node::wasm_endpoints! {
     (
         callBack
         burn
+        freeze
         getAdministrator
         getAntiSpamTax
         getBlackList
@@ -30,12 +31,13 @@ elrond_wasm_node::wasm_endpoints! {
         removeWhiteListSpots
         setAdministrator
         setAntiSpamTax
-        setBlackListSpots
         setIsPaused
         setMaxSupply
         setMintTimeLimit
         setRoyaltiesLimits
         setWhiteListEnabled
         setWhiteListSpots
+        unFreeze
+        wipe
     )
 }
