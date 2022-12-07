@@ -2,7 +2,7 @@ PROXY=https://devnet-gateway.elrond.com
 CHAIN_ID="D"
 
 WALLET="./wallet.pem"
-USER="./wallet2.pem"
+USER="../wallet2.pem"
 
 ADDRESS=$(erdpy data load --key=address-devnet)
 DEPLOY_TRANSACTION=$(erdpy data load --key=deployTransaction-devnet)
@@ -46,7 +46,7 @@ initializeContract(){
     erdpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
-    --gas-limit=80000000 \
+    --gas-limit=300000000 \
     --value=50000000000000000 \
     --function "initializeContract" \
     --arguments $collection_name $collection_ticker $token_identifier $anti_spam_tax $mint_time_limit \
@@ -110,13 +110,13 @@ burn() {
     #   $2 = NFT/SFT Token Nonce,
     #   $3 = NFT/SFT Token Amount,
 
-    user_address="$(erdpy wallet pem-address $WALLET)"
+    user_address="$(erdpy wallet pem-address $USER)"
     method="0x$(echo -n 'burn' | xxd -p -u | tr -d '\n')"
     sft_token="0x$(echo -n ${1} | xxd -p -u | tr -d '\n')"
 
     erdpy --verbose contract call $user_address \
         --recall-nonce \
-        --pem=${WALLET} \
+        --pem=${USER} \
         --gas-limit=100000000 \
         --function="ESDTNFTTransfer" \
         --arguments $sft_token $2 $3 ${ADDRESS} $method  \

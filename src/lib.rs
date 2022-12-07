@@ -10,11 +10,9 @@ pub mod nft_mint_utils;
 pub mod requirements;
 pub mod storage;
 pub mod views;
-
 #[elrond_wasm::contract]
 pub trait DataNftMint:
-    elrond_wasm_modules::default_issue_callbacks::DefaultIssueCallbacksModule
-    + storage::StorageModule
+    storage::StorageModule
     + events::EventsModule
     + requirements::RequirementsModule
     + nft_mint_utils::NftMintUtils
@@ -64,14 +62,24 @@ pub trait DataNftMint:
         self.mint_time_limit().set(mint_time_limit);
 
         // Collection issuing and giving NFT creation rights to the contract.
-        self.token_id().issue_and_set_all_roles(
-            EsdtTokenType::SemiFungible,
-            issue_cost,
-            collection_name,
-            token_ticker,
-            0usize,
-            None,
-        )
+        self.send()
+            .esdt_system_sc_proxy()
+            .issue_semi_fungible(
+                issue_cost,
+                &collection_name,
+                &token_ticker,
+                SemiFungibleTokenProperties {
+                    can_freeze: true,
+                    can_wipe: true,
+                    can_pause: false,
+                    can_change_owner: true,
+                    can_upgrade: true,
+                    can_add_special_roles: true,
+                },
+            )
+            .async_call()
+            .with_callback(self.callbacks().issue_callback())
+            .call_and_exit();
     }
 
     // Public endpoint used to mint Data NFT-FTs.
@@ -295,5 +303,41 @@ pub trait DataNftMint:
     fn set_administrator(&self, administrator: ManagedAddress) {
         self.set_administrator_event(&administrator);
         self.administrator().set(&administrator);
+    }
+
+    // Callback used to set the Token ID and the special roles for the SFT token.
+    #[callback]
+    fn issue_callback(
+        &self,
+        #[call_result] result: ManagedAsyncCallResult<EgldOrEsdtTokenIdentifier>,
+    ) {
+        match result {
+            ManagedAsyncCallResult::Ok(token_id) => {
+                self.token_id().set_token_id(token_id.unwrap_esdt());
+                self.send()
+                    .esdt_system_sc_proxy()
+                    .set_special_roles(
+                        &self.blockchain().get_sc_address(),
+                        &self.token_id().get_token_id(),
+                        [
+                            EsdtLocalRole::NftCreate,
+                            EsdtLocalRole::NftBurn,
+                            EsdtLocalRole::NftAddQuantity,
+                        ][..]
+                            .iter()
+                            .cloned(),
+                    )
+                    .async_call()
+                    .call_and_exit()
+            }
+            ManagedAsyncCallResult::Err(_) => {
+                let caller = self.blockchain().get_owner_address();
+                let returned = self.call_value().egld_or_single_esdt();
+                if returned.token_identifier.is_egld() && returned.amount > 0 {
+                    self.send()
+                        .direct(&caller, &returned.token_identifier, 0, &returned.amount);
+                }
+            }
+        }
     }
 }
