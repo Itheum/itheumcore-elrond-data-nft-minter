@@ -152,7 +152,8 @@ pub trait DataNftMint:
             self.send()
                 .esdt_system_sc_proxy()
                 .freeze(&token_identifier, &address)
-                .transfer_execute()
+                .async_call()
+                .call_and_exit();
         } else {
             sc_panic!("Address already in blacklist");
         }
@@ -168,7 +169,8 @@ pub trait DataNftMint:
             self.send()
                 .esdt_system_sc_proxy()
                 .unfreeze(&token_identifier, &address)
-                .transfer_execute();
+                .async_call()
+                .call_and_exit();
         } else {
             sc_panic!("Address not in blacklist");
         }
@@ -183,7 +185,8 @@ pub trait DataNftMint:
             self.send()
                 .esdt_system_sc_proxy()
                 .wipe(&token_identifier, &address)
-                .transfer_execute();
+                .async_call()
+                .call_and_exit();
         } else {
             sc_panic!("Address is not freezed");
         }

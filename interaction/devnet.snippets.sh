@@ -2,6 +2,7 @@ PROXY=https://devnet-gateway.elrond.com
 CHAIN_ID="D"
 
 WALLET="./wallet.pem"
+USER="./wallet2.pem"
 
 ADDRESS=$(erdpy data load --key=address-devnet)
 DEPLOY_TRANSACTION=$(erdpy data load --key=deployTransaction-devnet)
@@ -52,6 +53,55 @@ initializeContract(){
     --proxy ${PROXY} \
     --chain ${CHAIN_ID} \
     --send || return
+}
+
+freeze(){
+    # $1 = address to freeze
+
+    address="0x$(erdpy wallet bech32 --decode ${1})"
+
+    erdpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=100000000 \
+    --function "freeze" \
+    --arguments $address \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return 
+}
+
+unFreeze(){
+    # $1 = address to unfreeze
+
+    address="0x$(erdpy wallet bech32 --decode ${1})"
+
+    erdpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=100000000 \
+    --function "unFreeze" \
+    --arguments $address \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return 
+}
+
+
+wipe(){
+    # $1 = address to wipe tokens from
+
+    address="0x$(erdpy wallet bech32 --decode ${1})"
+
+    erdpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=100000000 \
+    --function "wipe" \
+    --arguments $address \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return 
 }
 
 
@@ -256,8 +306,8 @@ mintTokenUsingEsdt(){
 
     erdpy --verbose contract call $ADDRESS \
     --recall-nonce \
-    --pem=${WALLET} \
-    --gas-limit=10000000 \
+    --pem=${USER} \
+    --gas-limit=100000000 \
     --function "ESDTTransfer" \
     --arguments ${TOKEN_HEX} $1 $method $name $media $data_marshal $data_stream $data_preview $7 $8 $title $description \
     --proxy ${PROXY} \
