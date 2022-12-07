@@ -15,8 +15,13 @@ pub trait EventsModule {
     #[event("whitelistSpotSet")]
     fn set_whitelist_spot_event(&self, #[indexed] address: &ManagedAddress);
 
+    // Emitted whenever a blacklist spot is set
     #[event("blacklistSpotSet")]
     fn set_blacklist_spot_event(&self, #[indexed] address: &ManagedAddress);
+
+    // Emitted whenever a blacklist spot is removed
+    #[event("blacklistSpotRemoved")]
+    fn remove_blacklist_spot_event(&self, #[indexed] address: &ManagedAddress);
 
     // Emitted whenever a whitelist spot is removed
     #[event("whitelistSpotRemoved")]
@@ -49,6 +54,33 @@ pub trait EventsModule {
     // Emitted whenever the administrator is set
     #[event("setAdministrator")]
     fn set_administrator_event(&self, #[indexed] administrator: &ManagedAddress);
+
+    // Emmitted whenever an address is freezed
+    #[event("freeze")]
+    fn freeze_event(
+        &self,
+        #[indexed] address: &ManagedAddress,
+        #[indexed] token_identifier: &TokenIdentifier,
+        #[indexed] nonce: u64,
+    );
+
+    // Emmitted whenever an address is unfreezed
+    #[event("unfreeze")]
+    fn unfreeze_event(
+        &self,
+        #[indexed] address: &ManagedAddress,
+        #[indexed] token_identifier: &TokenIdentifier,
+        #[indexed] nonce: u64,
+    );
+
+    // Emitted whenver a token is wiped
+    #[event("wipe")]
+    fn wipe_event(
+        &self,
+        #[indexed] address: &ManagedAddress,
+        #[indexed] token_identifier: &TokenIdentifier,
+        #[indexed] nonce: u64,
+    );
 
     // Emitted whenever a mint is performed
     #[event("mint")]

@@ -3,8 +3,10 @@
 elrond_wasm::imports!();
 elrond_wasm::derive_imports!();
 
-use crate::storage::DataNftAttributes;
+use crate::{callbacks::CallbackProxy, storage::DataNftAttributes};
 
+pub mod callbacks;
+pub mod custom_functions;
 pub mod events;
 pub mod nft_mint_utils;
 pub mod requirements;
@@ -17,6 +19,8 @@ pub trait DataNftMint:
     + requirements::RequirementsModule
     + nft_mint_utils::NftMintUtils
     + views::ViewsModule
+    + callbacks::Callbacks
+    + custom_functions::CustomFunctions
 {
     // When the smart contract is deployed or upgraded, minting is automatically paused, whitelisting is enabled and default values are set
     #[init]
@@ -153,13 +157,10 @@ pub trait DataNftMint:
     //Endpoint used by the owner to freeze addresses
     #[only_owner]
     #[endpoint(freeze)]
-    fn freeze_address(&self, address: &ManagedAddress) {
-        let token_identifier = self.token_id().get_token_id();
+    fn freeze_address(&self, nonce: u64, address: &ManagedAddress) {
         if self.black_list().insert(address.clone()) {
             self.set_blacklist_spot_event(&address);
-            self.send()
-                .esdt_system_sc_proxy()
-                .freeze(&token_identifier, &address)
+            self.freeze_single_nft(nonce, &address)
                 .async_call()
                 .call_and_exit();
         } else {
@@ -170,13 +171,10 @@ pub trait DataNftMint:
     //Endpoint used by the owner to unfreeze addresses
     #[only_owner]
     #[endpoint(unFreeze)]
-    fn unfreeze_address(&self, address: &ManagedAddress) {
-        let token_identifier = self.token_id().get_token_id();
+    fn unfreeze_address(&self, nonce: u64, address: &ManagedAddress) {
         if self.black_list().remove(address) {
-            self.set_whitelist_spot_event(&address);
-            self.send()
-                .esdt_system_sc_proxy()
-                .unfreeze(&token_identifier, &address)
+            self.remove_blacklist_spot_event(&address);
+            self.unfreeze_single_nft(nonce, &address)
                 .async_call()
                 .call_and_exit();
         } else {
@@ -187,12 +185,9 @@ pub trait DataNftMint:
     //Endpoint used by the owner to wipe Data NFT-FTs
     #[only_owner]
     #[endpoint(wipe)]
-    fn wipe_token(&self, address: &ManagedAddress) {
-        let token_identifier = self.token_id().get_token_id();
+    fn wipe_token(&self, nonce: u64, address: &ManagedAddress) {
         if self.black_list().contains(&address) {
-            self.send()
-                .esdt_system_sc_proxy()
-                .wipe(&token_identifier, &address)
+            self.wipe_single_nft(nonce, &address)
                 .async_call()
                 .call_and_exit();
         } else {
@@ -303,41 +298,5 @@ pub trait DataNftMint:
     fn set_administrator(&self, administrator: ManagedAddress) {
         self.set_administrator_event(&administrator);
         self.administrator().set(&administrator);
-    }
-
-    // Callback used to set the Token ID and the special roles for the SFT token.
-    #[callback]
-    fn issue_callback(
-        &self,
-        #[call_result] result: ManagedAsyncCallResult<EgldOrEsdtTokenIdentifier>,
-    ) {
-        match result {
-            ManagedAsyncCallResult::Ok(token_id) => {
-                self.token_id().set_token_id(token_id.unwrap_esdt());
-                self.send()
-                    .esdt_system_sc_proxy()
-                    .set_special_roles(
-                        &self.blockchain().get_sc_address(),
-                        &self.token_id().get_token_id(),
-                        [
-                            EsdtLocalRole::NftCreate,
-                            EsdtLocalRole::NftBurn,
-                            EsdtLocalRole::NftAddQuantity,
-                        ][..]
-                            .iter()
-                            .cloned(),
-                    )
-                    .async_call()
-                    .call_and_exit()
-            }
-            ManagedAsyncCallResult::Err(_) => {
-                let caller = self.blockchain().get_owner_address();
-                let returned = self.call_value().egld_or_single_esdt();
-                if returned.token_identifier.is_egld() && returned.amount > 0 {
-                    self.send()
-                        .direct(&caller, &returned.token_identifier, 0, &returned.amount);
-                }
-            }
-        }
     }
 }

@@ -2,7 +2,7 @@ PROXY=https://devnet-gateway.elrond.com
 CHAIN_ID="D"
 
 WALLET="./wallet.pem"
-USER="../wallet2.pem"
+USER="../../testing-elrond.pem"
 
 ADDRESS=$(erdpy data load --key=address-devnet)
 DEPLOY_TRANSACTION=$(erdpy data load --key=deployTransaction-devnet)
@@ -56,32 +56,35 @@ initializeContract(){
 }
 
 freeze(){
-    # $1 = address to freeze
+    # $1 = token nonce
+    # $2 = address to freeze
 
-    address="0x$(erdpy wallet bech32 --decode ${1})"
+
+    address="0x$(erdpy wallet bech32 --decode ${2})"
 
     erdpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
-    --gas-limit=100000000 \
+    --gas-limit=90000000 \
     --function "freeze" \
-    --arguments $address \
+    --arguments $1 $address \
     --proxy ${PROXY} \
     --chain ${CHAIN_ID} \
     --send || return 
 }
 
 unFreeze(){
-    # $1 = address to unfreeze
+    # $1 = token nonce
+    # $2 = address to unfreeze
 
-    address="0x$(erdpy wallet bech32 --decode ${1})"
+    address="0x$(erdpy wallet bech32 --decode ${2})"
 
     erdpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
-    --gas-limit=100000000 \
+    --gas-limit=90000000 \
     --function "unFreeze" \
-    --arguments $address \
+    --arguments $1 $address \
     --proxy ${PROXY} \
     --chain ${CHAIN_ID} \
     --send || return 
@@ -89,16 +92,17 @@ unFreeze(){
 
 
 wipe(){
-    # $1 = address to wipe tokens from
+    # $1 = token nonce
+    # $2 = address to wipe tokens from
 
-    address="0x$(erdpy wallet bech32 --decode ${1})"
+    address="0x$(erdpy wallet bech32 --decode ${2})"
 
     erdpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
-    --gas-limit=100000000 \
+    --gas-limit=90000000 \
     --function "wipe" \
-    --arguments $address \
+    --arguments $1 $address \
     --proxy ${PROXY} \
     --chain ${CHAIN_ID} \
     --send || return 
@@ -117,7 +121,7 @@ burn() {
     erdpy --verbose contract call $user_address \
         --recall-nonce \
         --pem=${USER} \
-        --gas-limit=100000000 \
+        --gas-limit=6000000 \
         --function="ESDTNFTTransfer" \
         --arguments $sft_token $2 $3 ${ADDRESS} $method  \
         --proxy=${PROXY} \
