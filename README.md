@@ -59,7 +59,117 @@ The init function is called when deploying or upgrading the smart contract. It r
 Endpoint that initializes all the data needed for the smart contract to issue the token. The anti spam tax and mint time limit variables are used for regulating the minting of Data NFT-FTs. It can only be used once and it can only be called by the owner of the smart contract. In order for the call to work, the caller must also send 0.05 eGLD when calling the endpoint. This is to cover the cost of creating the Data NFT-FT collection.
 
 Call structure: "initializeContract" + "@" + collection_name hex encoded + "@" + token_ticker hex encoded + "@" + token_identifier hex encoded + "@" + anti_spam_tax + "@" + mint_time_limit hex encoded.
+
 Example: "initializeContract@436f6c6c656374696f6e4e616d65@4e46544654@2049544845554d2d613631333137@015af1d78b58c40000@0384"
+
+#### pause
+
+```rust
+    #[endpoint(pause)]
+    fn pause_collection(&self);
+```
+
+Endpoint that pauses the entire collection. No transactions, minting, burning can be made on the collection while it is paused.
+
+Call structure: "pause"
+
+Example: "pause"
+
+#### unpause
+
+```rust
+    #[endpoint(unpause)]
+    fn unpause_collection(&self);
+```
+
+Endpoint that unpauses the entire collection. Normal transactions, minting, burning can be made on the collection while it is unpaused.
+
+Call structure: "unpause"
+
+Example: "unpause"
+
+#### freeze
+
+```rust
+    #[endpoint(freeze)]
+    fn freeze_collection_for_address(
+        &self,
+        address: &ManagedAddress
+    );
+```
+
+Endpoint that freezes the entire collection for a specific address. It will utilize the token issued previously and owned by the smart contract. The freezed address will not be able to interact with the collection.
+
+Call structure: "freeze" + "@" + address hex encoded.
+
+Example: "freeze@afb9aa109340a83cdb2129635b060a3a2d67ba2659ad86bf6ef49f948c43572c"
+
+#### unfreeze
+
+```rust
+    #[endpoint(unfreeze)]
+    fn unfreeze_collection_for_address(
+        &self,
+        address: &ManagedAddress
+    );
+```
+
+Endpoint that unfreezes the entire collection for a specific address. It will utilize the token issued previously and owned by the smart contract. The unfreezed address will be able to interact with the collection.
+
+Call structure: "unfreeze" + "@" + address hex encoded.
+
+Example: "unfreeze@afb9aa109340a83cdb2129635b060a3a2d67ba2659ad86bf6ef49f948c43572c"
+
+#### freezeSingleNFT
+
+```rust
+    #[endpoint(freezeSingleNFT)]
+    fn freeze_single_token_for_address(
+        &self,
+        nonce: u64,
+        address: &ManagedAddress
+    );
+```
+
+Endpoint that freezes specific data NFT-FT for a specific address. It will utilize the token issued previously and owned by the smart contract and the nonce of the data NFT-FT. The freezed address will not be able to interact with the specifc data NFT-FT.
+
+Call structure: "freezeSingleNFT" + "@" + nonce hex encoded + "@" + address hex encoded.
+
+Example: "freezeSingleNFT@05@afb9aa109340a83cdb2129635b060a3a2d67ba2659ad86bf6ef49f948c43572c"
+
+#### unFreezeSingleNFT
+
+```rust
+    #[endpoint(unFreezeSingleNFT)]
+    fn unfreeze_single_token_for_address(
+        &self,
+        nonce: u64,
+        address: &ManagedAddress
+    );
+```
+
+Endpoint that unfreezes specific data NFT-FT for a specific address. It will utilize the token issued previously and owned by the smart contract and the nonce of the data NFT-FT. The unfreezed address will be able to interact with the specifc data NFT-FT.
+
+Call structure: "unFreezeSingleNFT" + "@" + nonce hex encoded + "@" + address hex encoded.
+
+Example: "unFreezeSingleNFT@05@afb9aa109340a83cdb2129635b060a3a2d67ba2659ad86bf6ef49f948c43572c"
+
+#### wipeSingleNFT
+
+```rust
+    #[endpoint(wipeSingleNFT)]
+    fn wipe_single_token_for_address(
+        &self,
+        nonce: u64,
+        address: &ManagedAddress
+    );
+```
+
+Endpoint that wipes specific data NFT-FT for a specific address. It will utilize the token issued previously and owned by the smart contract and the nonce of the data NFT-FT. The token manager may wipe out the tokens held by a frozen account, reducing the supply
+
+Call structure: "wipeSingleNFT" + "@" + nonce hex encoded + "@" + address hex encoded.
+
+Example: "wipeSingleNFT@05@afb9aa109340a83cdb2129635b060a3a2d67ba2659ad86bf6ef49f948c43572c"
 
 #### setMintTimeLimit
 
@@ -332,3 +442,7 @@ After deployment, one can interact with the smart contract and test its function
 ## Contributing
 
 Feel free the contact the development team if you wish to contribute or if you have any questions. If you find any issues, please report them in the Issues sections of the repository. You can also create your own pull requests which will be analyzed by the team.
+
+```
+
+```

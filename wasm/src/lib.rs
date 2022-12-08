@@ -10,6 +10,7 @@ elrond_wasm_node::wasm_endpoints! {
         callBack
         burn
         freeze
+        freezeSingleNFT
         getAdministrator
         getAntiSpamTax
         getBlackList
@@ -28,6 +29,7 @@ elrond_wasm_node::wasm_endpoints! {
         lastMintTime
         mint
         mintTimeLimit
+        pause
         removeWhiteListSpots
         setAdministrator
         setAntiSpamTax
@@ -37,7 +39,9 @@ elrond_wasm_node::wasm_endpoints! {
         setRoyaltiesLimits
         setWhiteListEnabled
         setWhiteListSpots
-        unFreeze
-        wipe
+        unFreezeSingleNFT
+        unfreeze
+        unpause
+        wipeSingleNFT
     )
 }

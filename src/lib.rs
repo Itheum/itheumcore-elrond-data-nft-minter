@@ -75,7 +75,7 @@ pub trait DataNftMint:
                 SemiFungibleTokenProperties {
                     can_freeze: true,
                     can_wipe: true,
-                    can_pause: false,
+                    can_pause: true,
                     can_change_owner: true,
                     can_upgrade: true,
                     can_add_special_roles: true,
@@ -154,10 +154,90 @@ pub trait DataNftMint:
         attributes
     }
 
-    //Endpoint used by the owner to freeze addresses
+    // Endpoint used to burn Data NFT-FTs.
+    #[payable("*")]
+    #[endpoint(burn)]
+    fn burn_token(&self) {
+        self.require_minting_is_ready();
+        let caller = self.blockchain().get_caller();
+        let payment = self.call_value().single_esdt();
+        self.token_id()
+            .require_same_token(&payment.token_identifier);
+        self.require_value_is_positive(&payment.amount);
+        self.token_id()
+            .nft_burn(payment.token_nonce, &payment.amount);
+        self.burn_event(
+            &caller,
+            &payment.token_identifier,
+            payment.token_nonce,
+            &payment.amount,
+        );
+    }
+
+    // Endpoint used by the owner to pause the collection
+    #[only_owner]
+    #[endpoint(pause)]
+    fn pause_collection(&self) {
+        let token_identifier = self.token_id().get_token_id();
+        self.pause_event(&token_identifier);
+        self.send()
+            .esdt_system_sc_proxy()
+            .pause(&token_identifier)
+            .async_call()
+            .call_and_exit();
+    }
+
+    // Endpoint used by the owner to unpause the collection
+    #[only_owner]
+    #[endpoint(unpause)]
+    fn unpause_collection(&self) {
+        let token_identifier = self.token_id().get_token_id();
+        self.unpause_event(&token_identifier);
+        self.send()
+            .esdt_system_sc_proxy()
+            .unpause(&token_identifier)
+            .async_call()
+            .call_and_exit();
+    }
+
+    // Endpoint used by the owner to freeze entire collection for specific address
     #[only_owner]
     #[endpoint(freeze)]
-    fn freeze_address(&self, nonce: u64, address: &ManagedAddress) {
+    fn freeze_collection_for_address(&self, address: &ManagedAddress) {
+        if self.black_list().insert(address.clone()) {
+            let token_identifier = self.token_id().get_token_id();
+            self.set_blacklist_spot_event(&address);
+            self.send()
+                .esdt_system_sc_proxy()
+                .freeze(&token_identifier, &address)
+                .async_call()
+                .call_and_exit();
+        } else {
+            sc_panic!("Address already in blacklist");
+        }
+    }
+
+    // Endpoint used by the owner to unFreeze entire collection for specific address
+    #[only_owner]
+    #[endpoint(unfreeze)]
+    fn unfreeze_collection_for_address(&self, address: &ManagedAddress) {
+        if self.black_list().remove(address) {
+            let token_identifier = self.token_id().get_token_id();
+            self.remove_blacklist_spot_event(&address);
+            self.send()
+                .esdt_system_sc_proxy()
+                .unfreeze(&token_identifier, &address)
+                .async_call()
+                .call_and_exit();
+        } else {
+            sc_panic!("Address not in blacklist");
+        }
+    }
+
+    //Endpoint used by the owner to freeze address
+    #[only_owner]
+    #[endpoint(freezeSingleNFT)]
+    fn freeze_single_token_for_address(&self, nonce: u64, address: &ManagedAddress) {
         if self.black_list().insert(address.clone()) {
             self.set_blacklist_spot_event(&address);
             self.freeze_single_nft(nonce, &address)
@@ -168,10 +248,10 @@ pub trait DataNftMint:
         }
     }
 
-    //Endpoint used by the owner to unfreeze addresses
+    //Endpoint used by the owner to unfreeze address
     #[only_owner]
-    #[endpoint(unFreeze)]
-    fn unfreeze_address(&self, nonce: u64, address: &ManagedAddress) {
+    #[endpoint(unFreezeSingleNFT)]
+    fn unfreeze_single_token_for_address(&self, nonce: u64, address: &ManagedAddress) {
         if self.black_list().remove(address) {
             self.remove_blacklist_spot_event(&address);
             self.unfreeze_single_nft(nonce, &address)
@@ -182,10 +262,10 @@ pub trait DataNftMint:
         }
     }
 
-    //Endpoint used by the owner to wipe Data NFT-FTs
+    //Endpoint used by the owner to wipe single nonce for data NFT-FTs
     #[only_owner]
-    #[endpoint(wipe)]
-    fn wipe_token(&self, nonce: u64, address: &ManagedAddress) {
+    #[endpoint(wipeSingleNFT)]
+    fn wipe_single_token_for_address(&self, nonce: u64, address: &ManagedAddress) {
         if self.black_list().contains(&address) {
             self.wipe_single_nft(nonce, &address)
                 .async_call()
@@ -193,19 +273,6 @@ pub trait DataNftMint:
         } else {
             sc_panic!("Address is not freezed");
         }
-    }
-
-    // Endpoint used to burn Data NFT-FTs.
-    #[payable("*")]
-    #[endpoint(burn)]
-    fn burn_token(&self) {
-        self.require_minting_is_ready();
-        let payment = self.call_value().single_esdt();
-        self.token_id()
-            .require_same_token(&payment.token_identifier);
-        self.require_value_is_positive(&payment.amount);
-        self.token_id()
-            .nft_burn(payment.token_nonce, &payment.amount);
     }
 
     // Endpoint that will be used by privileged address to change the contract pause value.

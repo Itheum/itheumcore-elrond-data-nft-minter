@@ -55,6 +55,14 @@ pub trait EventsModule {
     #[event("setAdministrator")]
     fn set_administrator_event(&self, #[indexed] administrator: &ManagedAddress);
 
+    // Emitted whenever the collection is paused
+    #[event("pause")]
+    fn pause_event(&self, #[indexed] token_identifier: &TokenIdentifier);
+
+    // Emitted whenever the collection is unpaused
+    #[event("unpause")]
+    fn unpause_event(&self, #[indexed] token_identifier: &TokenIdentifier);
+
     // Emmitted whenever an address is freezed
     #[event("freeze")]
     fn freeze_event(
@@ -80,6 +88,16 @@ pub trait EventsModule {
         #[indexed] address: &ManagedAddress,
         #[indexed] token_identifier: &TokenIdentifier,
         #[indexed] nonce: u64,
+    );
+
+    // Emitted whenever a burn is performed
+    #[event("burn")]
+    fn burn_event(
+        &self,
+        #[indexed] address: &ManagedAddress,
+        #[indexed] token_identifier: &TokenIdentifier,
+        #[indexed] nonce: u64,
+        #[indexed] amount: &BigUint,
     );
 
     // Emitted whenever a mint is performed

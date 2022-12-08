@@ -2,7 +2,7 @@ PROXY=https://devnet-gateway.elrond.com
 CHAIN_ID="D"
 
 WALLET="./wallet.pem"
-USER="../../testing-elrond.pem"
+USER="../wallet2.pem"
 
 ADDRESS=$(erdpy data load --key=address-devnet)
 DEPLOY_TRANSACTION=$(erdpy data load --key=deployTransaction-devnet)
@@ -55,7 +55,49 @@ initializeContract(){
     --send || return
 }
 
+
+pause(){
+    erdpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=90000000 \
+    --function "pause" \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return
+}
+
+
+unpause(){
+    erdpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=90000000 \
+    --function "unpause" \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return
+}
+
 freeze(){
+    # $1 = address to freeze
+
+    address="0x$(erdpy wallet bech32 --decode ${1})"
+
+    erdpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=90000000 \
+    --function "freeze" \
+    --arguments $address \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return 
+}
+
+
+
+freezeSingleNFT(){
     # $1 = token nonce
     # $2 = address to freeze
 
@@ -66,14 +108,31 @@ freeze(){
     --recall-nonce \
     --pem=${WALLET} \
     --gas-limit=90000000 \
-    --function "freeze" \
+    --function "freezeSingleNFT" \
     --arguments $1 $address \
     --proxy ${PROXY} \
     --chain ${CHAIN_ID} \
     --send || return 
 }
 
-unFreeze(){
+unfreeze(){
+    # $1 = address to freeze
+
+    address="0x$(erdpy wallet bech32 --decode ${1})"
+
+    erdpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=90000000 \
+    --function "unfreeze" \
+    --arguments $address \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return 
+}
+
+
+unFreezeSingleNFT(){
     # $1 = token nonce
     # $2 = address to unfreeze
 
@@ -83,7 +142,7 @@ unFreeze(){
     --recall-nonce \
     --pem=${WALLET} \
     --gas-limit=90000000 \
-    --function "unFreeze" \
+    --function "unFreezeSingleNFT" \
     --arguments $1 $address \
     --proxy ${PROXY} \
     --chain ${CHAIN_ID} \
@@ -91,7 +150,7 @@ unFreeze(){
 }
 
 
-wipe(){
+wipeSingleNFT(){
     # $1 = token nonce
     # $2 = address to wipe tokens from
 
@@ -101,7 +160,7 @@ wipe(){
     --recall-nonce \
     --pem=${WALLET} \
     --gas-limit=90000000 \
-    --function "wipe" \
+    --function "wipeSingleNFT" \
     --arguments $1 $address \
     --proxy ${PROXY} \
     --chain ${CHAIN_ID} \
@@ -129,7 +188,7 @@ burn() {
         --send || return
 }
 
-pause(){
+pauseContract(){
     erdpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
@@ -141,7 +200,7 @@ pause(){
     --send || return
 }
 
-unpause(){
+unPauseContract(){
     erdpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
