@@ -2,6 +2,7 @@ PROXY=https://devnet-gateway.elrond.com
 CHAIN_ID="D"
 
 WALLET="./wallet.pem"
+USER="../wallet2.pem"
 
 ADDRESS=$(erdpy data load --key=address-devnet)
 DEPLOY_TRANSACTION=$(erdpy data load --key=deployTransaction-devnet)
@@ -45,7 +46,7 @@ initializeContract(){
     erdpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
-    --gas-limit=80000000 \
+    --gas-limit=300000000 \
     --value=50000000000000000 \
     --function "initializeContract" \
     --arguments $collection_name $collection_ticker $token_identifier $anti_spam_tax $mint_time_limit \
@@ -55,19 +56,131 @@ initializeContract(){
 }
 
 
+pause(){
+    erdpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=90000000 \
+    --function "pause" \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return
+}
+
+
+unpause(){
+    erdpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=90000000 \
+    --function "unpause" \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return
+}
+
+freeze(){
+    # $1 = address to freeze
+
+    address="0x$(erdpy wallet bech32 --decode ${1})"
+
+    erdpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=90000000 \
+    --function "freeze" \
+    --arguments $address \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return 
+}
+
+
+
+freezeSingleNFT(){
+    # $1 = token nonce
+    # $2 = address to freeze
+
+
+    address="0x$(erdpy wallet bech32 --decode ${2})"
+
+    erdpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=90000000 \
+    --function "freezeSingleNFT" \
+    --arguments $1 $address \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return 
+}
+
+unfreeze(){
+    # $1 = address to freeze
+
+    address="0x$(erdpy wallet bech32 --decode ${1})"
+
+    erdpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=90000000 \
+    --function "unfreeze" \
+    --arguments $address \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return 
+}
+
+
+unFreezeSingleNFT(){
+    # $1 = token nonce
+    # $2 = address to unfreeze
+
+    address="0x$(erdpy wallet bech32 --decode ${2})"
+
+    erdpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=90000000 \
+    --function "unFreezeSingleNFT" \
+    --arguments $1 $address \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return 
+}
+
+
+wipeSingleNFT(){
+    # $1 = token nonce
+    # $2 = address to wipe tokens from
+
+    address="0x$(erdpy wallet bech32 --decode ${2})"
+
+    erdpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=90000000 \
+    --function "wipeSingleNFT" \
+    --arguments $1 $address \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return 
+}
+
+
 burn() {
     #   $1 = NFT/SFT Token Identifier,
     #   $2 = NFT/SFT Token Nonce,
     #   $3 = NFT/SFT Token Amount,
 
-    user_address="$(erdpy wallet pem-address $WALLET)"
+    user_address="$(erdpy wallet pem-address $USER)"
     method="0x$(echo -n 'burn' | xxd -p -u | tr -d '\n')"
     sft_token="0x$(echo -n ${1} | xxd -p -u | tr -d '\n')"
 
     erdpy --verbose contract call $user_address \
         --recall-nonce \
-        --pem=${WALLET} \
-        --gas-limit=100000000 \
+        --pem=${USER} \
+        --gas-limit=6000000 \
         --function="ESDTNFTTransfer" \
         --arguments $sft_token $2 $3 ${ADDRESS} $method  \
         --proxy=${PROXY} \
@@ -75,7 +188,7 @@ burn() {
         --send || return
 }
 
-pause(){
+pauseContract(){
     erdpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
@@ -87,7 +200,7 @@ pause(){
     --send || return
 }
 
-unpause(){
+unPauseContract(){
     erdpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
@@ -256,8 +369,8 @@ mintTokenUsingEsdt(){
 
     erdpy --verbose contract call $ADDRESS \
     --recall-nonce \
-    --pem=${WALLET} \
-    --gas-limit=10000000 \
+    --pem=${USER} \
+    --gas-limit=100000000 \
     --function "ESDTTransfer" \
     --arguments ${TOKEN_HEX} $1 $method $name $media $data_marshal $data_stream $data_preview $7 $8 $title $description \
     --proxy ${PROXY} \

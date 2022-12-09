@@ -1199,6 +1199,14 @@ fn burn_token_test() {
             },
         )
         .assert_ok();
+
+    b_wrapper.check_nft_balance(
+        first_user_address,
+        SFT_TICKER,
+        1u64,
+        &rust_biguint!(4),
+        Option::<&Empty>::None,
+    );
 }
 
 #[test] // Tests wheter the url is valid
