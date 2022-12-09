@@ -56,12 +56,12 @@ pub trait EventsModule {
     fn set_administrator_event(&self, #[indexed] administrator: &ManagedAddress);
 
     // Emitted whenever the collection is paused
-    #[event("pause")]
-    fn pause_event(&self, #[indexed] token_identifier: &TokenIdentifier);
+    #[event("pauseCollection")]
+    fn pause_collection_event(&self, #[indexed] token_identifier: &TokenIdentifier);
 
     // Emitted whenever the collection is unpaused
-    #[event("unpause")]
-    fn unpause_event(&self, #[indexed] token_identifier: &TokenIdentifier);
+    #[event("unpauseCollection")]
+    fn unpause_collection_event(&self, #[indexed] token_identifier: &TokenIdentifier);
 
     // Emmitted whenever an address is freezed
     #[event("freeze")]
