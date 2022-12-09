@@ -45,8 +45,8 @@ pub trait DataNftMint:
         &self,
         collection_name: ManagedBuffer,
         token_ticker: ManagedBuffer,
-        token_identifier: &EgldOrEsdtTokenIdentifier,
-        anti_spam_tax: BigUint,
+        anti_spam_tax_token: &EgldOrEsdtTokenIdentifier,
+        anti_spam_tax_value: BigUint,
         mint_time_limit: u64,
     ) {
         require!(
@@ -59,8 +59,9 @@ pub trait DataNftMint:
             "Issue cost is 0.05 eGLD"
         );
 
-        self.set_anti_spam_tax_event(&token_identifier, &anti_spam_tax);
-        self.anti_spam_tax(token_identifier).set(anti_spam_tax);
+        self.set_anti_spam_tax_event(&anti_spam_tax_token, &anti_spam_tax_value);
+        self.anti_spam_tax(anti_spam_tax_token)
+            .set(anti_spam_tax_value);
 
         self.set_mint_time_limit_event(&mint_time_limit);
         self.mint_time_limit().set(mint_time_limit);
