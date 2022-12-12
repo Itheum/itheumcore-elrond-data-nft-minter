@@ -105,7 +105,7 @@ pub trait DataNftMint:
     ) -> DataNftAttributes<Self::Api> {
         self.require_minting_is_ready();
         self.require_url_is_valid(&data_marshal);
-        self.require_url_is_valid(&data_stream);
+        self.require_url_is_adequate_length(&data_stream);
         self.require_url_is_valid(&data_preview);
         self.require_url_is_valid(&media);
         self.require_sft_is_valid(&royalties, &supply);

@@ -74,9 +74,7 @@ pub trait RequirementsModule: crate::storage::StorageModule {
     fn require_url_is_valid(&self, url: &ManagedBuffer) {
         let url_length = url.len();
         let starts_with: &[u8] = b"https://";
-        require!(!url.is_empty(), "URL is empty");
-        require!(url_length <= 300, "URL length is too big");
-        require!(url_length >= 20, "URL length is too small");
+        self.require_url_is_adequate_length(url);
         let url_vec = url.to_boxed_bytes().into_vec();
         for i in 0..starts_with.len() {
             require!(url_vec[i] == starts_with[i], "URL must start with https://");
@@ -86,5 +84,12 @@ pub trait RequirementsModule: crate::storage::StorageModule {
                 sc_panic!("URL contains invalid characters");
             }
         }
+    }
+
+    fn require_url_is_adequate_length(&self, url: &ManagedBuffer) {
+        let url_length = url.len();
+        require!(!url.is_empty(), "URL is empty");
+        require!(url_length <= 300, "URL length is too big");
+        require!(url_length >= 20, "URL length is too small");
     }
 }
