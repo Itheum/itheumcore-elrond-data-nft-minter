@@ -1,5 +1,6 @@
 use std::u8;
 
+use datanftmint::collection_management::CollectionManagement;
 use datanftmint::nft_mint_utils::*;
 use datanftmint::requirements::RequirementsModule;
 use datanftmint::storage::*;
@@ -1240,7 +1241,37 @@ fn url_validation_test() {
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_url_is_adequate_length(&managed_buffer!(SFT_TICKER))
+        })
+        .assert_user_error("URL length is too small");
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
             sc.require_url_is_valid(&managed_buffer!(&[
+                SFT_TICKER,
+                DATA_MARCHAL,
+                DATA_STREAM,
+                MEDIA_URI,
+                DATA_STREAM,
+                MEDIA_URI,
+                DATA_STREAM,
+                MEDIA_URI,
+                SFT_TICKER,
+                DATA_MARCHAL,
+                DATA_STREAM,
+                MEDIA_URI,
+                DATA_STREAM,
+                MEDIA_URI,
+                DATA_STREAM,
+                MEDIA_URI
+            ]
+            .concat()))
+        })
+        .assert_user_error("URL length is too big");
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_url_is_adequate_length(&managed_buffer!(&[
                 SFT_TICKER,
                 DATA_MARCHAL,
                 DATA_STREAM,
@@ -1274,7 +1305,7 @@ fn privileges_test() {
     let mut setup = setup_contract(datanftmint::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
     let user_address = &setup.first_user_address;
-
+    let second_user_address = &setup.second_user_address;
     b_wrapper
         .execute_tx(
             &user_address,
@@ -1345,6 +1376,33 @@ fn privileges_test() {
             &setup.contract_wrapper,
             &rust_biguint!(0u64),
             |sc| sc.set_max_supply(managed_biguint!(200)),
+        )
+        .assert_user_error("Address is not privileged");
+
+    b_wrapper
+        .execute_tx(
+            &user_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| sc.freeze_single_token_for_address(1u64, &managed_address!(second_user_address)),
+        )
+        .assert_user_error("Address is not privileged");
+
+    b_wrapper
+        .execute_tx(
+            &user_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| sc.unfreeze_single_token_for_address(1u64, &managed_address!(second_user_address)),
+        )
+        .assert_user_error("Address is not privileged");
+
+    b_wrapper
+        .execute_tx(
+            &user_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| sc.wipe_single_token_for_address(1u64, &managed_address!(second_user_address)),
         )
         .assert_user_error("Address is not privileged");
 }
