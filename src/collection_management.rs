@@ -10,7 +10,6 @@ pub trait CollectionManagement:
     crate::storage::StorageModule
     + crate::events::EventsModule
     + crate::requirements::RequirementsModule
-
 {
     fn freeze_single_nft(
         &self,
@@ -125,18 +124,11 @@ pub trait CollectionManagement:
         }
     }
 
-<<<<<<< HEAD
     //Endpoint used by the owner and the administrator to freeze address
     #[endpoint(freezeSingleNFT)]
     fn freeze_single_token_for_address(&self, nonce: u64, address: &ManagedAddress) {
         let caller = self.blockchain().get_caller();
         self.require_is_privileged(&caller);
-=======
-    //Endpoint used by the owner to freeze address
-    #[only_owner]
-    #[endpoint(freezeSingleNFT)]
-    fn freeze_single_token_for_address(&self, nonce: u64, address: &ManagedAddress) {
->>>>>>> main
         if self.black_list().insert(address.clone()) {
             self.set_blacklist_spot_event(&address);
             self.freeze_single_nft(nonce, &address)
@@ -147,18 +139,11 @@ pub trait CollectionManagement:
         }
     }
 
-<<<<<<< HEAD
     //Endpoint used by the owner and the administrator to unfreeze address
     #[endpoint(unFreezeSingleNFT)]
     fn unfreeze_single_token_for_address(&self, nonce: u64, address: &ManagedAddress) {
         let caller = self.blockchain().get_caller();
         self.require_is_privileged(&caller);
-=======
-    //Endpoint used by the owner to unfreeze address
-    #[only_owner]
-    #[endpoint(unFreezeSingleNFT)]
-    fn unfreeze_single_token_for_address(&self, nonce: u64, address: &ManagedAddress) {
->>>>>>> main
         if self.black_list().remove(address) {
             self.remove_blacklist_spot_event(&address);
             self.unfreeze_single_nft(nonce, &address)
@@ -169,18 +154,11 @@ pub trait CollectionManagement:
         }
     }
 
-<<<<<<< HEAD
     //Endpoint used by the owner and the administrator to wipe single nonce for data NFT-FTs
     #[endpoint(wipeSingleNFT)]
     fn wipe_single_token_for_address(&self, nonce: u64, address: &ManagedAddress) {
         let caller = self.blockchain().get_caller();
         self.require_is_privileged(&caller);
-=======
-    //Endpoint used by the owner to wipe single nonce for data NFT-FTs
-    #[only_owner]
-    #[endpoint(wipeSingleNFT)]
-    fn wipe_single_token_for_address(&self, nonce: u64, address: &ManagedAddress) {
->>>>>>> main
         if self.black_list().contains(&address) {
             self.wipe_single_nft(nonce, &address)
                 .async_call()
