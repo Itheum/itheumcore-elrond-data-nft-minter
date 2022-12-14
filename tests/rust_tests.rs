@@ -14,6 +14,7 @@ use elrond_wasm::{
     types::{Address, EsdtLocalRole},
 };
 
+use elrond_wasm_debug::tx_mock::TxContextRef;
 use elrond_wasm_debug::{
     managed_address, managed_biguint, managed_buffer, managed_token_id, managed_token_id_wrapped,
     rust_biguint, testing_framework::*, DebugApi,
@@ -689,6 +690,7 @@ fn requirements_test() {
 }
 
 #[test] // Tests whether minting works correctly.
+        // Tests wheter the creator is in the NFT-FT attributes
 fn mint_nft_ft_test() {
     let mut setup = setup_contract(datanftmint::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
@@ -996,6 +998,52 @@ fn mint_nft_ft_test() {
             );
         })
         .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            let token_data = sc.blockchain().get_esdt_token_data(
+                &managed_address!(first_user_address),
+                &managed_token_id!(SFT_TICKER),
+                1u64,
+            );
+            let attributes = token_data.decode_attributes::<DataNftAttributes<TxContextRef>>();
+
+            let test_attributes: DataNftAttributes<TxContextRef> = DataNftAttributes {
+                creation_time: attributes.creation_time,
+                creator: managed_address!(first_user_address),
+                data_marshal_url: managed_buffer!(DATA_MARCHAL),
+                data_preview_url: managed_buffer!(DATA_STREAM),
+                data_stream_url: managed_buffer!(DATA_STREAM),
+                title: managed_buffer!(USER_NFT_NAME),
+                description: managed_buffer!(USER_NFT_NAME),
+            };
+
+            assert_eq!(test_attributes, attributes);
+        })
+        .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            let token_data = sc.blockchain().get_esdt_token_data(
+                &managed_address!(first_user_address),
+                &managed_token_id!(SFT_TICKER),
+                2u64,
+            );
+            let attributes = token_data.decode_attributes::<DataNftAttributes<TxContextRef>>();
+
+            let test_attributes: DataNftAttributes<TxContextRef> = DataNftAttributes {
+                creation_time: attributes.creation_time,
+                creator: managed_address!(first_user_address),
+                data_marshal_url: managed_buffer!(DATA_MARCHAL),
+                data_preview_url: managed_buffer!(DATA_STREAM),
+                data_stream_url: managed_buffer!(DATA_STREAM),
+                title: managed_buffer!(USER_NFT_NAME),
+                description: managed_buffer!(USER_NFT_NAME),
+            };
+
+            assert_eq!(test_attributes, attributes);
+        })
+        .assert_ok()
 }
 
 #[test] //Tests wheter the whitelist functionality works as expected
