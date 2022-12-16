@@ -1,5 +1,6 @@
 use std::u8;
 
+use datanftmint::collection_management::CollectionManagement;
 use datanftmint::nft_mint_utils::*;
 use datanftmint::requirements::RequirementsModule;
 use datanftmint::storage::*;
@@ -13,6 +14,7 @@ use elrond_wasm::{
     types::{Address, EsdtLocalRole},
 };
 
+use elrond_wasm_debug::tx_mock::TxContextRef;
 use elrond_wasm_debug::{
     managed_address, managed_biguint, managed_buffer, managed_token_id, managed_token_id_wrapped,
     rust_biguint, testing_framework::*, DebugApi,
@@ -688,6 +690,7 @@ fn requirements_test() {
 }
 
 #[test] // Tests whether minting works correctly.
+        // Tests wheter the creator is in the NFT-FT attributes
 fn mint_nft_ft_test() {
     let mut setup = setup_contract(datanftmint::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
@@ -995,6 +998,52 @@ fn mint_nft_ft_test() {
             );
         })
         .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            let token_data = sc.blockchain().get_esdt_token_data(
+                &managed_address!(first_user_address),
+                &managed_token_id!(SFT_TICKER),
+                1u64,
+            );
+            let attributes = token_data.decode_attributes::<DataNftAttributes<TxContextRef>>();
+
+            let test_attributes: DataNftAttributes<TxContextRef> = DataNftAttributes {
+                creation_time: attributes.creation_time,
+                creator: managed_address!(first_user_address),
+                data_marshal_url: managed_buffer!(DATA_MARCHAL),
+                data_preview_url: managed_buffer!(DATA_STREAM),
+                data_stream_url: managed_buffer!(DATA_STREAM),
+                title: managed_buffer!(USER_NFT_NAME),
+                description: managed_buffer!(USER_NFT_NAME),
+            };
+
+            assert_eq!(test_attributes, attributes);
+        })
+        .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            let token_data = sc.blockchain().get_esdt_token_data(
+                &managed_address!(first_user_address),
+                &managed_token_id!(SFT_TICKER),
+                2u64,
+            );
+            let attributes = token_data.decode_attributes::<DataNftAttributes<TxContextRef>>();
+
+            let test_attributes: DataNftAttributes<TxContextRef> = DataNftAttributes {
+                creation_time: attributes.creation_time,
+                creator: managed_address!(first_user_address),
+                data_marshal_url: managed_buffer!(DATA_MARCHAL),
+                data_preview_url: managed_buffer!(DATA_STREAM),
+                data_stream_url: managed_buffer!(DATA_STREAM),
+                title: managed_buffer!(USER_NFT_NAME),
+                description: managed_buffer!(USER_NFT_NAME),
+            };
+
+            assert_eq!(test_attributes, attributes);
+        })
+        .assert_ok()
 }
 
 #[test] //Tests wheter the whitelist functionality works as expected
@@ -1304,7 +1353,7 @@ fn privileges_test() {
     let mut setup = setup_contract(datanftmint::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
     let user_address = &setup.first_user_address;
-
+    let second_user_address = &setup.second_user_address;
     b_wrapper
         .execute_tx(
             &user_address,
@@ -1375,6 +1424,33 @@ fn privileges_test() {
             &setup.contract_wrapper,
             &rust_biguint!(0u64),
             |sc| sc.set_max_supply(managed_biguint!(200)),
+        )
+        .assert_user_error("Address is not privileged");
+
+    b_wrapper
+        .execute_tx(
+            &user_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| sc.freeze_single_token_for_address(1u64, &managed_address!(second_user_address)),
+        )
+        .assert_user_error("Address is not privileged");
+
+    b_wrapper
+        .execute_tx(
+            &user_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| sc.unfreeze_single_token_for_address(1u64, &managed_address!(second_user_address)),
+        )
+        .assert_user_error("Address is not privileged");
+
+    b_wrapper
+        .execute_tx(
+            &user_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| sc.wipe_single_token_for_address(1u64, &managed_address!(second_user_address)),
         )
         .assert_user_error("Address is not privileged");
 }

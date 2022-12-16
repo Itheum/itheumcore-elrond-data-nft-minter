@@ -120,6 +120,40 @@ Call structure: "unfreeze" + "@" + address hex encoded.
 
 Example: "unfreeze@afb9aa109340a83cdb2129635b060a3a2d67ba2659ad86bf6ef49f948c43572c"
 
+#### setMintTimeLimit
+
+```rust
+    #[endpoint(setMintTimeLimit)]
+    fn set_mint_time_limit(
+        &self,
+        mint_time_limit: u64
+    );
+```
+
+Endpoint that sets a time limit for the mint. An address can mint only once in the time limit.
+
+Call structure: "setMintTimeLimit" +"@" + mint_time_limit hex encoded.
+
+Example: "setMintTimeLimit@0384"
+
+#### setAdministrator
+
+```rust
+    #[endpoint(setAdministrator)]
+    fn set_administrator(
+        &self,
+        administrator: ManagedAddress
+    );
+```
+
+Endpoint that sets the administrator of the contract. The administrator has some privileges that will be presented in the [Owner and administrator endpoints](#owner-and-administrator-endpoints) section.
+
+Call structure: "setAdministrator" + "@" + administrator hex encoded.
+
+Example: "setAdministrator@afb9aa109340a83cdb2129635b060a3a2d67ba2659ad86bf6ef49f948c43572c"
+
+### Owner and administrator endpoints
+
 #### freezeSingleNFT
 
 ```rust
@@ -170,40 +204,6 @@ Endpoint that wipes specific data NFT-FT for a specific address. It will utilize
 Call structure: "wipeSingleNFT" + "@" + nonce hex encoded + "@" + address hex encoded.
 
 Example: "wipeSingleNFT@05@afb9aa109340a83cdb2129635b060a3a2d67ba2659ad86bf6ef49f948c43572c"
-
-#### setMintTimeLimit
-
-```rust
-    #[endpoint(setMintTimeLimit)]
-    fn set_mint_time_limit(
-        &self,
-        mint_time_limit: u64
-    );
-```
-
-Endpoint that sets a time limit for the mint. An address can mint only once in the time limit.
-
-Call structure: "setMintTimeLimit" +"@" + mint_time_limit hex encoded.
-
-Example: "setMintTimeLimit@0384"
-
-#### setAdministrator
-
-```rust
-    #[endpoint(setAdministrator)]
-    fn set_administrator(
-        &self,
-        administrator: ManagedAddress
-    );
-```
-
-Endpoint that sets the administrator of the contract. The administrator has some privileges that will be presented in the [Owner and administrator endpoints](#owner-and-administrator-endpoints) section.
-
-Call structure: "setAdministrator" + "@" + administrator hex encoded.
-
-Example: "setAdministrator@afb9aa109340a83cdb2129635b060a3a2d67ba2659ad86bf6ef49f948c43572c"
-
-### Owner and administrator endpoints
 
 #### setIsPaused
 
