@@ -988,6 +988,10 @@ fn mint_nft_ft_test() {
                 is_whitelisted: sc
                     .white_list()
                     .contains(&managed_address!(first_user_address)),
+                minted_per_user: sc
+                    .minted_per_address(&managed_address!(first_user_address))
+                    .get(),
+                total_minted: sc.minted_tokens().get(),
             };
             assert_eq!(
                 sc.get_user_data_out(
