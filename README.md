@@ -368,7 +368,7 @@ Example: "ESDTNFTTransfer@4e465446542d373736336637@01@1e@00000000000000000500c72
 
 ### Views
 
-#### getUSerDataOut
+#### getUserDataOut
 
 ```rust
     #[view(getUserDataOut)]
@@ -378,7 +378,7 @@ Example: "ESDTNFTTransfer@4e465446542d373736336637@01@1e@00000000000000000500c72
     );
 ```
 
-Main view of the contract. Receives an address and a token identifier as arguments and returns a structure that contains all the data needed by the frontend in order to limit the user from wrongly intteracting with the smart contract. The structure contains the following fields:
+Main view of the contract. Receives an address and a token identifier as arguments and returns a structure that contains all the data needed by the frontend in order to limit the user from wrongly interacting with the smart contract. The structure contains the following fields:
 
 - **anti_spam_tax_value**: the value of the anti spam tax for the given token identifier
 - **is_paused**: a boolean that indicates if the contract is paused or not
@@ -394,6 +394,21 @@ Main view of the contract. Receives an address and a token identifier as argumen
 
 This smart contract aims to offer the Elrond community an audited NFT minter smart contract that is easy to use, well documented and secure.
 
+### Setting up dev environment (project development bootstrap)
+- Uses `elrond-wasm-* 0.37.0` SDK libs (see Cargo.toml)
+- Building requires minimum **erdpy 2.0.0** (newer version should also work but devs used 2.0.0). Check version using `erdpy --version`
+- To build the project, requires minimum Rust version `1.68.0-nightly`. Check you Rust version by running `rustc --version`. To update your Rust, run `rustup update`. To set to nightly run `rustup default nightly`
+- After you make sure you have the minimum Rust version you can then begin development. After you clone repo and before you run build, deploy or run the tests - follow these steps (most likely only needed the 1st time)
+```
+rustup default nightly
+erdpy deps install rust --overwrite
+cargo clean
+cargo build
+```
+- The above should all work without any errors, next you can successfully run the following command to build via erdpy: `erdpy contract build`
+- You can now run the tests. See "How to test" section below
+- You can now update code as needed
+
 ### Architecture
 
 The Smart Contract is structured in 6 files:
@@ -406,6 +421,8 @@ The Smart Contract is structured in 6 files:
 - lib: This is the main file of the smart contract, where all the logic of the smart contract is implemented. This connects all the other files (modules) and uses them to implement what is the contract itself.
 
 ### How to test
+
+Prior to running the below, make sure you check section called **Setting up dev environment (project development bootstrap)** above and your dev environment is configured correctly. You also need to run `erdpy contract build` prior to running tests.
 
 The tests are located in the tests folder, in the rust_tests file. In order to run the tests one can use the command:
 
