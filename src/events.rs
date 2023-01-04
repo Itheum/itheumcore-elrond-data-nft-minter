@@ -1,6 +1,6 @@
 elrond_wasm::imports!();
 elrond_wasm::derive_imports!();
-//Module that handles event emitting for important smart contract events in order to facilitate logging, debugging and monitoring with ease
+// Module that handles event emitting for important smart contract events in order to facilitate logging, debugging and monitoring with ease
 #[elrond_wasm::module]
 pub trait EventsModule {
     // Emitted whenever minting pause changes value
@@ -63,7 +63,7 @@ pub trait EventsModule {
     #[event("unpauseCollection")]
     fn unpause_collection_event(&self, #[indexed] token_identifier: &TokenIdentifier);
 
-    // Emmitted whenever an address is freezed
+    // Emitted whenever an address is freezed
     #[event("freeze")]
     fn freeze_event(
         &self,
@@ -72,7 +72,7 @@ pub trait EventsModule {
         #[indexed] nonce: u64,
     );
 
-    // Emmitted whenever an address is unfreezed
+    // Emitted whenever an address is unfreezed
     #[event("unfreeze")]
     fn unfreeze_event(
         &self,
@@ -81,7 +81,7 @@ pub trait EventsModule {
         #[indexed] nonce: u64,
     );
 
-    // Emitted whenver a token is wiped
+    // Emitted whenever a token is wiped
     #[event("wipe")]
     fn wipe_event(
         &self,
