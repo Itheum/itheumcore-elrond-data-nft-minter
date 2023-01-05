@@ -89,14 +89,6 @@ pub trait DataNftMint:
             .call_and_exit();
     }
 
-    // Endpoint used to set the treasury address.
-    #[only_owner]
-    #[endpoint(setTreasuryAddress)]
-    fn set_treasury_address(&self, address: ManagedAddress) {
-        self.treasury_address_event(&address);
-        self.treasury_address().set(&address);
-    }
-
     // Public endpoint used to mint Data NFT-FTs.
     #[payable("*")]
     #[endpoint(mint)]
@@ -196,6 +188,14 @@ pub trait DataNftMint:
             payment.token_nonce,
             &payment.amount,
         );
+    }
+
+    // Endpoint used to set the treasury address.
+    #[only_owner]
+    #[endpoint(setTreasuryAddress)]
+    fn set_treasury_address(&self, address: ManagedAddress) {
+        self.treasury_address_event(&address);
+        self.treasury_address().set(&address);
     }
 
     // Endpoint that will be used by privileged address to change the contract pause value.
