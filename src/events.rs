@@ -7,6 +7,10 @@ pub trait EventsModule {
     #[event("mintPauseToggle")]
     fn mint_pause_toggle_event(&self, #[indexed] pause_value: &bool);
 
+    // Emitted whenever treasury address is set
+    #[event("setTreasuryAddress")]
+    fn treasury_address_event(&self, #[indexed] treasury_address: &ManagedAddress);
+
     // Emitted whenever whitelist enabling changes value
     #[event("whitelistEnableToggle")]
     fn whitelist_enable_toggle_event(&self, #[indexed] enable_value: &bool);

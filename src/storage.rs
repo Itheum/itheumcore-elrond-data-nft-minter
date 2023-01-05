@@ -20,6 +20,11 @@ pub trait StorageModule {
     #[storage_mapper("sft_token_id")]
     fn token_id(&self) -> NonFungibleTokenMapper<Self::Api>;
 
+    // Stores the treasury address
+    #[view(getTreasuryAddress)]
+    #[storage_mapper("treasury_address")]
+    fn treasury_address(&self) -> SingleValueMapper<ManagedAddress>;
+
     // Stores the amount of SFTs that have been created
     #[view(getMintedTokens)]
     #[storage_mapper("minted_tokens")]

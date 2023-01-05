@@ -51,6 +51,7 @@ where
         ContractObjWrapper<datanftmint::ContractObj<DebugApi>, ContractObjBuilder>,
     pub first_user_address: Address,
     pub second_user_address: Address,
+    pub treasury_address: Address,
 }
 
 fn setup_contract<ContractObjBuilder>(
@@ -66,6 +67,8 @@ where
     let second_user_address =
         blockchain_wrapper.create_user_account(&rust_biguint!(OWNER_EGLD_BALANCE / 100u128));
     let owner_address = blockchain_wrapper.create_user_account(&rust_biguint!(OWNER_EGLD_BALANCE));
+    let treasury_address =
+        blockchain_wrapper.create_user_account(&rust_biguint!(OWNER_EGLD_BALANCE / 10u128));
     let cf_wrapper = blockchain_wrapper.create_sc_account(
         &rust_zero,
         Some(&owner_address),
@@ -93,6 +96,7 @@ where
         owner_address,
         first_user_address,
         second_user_address,
+        treasury_address,
         contract_wrapper: cf_wrapper,
     }
 }
@@ -454,6 +458,7 @@ fn requirements_test() {
     let owner_address = &setup.owner_address;
     let first_user_address = &setup.first_user_address;
     let second_user_address = &setup.second_user_address;
+    let treasury_address = &setup.treasury_address;
 
     b_wrapper
         .execute_tx(
@@ -528,6 +533,24 @@ fn requirements_test() {
             &rust_biguint!(0u64),
             |sc| {
                 sc.set_is_paused(false);
+            },
+        )
+        .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_minting_is_ready();
+        })
+        .assert_error(4, "Minting is not ready");
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.treasury_address()
+                    .set(&managed_address!(treasury_address));
             },
         )
         .assert_ok();
@@ -696,6 +719,7 @@ fn mint_nft_ft_test() {
     let b_wrapper = &mut setup.blockchain_wrapper;
     let owner_address = &setup.owner_address;
     let first_user_address = &setup.first_user_address;
+    let treasury_address = &setup.treasury_address;
 
     b_wrapper
         .execute_tx(
@@ -735,6 +759,18 @@ fn mint_nft_ft_test() {
             &setup.contract_wrapper,
             &rust_biguint!(5u64 * 10u64.pow(16u32)),
             |sc| sc.token_id().set_token_id(managed_token_id!(SFT_TICKER)),
+        )
+        .assert_ok();
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.treasury_address()
+                    .set(&managed_address!(treasury_address));
+            },
         )
         .assert_ok();
 
@@ -936,6 +972,16 @@ fn mint_nft_ft_test() {
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
             assert_eq!(sc.minted_tokens().get(), 1u64);
+        })
+        .assert_ok();
+    // check if the payment token was transfered from the contract to the treasury address
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(
+                sc.blockchain()
+                    .get_sc_balance(&managed_token_id_wrapped!(TOKEN_ID), 0),
+                managed_biguint!(0u64)
+            )
         })
         .assert_ok();
 
@@ -1164,6 +1210,7 @@ fn burn_token_test() {
     let b_wrapper = &mut setup.blockchain_wrapper;
     let owner_address = &setup.owner_address;
     let first_user_address = &setup.first_user_address;
+    let treasury_address = &setup.treasury_address;
 
     b_wrapper
         .execute_tx(
@@ -1205,6 +1252,18 @@ fn burn_token_test() {
             &rust_biguint!(0u64),
             |sc| {
                 sc.set_is_paused(false);
+            },
+        )
+        .assert_ok();
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.treasury_address()
+                    .set(&managed_address!(treasury_address));
             },
         )
         .assert_ok();

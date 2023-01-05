@@ -13,6 +13,9 @@ pub trait RequirementsModule: crate::storage::StorageModule {
         if self.token_id().is_empty() {
             is_mint_ready = false;
         }
+        if self.treasury_address().is_empty() {
+            is_mint_ready = false;
+        }
         require!(is_mint_ready, "Minting is not ready");
     }
 

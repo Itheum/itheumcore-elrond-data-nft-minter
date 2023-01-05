@@ -153,6 +153,19 @@ pub trait DataNftMint:
         self.send()
             .direct_esdt(&caller, &token_identifier, nonce, &supply);
 
+        let treasury_address = self.treasury_address().get();
+
+        if payment.token_identifier.is_egld() {
+            self.send().direct_egld(&treasury_address, &payment.amount);
+        } else {
+            self.send().direct_esdt(
+                &treasury_address,
+                &payment.token_identifier.unwrap_esdt(),
+                payment.token_nonce,
+                &payment.amount,
+            );
+        }
+
         attributes
     }
 
@@ -174,6 +187,14 @@ pub trait DataNftMint:
             payment.token_nonce,
             &payment.amount,
         );
+    }
+
+    // Endpoint used to set treasury address.
+    #[only_owner]
+    #[endpoint(setTreasuryAddress)]
+    fn set_treasury_address(&self, address: ManagedAddress) {
+        self.treasury_address_event(&address);
+        self.treasury_address().set(&address);
     }
 
     // Endpoint that will be used by privileged address to change the contract pause value.
