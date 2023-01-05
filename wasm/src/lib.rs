@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           35
+// Endpoints:                           37
 // Async Callback:                       1
-// Total number of exported functions:  37
+// Total number of exported functions:  39
 
 #![no_std]
 
@@ -15,6 +15,7 @@ elrond_wasm_node::wasm_endpoints! {
     datanftmint
     (
         initializeContract
+        setTreasuryAddress
         mint
         burn
         setIsPaused
@@ -27,6 +28,7 @@ elrond_wasm_node::wasm_endpoints! {
         setMaxSupply
         setAdministrator
         getTokenId
+        getTreasuryAddress
         getMintedTokens
         getAntiSpamTax
         getIsPaused

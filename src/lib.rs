@@ -48,6 +48,7 @@ pub trait DataNftMint:
         anti_spam_tax_token: &EgldOrEsdtTokenIdentifier,
         anti_spam_tax_value: BigUint,
         mint_time_limit: u64,
+        treasury_address: ManagedAddress,
     ) {
         require!(
             self.token_id().is_empty(),
@@ -65,7 +66,7 @@ pub trait DataNftMint:
 
         self.set_mint_time_limit_event(&mint_time_limit);
         self.mint_time_limit().set(mint_time_limit);
-
+        self.treasury_address().set(&treasury_address);
         // Collection issuing and giving NFT creation rights to the contract.
         self.send()
             .esdt_system_sc_proxy()
@@ -153,6 +154,19 @@ pub trait DataNftMint:
         self.send()
             .direct_esdt(&caller, &token_identifier, nonce, &supply);
 
+        let treasury_address = self.treasury_address().get();
+
+        if payment.token_identifier.is_egld() {
+            self.send().direct_egld(&treasury_address, &payment.amount);
+        } else {
+            self.send().direct_esdt(
+                &treasury_address,
+                &payment.token_identifier.unwrap_esdt(),
+                payment.token_nonce,
+                &payment.amount,
+            );
+        }
+
         attributes
     }
 
@@ -174,6 +188,14 @@ pub trait DataNftMint:
             payment.token_nonce,
             &payment.amount,
         );
+    }
+
+    // Endpoint used to set the treasury address.
+    #[only_owner]
+    #[endpoint(setTreasuryAddress)]
+    fn set_treasury_address(&self, address: ManagedAddress) {
+        self.treasury_address_event(&address);
+        self.treasury_address().set(&address);
     }
 
     // Endpoint that will be used by privileged address to change the contract pause value.

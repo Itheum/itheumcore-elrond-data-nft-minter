@@ -14,6 +14,8 @@ pub struct UserDataOut<M: ManagedTypeApi> {
     pub last_mint_time: u64,
     pub whitelist_enabled: bool,
     pub is_whitelisted: bool,
+    pub minted_per_user: BigUint<M>,
+    pub total_minted: BigUint<M>,
 }
 
 //Module that handles read-only endpoints (views) for the smart contract
@@ -36,6 +38,8 @@ pub trait ViewsModule: crate::storage::StorageModule {
             let last_mint_time = self.last_mint_time(&address).get();
             let whitelist_enabled = self.white_list_enabled().get();
             let is_whitelisted = self.white_list().contains(&address);
+            let minted_per_user = self.minted_per_address(&address).get();
+            let total_minted = self.minted_tokens().get();
 
             let user_data = UserDataOut {
                 anti_spam_tax_value,
@@ -47,6 +51,8 @@ pub trait ViewsModule: crate::storage::StorageModule {
                 last_mint_time,
                 whitelist_enabled,
                 is_whitelisted,
+                minted_per_user,
+                total_minted,
             };
             user_data
         }
