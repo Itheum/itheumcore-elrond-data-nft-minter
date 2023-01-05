@@ -241,7 +241,7 @@ pub trait DataNftMint:
         self.mint_time_limit().set(mint_time_limit);
     }
 
-    // Endpoint that will be used by the owner and privileged address to set min and max royalties
+    // Endpoint that will be used by the owner and privileged address to set min and max royalties.
     #[endpoint(setRoyaltiesLimits)]
     fn set_royalties_limits(&self, min_royalties: BigUint, max_royalties: BigUint) {
         let caller = self.blockchain().get_caller();
