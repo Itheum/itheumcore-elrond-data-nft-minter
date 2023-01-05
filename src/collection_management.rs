@@ -124,7 +124,7 @@ pub trait CollectionManagement:
         }
     }
 
-    //Endpoint used by the owner and the administrator to freeze address
+    // Endpoint used by the owner and the administrator to freeze address
     #[endpoint(freezeSingleNFT)]
     fn freeze_single_token_for_address(&self, nonce: u64, address: &ManagedAddress) {
         let caller = self.blockchain().get_caller();
@@ -139,7 +139,7 @@ pub trait CollectionManagement:
         }
     }
 
-    //Endpoint used by the owner and the administrator to unfreeze address
+    // Endpoint used by the owner and the administrator to unfreeze address
     #[endpoint(unFreezeSingleNFT)]
     fn unfreeze_single_token_for_address(&self, nonce: u64, address: &ManagedAddress) {
         let caller = self.blockchain().get_caller();
@@ -154,7 +154,7 @@ pub trait CollectionManagement:
         }
     }
 
-    //Endpoint used by the owner and the administrator to wipe single nonce for data NFT-FTs
+    // Endpoint used by the owner and the administrator to wipe single nonce for data NFT-FTs
     #[endpoint(wipeSingleNFT)]
     fn wipe_single_token_for_address(&self, nonce: u64, address: &ManagedAddress) {
         let caller = self.blockchain().get_caller();
