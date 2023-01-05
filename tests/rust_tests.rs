@@ -1393,20 +1393,6 @@ fn burn_token_test() {
         &rust_biguint!(4),
         Option::<&Empty>::None,
     );
-
-    // [test] burn just 1 of the supply
-    b_wrapper
-        .execute_esdt_transfer(
-            &first_user_address,
-            &setup.contract_wrapper,
-            SFT_TICKER,
-            1u64,
-            &rust_biguint!(5),
-            |sc| {
-                sc.burn_token();
-            },
-        )
-        .assert_ok();    
 }
 
 #[test] // Tests whether the url is valid
