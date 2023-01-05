@@ -101,7 +101,6 @@ freezeSingleNFT(){
     # $1 = token nonce
     # $2 = address to freeze
 
-
     address="0x$(erdpy wallet bech32 --decode ${2})"
 
     erdpy --verbose contract call ${ADDRESS} \
@@ -168,7 +167,7 @@ wipeSingleNFT(){
 }
 
 
-burn() {
+burn(){
     #   $1 = NFT/SFT Token Identifier,
     #   $2 = NFT/SFT Token Nonce,
     #   $3 = NFT/SFT Token Amount,

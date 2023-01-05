@@ -48,6 +48,7 @@ pub trait DataNftMint:
         anti_spam_tax_token: &EgldOrEsdtTokenIdentifier,
         anti_spam_tax_value: BigUint,
         mint_time_limit: u64,
+        treasury_address: ManagedAddress,
     ) {
         require!(
             self.token_id().is_empty(),
@@ -65,7 +66,7 @@ pub trait DataNftMint:
 
         self.set_mint_time_limit_event(&mint_time_limit);
         self.mint_time_limit().set(mint_time_limit);
-
+        self.treasury_address().set(&treasury_address);
         // Collection issuing and giving NFT creation rights to the contract.
         self.send()
             .esdt_system_sc_proxy()
@@ -86,6 +87,14 @@ pub trait DataNftMint:
             .async_call()
             .with_callback(self.callbacks().issue_callback())
             .call_and_exit();
+    }
+
+    // Endpoint used to set the treasury address.
+    #[only_owner]
+    #[endpoint(setTreasuryAddress)]
+    fn set_treasury_address(&self, address: ManagedAddress) {
+        self.treasury_address_event(&address);
+        self.treasury_address().set(&address);
     }
 
     // Public endpoint used to mint Data NFT-FTs.
@@ -189,14 +198,6 @@ pub trait DataNftMint:
         );
     }
 
-    // Endpoint used to set treasury address.
-    #[only_owner]
-    #[endpoint(setTreasuryAddress)]
-    fn set_treasury_address(&self, address: ManagedAddress) {
-        self.treasury_address_event(&address);
-        self.treasury_address().set(&address);
-    }
-
     // Endpoint that will be used by privileged address to change the contract pause value.
     #[endpoint(setIsPaused)]
     fn set_is_paused(&self, is_paused: bool) {
@@ -262,7 +263,7 @@ pub trait DataNftMint:
         self.mint_time_limit().set(mint_time_limit);
     }
 
-    // Endpoint that will be used by the owner and privileged address to set min and max royalties
+    // Endpoint that will be used by the owner and privileged address to set min and max royalties.
     #[endpoint(setRoyaltiesLimits)]
     fn set_royalties_limits(&self, min_royalties: BigUint, max_royalties: BigUint) {
         let caller = self.blockchain().get_caller();

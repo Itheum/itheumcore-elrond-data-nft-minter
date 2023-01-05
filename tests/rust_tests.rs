@@ -27,12 +27,13 @@ pub const ANOTHER_TOKEN_ID: &[u8] = b"ANOTHER-123456";
 pub const COLLECTION_NAME: &[u8] = b"DATANFT-FT";
 pub const SFT_TICKER: &[u8] = b"DATANFTFT-1a2b3c";
 pub const SFT_NAME: &[u8] = b"DATA NFT-FT";
-pub const DATA_MARCHAL: &[u8] = b"https://DATA-MARCHAL-ENCRYPTED/marshal";
+pub const DATA_MARSHAL: &[u8] = b"https://DATA-MARSHAL-ENCRYPTED/marshal";
 pub const DATA_STREAM: &[u8] = b"https://DATA-STREAM-ECRYPTED/stream";
+pub const DATA_PREVIEW: &[u8] = b"https://DATA-STREAM-ECRYPTED/stream-preview";
 pub const MEDIA_URI: &[u8] = b"https://ipfs.io/ipfs/123456abcdef/metadata.json";
-pub const URL_WITH_SPACES: &[u8] = b"https://DATA-MARCHAL-ENCRYPTED/marshal with spaces";
-pub const URL_WITH_RETURN: &[u8] = b"https://DATA-MARCHAL-ENCRYPTED/marshal\r";
-pub const URL_WITHOUT_PROTOCOL: &[u8] = b"DATA-MARCHAL-ENCRYPTED/marshal/test/test/test";
+pub const URL_WITH_SPACES: &[u8] = b"https://DATA-MARSHAL-ENCRYPTED/marshal with spaces";
+pub const URL_WITH_RETURN: &[u8] = b"https://DATA-MARSHAL-ENCRYPTED/marshal\r";
+pub const URL_WITHOUT_PROTOCOL: &[u8] = b"DATA-MARSHAL-ENCRYPTED/marshal/test/test/test";
 pub const USER_NFT_NAME: &[u8] = b"USER-NFT-NAME";
 pub const MINT_TIME_LIMIT: u64 = 15;
 pub const ROLES: &[EsdtLocalRole] = &[
@@ -117,8 +118,10 @@ fn deploy_test() {
         .assert_ok();
 }
 
-#[test] //Tests wether pause correct state after deployment
-        //Tests wether the owner can unpause the contract
+#[test] //Tests owner setting a new admin
+        //Tests whether pause correct state after deployment
+        //Tests whether the owner can unpause the contract and pause again
+        //Tests whether the admin can unpause the contract
 fn pause_test() {
     let mut setup = setup_contract(datanftmint::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
@@ -154,6 +157,29 @@ fn pause_test() {
         .assert_ok();
 
     b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(sc.is_paused().get(), false)
+        })
+        .assert_ok();
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.set_is_paused(true);
+            },
+        )
+        .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(sc.is_paused().get(), true)
+        })
+        .assert_ok();
+
+    b_wrapper
         .execute_tx(
             &first_user_address,
             &setup.contract_wrapper,
@@ -162,6 +188,12 @@ fn pause_test() {
                 sc.set_is_paused(false);
             },
         )
+        .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(sc.is_paused().get(), false)
+        })
         .assert_ok();
 }
 
@@ -265,6 +297,7 @@ fn setup_contract_test() {
     let mut setup = setup_contract(datanftmint::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
     let owner_address = &setup.owner_address;
+    let treasury_address = &setup.treasury_address;
 
     b_wrapper
         .execute_tx(
@@ -278,6 +311,7 @@ fn setup_contract_test() {
                     &managed_token_id_wrapped!(TOKEN_ID),
                     managed_biguint!(1_000_000),
                     MINT_TIME_LIMIT,
+                    managed_address!(treasury_address),
                 )
             },
         )
@@ -295,6 +329,7 @@ fn setup_contract_test() {
                     &managed_token_id_wrapped!(TOKEN_ID),
                     managed_biguint!(1_000_000),
                     MINT_TIME_LIMIT,
+                    managed_address!(treasury_address),
                 )
             },
         )
@@ -321,6 +356,7 @@ fn setup_contract_test() {
                     &managed_token_id_wrapped!(TOKEN_ID),
                     managed_biguint!(1_000_000),
                     MINT_TIME_LIMIT,
+                    managed_address!(treasury_address),
                 )
             },
         )
@@ -409,6 +445,7 @@ fn nft_mint_utils_test() {
     let mut setup = setup_contract(datanftmint::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
     let owner_address = &setup.owner_address;
+    let treasury_address = &setup.treasury_address;
 
     b_wrapper
         .execute_tx(
@@ -422,6 +459,7 @@ fn nft_mint_utils_test() {
                     &managed_token_id_wrapped!(TOKEN_ID),
                     managed_biguint!(1_000_000),
                     MINT_TIME_LIMIT,
+                    managed_address!(treasury_address),
                 )
             },
         )
@@ -429,11 +467,11 @@ fn nft_mint_utils_test() {
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
-            let data_buffer = managed_buffer!(&[DATA_MARCHAL, DATA_STREAM].concat());
+            let data_buffer = managed_buffer!(&[DATA_MARSHAL, DATA_STREAM].concat());
             let data_hash = sc.crypto().sha256(data_buffer).as_managed_buffer().clone();
             assert_eq!(
                 sc.crate_hash_buffer(
-                    &managed_buffer!(DATA_MARCHAL),
+                    &managed_buffer!(DATA_MARSHAL),
                     &managed_buffer!(DATA_STREAM)
                 ),
                 data_hash
@@ -472,9 +510,19 @@ fn requirements_test() {
                     &managed_token_id_wrapped!(TOKEN_ID),
                     managed_biguint!(1_000_000),
                     MINT_TIME_LIMIT,
+                    managed_address!(treasury_address),
                 )
             },
         )
+        .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(
+                sc.treasury_address().get(),
+                managed_address!(treasury_address)
+            );
+        })
         .assert_ok();
 
     b_wrapper
@@ -541,18 +589,6 @@ fn requirements_test() {
         .execute_query(&setup.contract_wrapper, |sc| {
             sc.require_minting_is_ready();
         })
-        .assert_error(4, "Minting is not ready");
-
-    b_wrapper
-        .execute_tx(
-            &owner_address,
-            &setup.contract_wrapper,
-            &rust_biguint!(0u64),
-            |sc| {
-                sc.treasury_address()
-                    .set(&managed_address!(treasury_address));
-            },
-        )
         .assert_ok();
 
     b_wrapper
@@ -713,7 +749,7 @@ fn requirements_test() {
 }
 
 #[test] // Tests whether minting works correctly.
-        // Tests wheter the creator is in the NFT-FT attributes
+        // Tests if the creator is in the NFT-FT attributes
 fn mint_nft_ft_test() {
     let mut setup = setup_contract(datanftmint::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
@@ -721,6 +757,7 @@ fn mint_nft_ft_test() {
     let first_user_address = &setup.first_user_address;
     let treasury_address = &setup.treasury_address;
 
+    // [test] when deployed a smart contract is paused and token_id is empty so require_minting_is_ready asserts
     b_wrapper
         .execute_tx(
             &first_user_address,
@@ -730,9 +767,9 @@ fn mint_nft_ft_test() {
                 sc.mint_token(
                     managed_buffer!(USER_NFT_NAME),
                     managed_buffer!(MEDIA_URI),
-                    managed_buffer!(DATA_MARCHAL),
+                    managed_buffer!(DATA_MARSHAL),
                     managed_buffer!(DATA_STREAM),
-                    managed_buffer!(DATA_STREAM),
+                    managed_buffer!(DATA_PREVIEW),
                     managed_biguint!(2),
                     managed_biguint!(10),
                     managed_buffer!(USER_NFT_NAME),
@@ -742,6 +779,7 @@ fn mint_nft_ft_test() {
         )
         .assert_error(4, "Minting is not ready");
 
+    // [setup] owner unpauses contract
     b_wrapper
         .execute_tx(
             &owner_address,
@@ -753,6 +791,7 @@ fn mint_nft_ft_test() {
         )
         .assert_ok();
 
+    // [setup] owner sets the token ID (in real world, this is done via a callback after actual collection is minted)
     b_wrapper
         .execute_tx(
             &owner_address,
@@ -762,6 +801,7 @@ fn mint_nft_ft_test() {
         )
         .assert_ok();
 
+    // [test] require_sft_is_valid assert fails as supply is 0
     b_wrapper
         .execute_tx(
             &owner_address,
@@ -783,9 +823,9 @@ fn mint_nft_ft_test() {
                 sc.mint_token(
                     managed_buffer!(USER_NFT_NAME),
                     managed_buffer!(MEDIA_URI),
-                    managed_buffer!(DATA_MARCHAL),
+                    managed_buffer!(DATA_MARSHAL),
                     managed_buffer!(DATA_STREAM),
-                    managed_buffer!(DATA_STREAM),
+                    managed_buffer!(DATA_PREVIEW),
                     managed_biguint!(20),
                     managed_biguint!(0),
                     managed_buffer!(USER_NFT_NAME),
@@ -795,6 +835,7 @@ fn mint_nft_ft_test() {
         )
         .assert_error(4, "Supply must be higher than zero");
 
+    // [test] require_sft_is_valid assert fails as royalties exceed the max royalties
     b_wrapper
         .execute_tx(
             &first_user_address,
@@ -804,9 +845,9 @@ fn mint_nft_ft_test() {
                 sc.mint_token(
                     managed_buffer!(USER_NFT_NAME),
                     managed_buffer!(MEDIA_URI),
-                    managed_buffer!(DATA_MARCHAL),
+                    managed_buffer!(DATA_MARSHAL),
                     managed_buffer!(DATA_STREAM),
-                    managed_buffer!(DATA_STREAM),
+                    managed_buffer!(DATA_PREVIEW),
                     managed_biguint!(90000),
                     managed_biguint!(1),
                     managed_buffer!(USER_NFT_NAME),
@@ -816,6 +857,18 @@ fn mint_nft_ft_test() {
         )
         .assert_error(4, "Royalties are bigger than max royalties");
 
+    // @TODO DAVID: also test following assertions so we have complete test flow: "Royalties are smaller than min royalties",  "Max supply exceeded"
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| sc.min_royalties().set(&managed_biguint!(100u64)),
+        )
+        .assert_ok();
+
+    // [test] require_sft_is_valid assert fails as royalties are smaller than min royalties
     b_wrapper
         .execute_tx(
             &first_user_address,
@@ -825,10 +878,54 @@ fn mint_nft_ft_test() {
                 sc.mint_token(
                     managed_buffer!(USER_NFT_NAME),
                     managed_buffer!(MEDIA_URI),
-                    managed_buffer!(DATA_MARCHAL),
+                    managed_buffer!(DATA_MARSHAL),
                     managed_buffer!(DATA_STREAM),
+                    managed_buffer!(DATA_PREVIEW),
+                    managed_biguint!(0u64),
+                    managed_biguint!(1),
+                    managed_buffer!(USER_NFT_NAME),
+                    managed_buffer!(USER_NFT_NAME),
+                );
+            },
+        )
+        .assert_user_error("Royalties are smaller than min royalties");
+
+    // [test] require_sft_is_valid assert fails as supply exceeds max supply
+    b_wrapper
+        .execute_tx(
+            &first_user_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.mint_token(
+                    managed_buffer!(USER_NFT_NAME),
+                    managed_buffer!(MEDIA_URI),
+                    managed_buffer!(DATA_MARSHAL),
                     managed_buffer!(DATA_STREAM),
-                    managed_biguint!(20),
+                    managed_buffer!(DATA_PREVIEW),
+                    managed_biguint!(5000u64),
+                    managed_biguint!(1000),
+                    managed_buffer!(USER_NFT_NAME),
+                    managed_buffer!(USER_NFT_NAME),
+                );
+            },
+        )
+        .assert_user_error("Max supply exceeded");
+
+    // [test] require_minting_is_allowed assert fails as caller not whitelisted
+    b_wrapper
+        .execute_tx(
+            &first_user_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.mint_token(
+                    managed_buffer!(USER_NFT_NAME),
+                    managed_buffer!(MEDIA_URI),
+                    managed_buffer!(DATA_MARSHAL),
+                    managed_buffer!(DATA_STREAM),
+                    managed_buffer!(DATA_PREVIEW),
+                    managed_biguint!(2000u64),
                     managed_biguint!(5),
                     managed_buffer!(USER_NFT_NAME),
                     managed_buffer!(USER_NFT_NAME),
@@ -837,6 +934,7 @@ fn mint_nft_ft_test() {
         )
         .assert_error(4, "You are not whitelisted");
 
+    // [setup] setting mint_time_limit to 15 mins (is it mins or sec or ms?).. i.e. u need to wait 15 mins to try again
     b_wrapper
         .execute_tx(
             &owner_address,
@@ -848,6 +946,7 @@ fn mint_nft_ft_test() {
         )
         .assert_ok();
 
+    // [test] fails as user did not wait 15 mins to try (@TOCONFIRM - if last test reverted then last_mint_time should not be set right? so how does this fail?)
     b_wrapper
         .execute_tx(
             &first_user_address,
@@ -857,10 +956,10 @@ fn mint_nft_ft_test() {
                 sc.mint_token(
                     managed_buffer!(USER_NFT_NAME),
                     managed_buffer!(MEDIA_URI),
-                    managed_buffer!(DATA_MARCHAL),
+                    managed_buffer!(DATA_MARSHAL),
                     managed_buffer!(DATA_STREAM),
-                    managed_buffer!(DATA_STREAM),
-                    managed_biguint!(20),
+                    managed_buffer!(DATA_PREVIEW),
+                    managed_biguint!(2000u64),
                     managed_biguint!(5),
                     managed_buffer!(USER_NFT_NAME),
                     managed_buffer!(USER_NFT_NAME),
@@ -869,6 +968,7 @@ fn mint_nft_ft_test() {
         )
         .assert_error(4, "You need to wait more time before minting again");
 
+    // [setup] setting mint_time_limit to 0 mins (is it mins or sec or ms?).. i.e. u need to wait 0 mins to try again
     b_wrapper
         .execute_tx(
             &owner_address,
@@ -880,6 +980,7 @@ fn mint_nft_ft_test() {
         )
         .assert_ok();
 
+    // [setup] setting set_whitelist_spots to caller so he is whitelisted
     b_wrapper
         .execute_tx(
             &owner_address,
@@ -893,6 +994,7 @@ fn mint_nft_ft_test() {
         )
         .assert_ok();
 
+    // [test] require_value_is_positive assert fails as user is setting egld_payment to 0 (should be the ITHEUM tax amount)
     b_wrapper
         .execute_tx(
             &first_user_address,
@@ -902,10 +1004,10 @@ fn mint_nft_ft_test() {
                 sc.mint_token(
                     managed_buffer!(USER_NFT_NAME),
                     managed_buffer!(MEDIA_URI),
-                    managed_buffer!(DATA_MARCHAL),
+                    managed_buffer!(DATA_MARSHAL),
                     managed_buffer!(DATA_STREAM),
-                    managed_buffer!(DATA_STREAM),
-                    managed_biguint!(20),
+                    managed_buffer!(DATA_PREVIEW),
+                    managed_biguint!(2000u64),
                     managed_biguint!(5),
                     managed_buffer!(USER_NFT_NAME),
                     managed_buffer!(USER_NFT_NAME),
@@ -914,6 +1016,7 @@ fn mint_nft_ft_test() {
         )
         .assert_error(4, "Value must be higher than zero");
 
+    // [test] fails as tax payment is not sufficient (egld_payment value is less than anti_spam_tax(&payment.token_identifier).get())
     b_wrapper
         .execute_tx(
             &first_user_address,
@@ -923,10 +1026,10 @@ fn mint_nft_ft_test() {
                 sc.mint_token(
                     managed_buffer!(USER_NFT_NAME),
                     managed_buffer!(MEDIA_URI),
-                    managed_buffer!(DATA_MARCHAL),
+                    managed_buffer!(DATA_MARSHAL),
                     managed_buffer!(DATA_STREAM),
-                    managed_buffer!(DATA_STREAM),
-                    managed_biguint!(20),
+                    managed_buffer!(DATA_PREVIEW),
+                    managed_biguint!(2000u64),
                     managed_biguint!(5),
                     managed_buffer!(USER_NFT_NAME),
                     managed_buffer!(USER_NFT_NAME),
@@ -935,6 +1038,7 @@ fn mint_nft_ft_test() {
         )
         .assert_error(4, "Wrong amount of payment sent");
 
+    // [setup] setting set_anti_spam_tax to 200 ITHEUM
     b_wrapper
         .execute_tx(
             &owner_address,
@@ -944,8 +1048,10 @@ fn mint_nft_ft_test() {
         )
         .assert_ok();
 
+    // [setup] giving the minter contract special roles needed. (in actual contract this is done on async OK of initialize_contract.issue_semi_fungible)
     b_wrapper.set_esdt_local_roles(setup.contract_wrapper.address_ref(), SFT_TICKER, ROLES);
 
+    // [test] minting will now succeed as it meets all criteria
     b_wrapper
         .execute_esdt_transfer(
             first_user_address,
@@ -957,10 +1063,10 @@ fn mint_nft_ft_test() {
                 sc.mint_token(
                     managed_buffer!(USER_NFT_NAME),
                     managed_buffer!(MEDIA_URI),
-                    managed_buffer!(DATA_MARCHAL),
+                    managed_buffer!(DATA_MARSHAL),
                     managed_buffer!(DATA_STREAM),
-                    managed_buffer!(DATA_STREAM),
-                    managed_biguint!(20),
+                    managed_buffer!(DATA_PREVIEW),
+                    managed_biguint!(2000u64),
                     managed_biguint!(5),
                     managed_buffer!(USER_NFT_NAME),
                     managed_buffer!(USER_NFT_NAME),
@@ -969,6 +1075,7 @@ fn mint_nft_ft_test() {
         )
         .assert_ok();
 
+    // [test] as minting succeeded, minted_tokens should increment by 1
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
             assert_eq!(sc.minted_tokens().get(), 1u64);
@@ -985,6 +1092,7 @@ fn mint_nft_ft_test() {
         })
         .assert_ok();
 
+    // [test] as minting succeeded, minted_per_address should increment by 1
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
             assert_eq!(
@@ -994,6 +1102,62 @@ fn mint_nft_ft_test() {
             );
         })
         .assert_ok();
+
+    // [setup] remove the user from whitelist so we can test re-mint prevention
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                let mut args = MultiValueEncoded::new();
+                args.push(managed_address!(&first_user_address));
+                sc.remove_whitelist_spots(args);
+            },
+        )
+        .assert_ok();
+
+    // [test] mint another SFT but it will fail as user was removed from whitelist
+    b_wrapper
+        .execute_esdt_transfer(
+            first_user_address,
+            &setup.contract_wrapper,
+            TOKEN_ID,
+            0,
+            &rust_biguint!(200),
+            |sc| {
+                sc.mint_token(
+                    managed_buffer!(USER_NFT_NAME),
+                    managed_buffer!(MEDIA_URI),
+                    managed_buffer!(DATA_MARSHAL),
+                    managed_buffer!(DATA_STREAM),
+                    managed_buffer!(DATA_PREVIEW),
+                    managed_biguint!(2000u64),
+                    managed_biguint!(5),
+                    managed_buffer!(USER_NFT_NAME),
+                    managed_buffer!(USER_NFT_NAME),
+                );
+            },
+        )
+        .assert_error(4, "You are not whitelisted");
+
+    // [setup] whitelisting him again so we can test a remint
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                let mut args = MultiValueEncoded::new();
+                args.push(managed_address!(&first_user_address));
+                sc.set_whitelist_spots(args);
+            },
+        )
+        .assert_ok();
+
+    // [test] mint another SFT (with new links), it succeeds as the mint_time_limit was set to 0 above
+    let data_stream_2: &[u8] = b"https://DATA-STREAM-ECRYPTED/stream-2";
+    let data_preview_2: &[u8] = b"https://DATA-STREAM-ECRYPTED/stream-preview";
 
     b_wrapper
         .execute_esdt_transfer(
@@ -1006,10 +1170,10 @@ fn mint_nft_ft_test() {
                 sc.mint_token(
                     managed_buffer!(USER_NFT_NAME),
                     managed_buffer!(MEDIA_URI),
-                    managed_buffer!(DATA_MARCHAL),
-                    managed_buffer!(DATA_STREAM),
-                    managed_buffer!(DATA_STREAM),
-                    managed_biguint!(20),
+                    managed_buffer!(DATA_MARSHAL),
+                    managed_buffer!(data_stream_2),
+                    managed_buffer!(data_preview_2),
+                    managed_biguint!(2000u64),
                     managed_biguint!(5),
                     managed_buffer!(USER_NFT_NAME),
                     managed_buffer!(USER_NFT_NAME),
@@ -1018,13 +1182,32 @@ fn mint_nft_ft_test() {
         )
         .assert_ok();
 
+    // [test] as minting succeeded, minted_tokens should increment by 1 (1 -> 2)
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(sc.minted_tokens().get(), 2u64);
+        })
+        .assert_ok();
+
+    // [test] as minting succeeded, minted_per_address should increment by 1 (1 -> 2)
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(
+                sc.minted_per_address(&managed_address!(first_user_address))
+                    .get(),
+                2u64
+            );
+        })
+        .assert_ok();
+
+    // [test] test if the get_user_data_out view returns the correct final state view based on our tests above
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
             let data_out = UserDataOut {
                 anti_spam_tax_value: sc.anti_spam_tax(&managed_token_id_wrapped!(TOKEN_ID)).get(),
                 is_paused: sc.is_paused().get(),
-                max_royalities: sc.max_royalties().get(),
-                min_royalities: sc.min_royalties().get(),
+                max_royalties: sc.max_royalties().get(),
+                min_royalties: sc.min_royalties().get(),
                 max_supply: sc.max_supply().get(),
                 mint_time_limit: sc.mint_time_limit().get(),
                 last_mint_time: sc
@@ -1049,6 +1232,7 @@ fn mint_nft_ft_test() {
         })
         .assert_ok();
 
+    // [test] test if DataNftAttributes of 1st (nonce) SFT minted above matches on-chain state (and if creator attr holds user address)
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
             let token_data = sc.blockchain().get_esdt_token_data(
@@ -1061,8 +1245,8 @@ fn mint_nft_ft_test() {
             let test_attributes: DataNftAttributes<TxContextRef> = DataNftAttributes {
                 creation_time: attributes.creation_time,
                 creator: managed_address!(first_user_address),
-                data_marshal_url: managed_buffer!(DATA_MARCHAL),
-                data_preview_url: managed_buffer!(DATA_STREAM),
+                data_marshal_url: managed_buffer!(DATA_MARSHAL),
+                data_preview_url: managed_buffer!(DATA_PREVIEW),
                 data_stream_url: managed_buffer!(DATA_STREAM),
                 title: managed_buffer!(USER_NFT_NAME),
                 description: managed_buffer!(USER_NFT_NAME),
@@ -1072,6 +1256,7 @@ fn mint_nft_ft_test() {
         })
         .assert_ok();
 
+    // [test] test if DataNftAttributes of 2nd (nonce) SFT minted above matches on-chain state (and if creator attr holds user address)
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
             let token_data = sc.blockchain().get_esdt_token_data(
@@ -1084,9 +1269,9 @@ fn mint_nft_ft_test() {
             let test_attributes: DataNftAttributes<TxContextRef> = DataNftAttributes {
                 creation_time: attributes.creation_time,
                 creator: managed_address!(first_user_address),
-                data_marshal_url: managed_buffer!(DATA_MARCHAL),
-                data_preview_url: managed_buffer!(DATA_STREAM),
-                data_stream_url: managed_buffer!(DATA_STREAM),
+                data_marshal_url: managed_buffer!(DATA_MARSHAL),
+                data_preview_url: managed_buffer!(data_preview_2),
+                data_stream_url: managed_buffer!(data_stream_2),
                 title: managed_buffer!(USER_NFT_NAME),
                 description: managed_buffer!(USER_NFT_NAME),
             };
@@ -1096,7 +1281,7 @@ fn mint_nft_ft_test() {
         .assert_ok()
 }
 
-#[test] //Tests wheter the whitelist functionality works as expected
+#[test] //Tests whether the whitelist functionality works as expected
 fn white_list_test() {
     let mut setup = setup_contract(datanftmint::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
@@ -1204,7 +1389,7 @@ fn white_list_test() {
         .assert_user_error("Address not in whitelist");
 }
 
-#[test] // Tests wheter the burn functionality works as expected
+#[test] // Tests whether the burn functionality works as expected
 fn burn_token_test() {
     let mut setup = setup_contract(datanftmint::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
@@ -1212,6 +1397,7 @@ fn burn_token_test() {
     let first_user_address = &setup.first_user_address;
     let treasury_address = &setup.treasury_address;
 
+    // [setup] add caller to whitelist so he can mint
     b_wrapper
         .execute_tx(
             &owner_address,
@@ -1225,6 +1411,7 @@ fn burn_token_test() {
         )
         .assert_ok();
 
+    // [setup] add anti-spam tax or minting is prevented
     b_wrapper
         .execute_tx(
             &owner_address,
@@ -1234,6 +1421,7 @@ fn burn_token_test() {
         )
         .assert_ok();
 
+    // [setup] add collection id or minting is prevented
     b_wrapper
         .execute_tx(
             &owner_address,
@@ -1243,8 +1431,10 @@ fn burn_token_test() {
         )
         .assert_ok();
 
+    // [setup] give contract required sft roles
     b_wrapper.set_esdt_local_roles(setup.contract_wrapper.address_ref(), SFT_TICKER, ROLES);
 
+    // [setup] unpause or minting is prevented
     b_wrapper
         .execute_tx(
             &owner_address,
@@ -1256,6 +1446,7 @@ fn burn_token_test() {
         )
         .assert_ok();
 
+    // [test] mint an SFT with 5 supply
     b_wrapper
         .execute_tx(
             &owner_address,
@@ -1279,9 +1470,9 @@ fn burn_token_test() {
                 sc.mint_token(
                     managed_buffer!(USER_NFT_NAME),
                     managed_buffer!(MEDIA_URI),
-                    managed_buffer!(DATA_MARCHAL),
+                    managed_buffer!(DATA_MARSHAL),
                     managed_buffer!(DATA_STREAM),
-                    managed_buffer!(DATA_STREAM),
+                    managed_buffer!(DATA_PREVIEW),
                     managed_biguint!(20),
                     managed_biguint!(5),
                     managed_buffer!(USER_NFT_NAME),
@@ -1291,6 +1482,7 @@ fn burn_token_test() {
         )
         .assert_ok();
 
+    // [test] check if blockchain reports a balance of 5 for the newly minted SFT
     b_wrapper.check_nft_balance(
         first_user_address,
         SFT_TICKER,
@@ -1299,6 +1491,7 @@ fn burn_token_test() {
         Option::<&Empty>::None,
     );
 
+    // [test] burn just 1 of the supply
     b_wrapper
         .execute_esdt_transfer(
             &first_user_address,
@@ -1312,6 +1505,7 @@ fn burn_token_test() {
         )
         .assert_ok();
 
+    // [test] check if blockchain reports a new balance of 4
     b_wrapper.check_nft_balance(
         first_user_address,
         SFT_TICKER,
@@ -1321,7 +1515,7 @@ fn burn_token_test() {
     );
 }
 
-#[test] // Tests wheter the url is valid
+#[test] // Tests whether the url is valid
 fn url_validation_test() {
     let mut setup = setup_contract(datanftmint::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
@@ -1360,7 +1554,7 @@ fn url_validation_test() {
         .execute_query(&setup.contract_wrapper, |sc| {
             sc.require_url_is_valid(&managed_buffer!(&[
                 SFT_TICKER,
-                DATA_MARCHAL,
+                DATA_MARSHAL,
                 DATA_STREAM,
                 MEDIA_URI,
                 DATA_STREAM,
@@ -1368,7 +1562,7 @@ fn url_validation_test() {
                 DATA_STREAM,
                 MEDIA_URI,
                 SFT_TICKER,
-                DATA_MARCHAL,
+                DATA_MARSHAL,
                 DATA_STREAM,
                 MEDIA_URI,
                 DATA_STREAM,
@@ -1384,7 +1578,7 @@ fn url_validation_test() {
         .execute_query(&setup.contract_wrapper, |sc| {
             sc.require_url_is_adequate_length(&managed_buffer!(&[
                 SFT_TICKER,
-                DATA_MARCHAL,
+                DATA_MARSHAL,
                 DATA_STREAM,
                 MEDIA_URI,
                 DATA_STREAM,
@@ -1392,7 +1586,7 @@ fn url_validation_test() {
                 DATA_STREAM,
                 MEDIA_URI,
                 SFT_TICKER,
-                DATA_MARCHAL,
+                DATA_MARSHAL,
                 DATA_STREAM,
                 MEDIA_URI,
                 DATA_STREAM,
@@ -1411,7 +1605,7 @@ fn url_validation_test() {
         .assert_ok();
 }
 
-#[test] // Tests wheter an user cannont interact with functions that require privileges
+#[test] // Tests whether an user cannot interact with functions that require privileges
 fn privileges_test() {
     let mut setup = setup_contract(datanftmint::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;

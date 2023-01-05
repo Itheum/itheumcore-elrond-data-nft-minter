@@ -7,8 +7,8 @@ elrond_wasm::derive_imports!();
 pub struct UserDataOut<M: ManagedTypeApi> {
     pub anti_spam_tax_value: BigUint<M>,
     pub is_paused: bool,
-    pub max_royalities: BigUint<M>,
-    pub min_royalities: BigUint<M>,
+    pub max_royalties: BigUint<M>,
+    pub min_royalties: BigUint<M>,
     pub max_supply: BigUint<M>,
     pub mint_time_limit: u64,
     pub last_mint_time: u64,
@@ -31,8 +31,8 @@ pub trait ViewsModule: crate::storage::StorageModule {
         {
             let anti_spam_tax_value = self.anti_spam_tax(tax_token).get(); //if it returns 0 the token is not supported
             let is_paused = self.is_paused().get();
-            let max_royalities = self.max_royalties().get();
-            let min_royalities = self.min_royalties().get();
+            let max_royalties = self.max_royalties().get();
+            let min_royalties = self.min_royalties().get();
             let max_supply = self.max_supply().get();
             let mint_time_limit = self.mint_time_limit().get();
             let last_mint_time = self.last_mint_time(&address).get();
@@ -44,8 +44,8 @@ pub trait ViewsModule: crate::storage::StorageModule {
             let user_data = UserDataOut {
                 anti_spam_tax_value,
                 is_paused,
-                max_royalities,
-                min_royalities,
+                max_royalties,
+                min_royalties,
                 max_supply,
                 mint_time_limit,
                 last_mint_time,

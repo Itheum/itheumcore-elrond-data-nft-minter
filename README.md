@@ -397,7 +397,7 @@ This smart contract aims to offer the Elrond community an audited NFT minter sma
 ### Setting up dev environment (project development bootstrap)
 - Uses `elrond-wasm-* 0.37.0` SDK libs (see Cargo.toml)
 - Building requires minimum **erdpy 2.0.0** (newer version should also work but devs used 2.0.0). Check version using `erdpy --version`
-- To build the project, requires minimum Rust version `1.68.0-nightly`. Check you Rust version by running `rustc --version`. To update your Rust, run `rustup update`. To set to nightly run `rustup default nightly`
+- To build the project, requires minimum Rust version `1.68.0-nightly`. Check your Rust version by running `rustc --version`. To update your Rust, run `rustup update`. To set to nightly run `rustup default nightly`
 - After you make sure you have the minimum Rust version you can then begin development. After you clone repo and before you run build, deploy or run the tests - follow these steps (most likely only needed the 1st time)
 ```
 rustup default nightly
@@ -422,7 +422,7 @@ The Smart Contract is structured in 6 files:
 
 ### How to test
 
-Prior to running the below, make sure you check section called **Setting up dev environment (project development bootstrap)** above and your dev environment is configured correctly. You also need to run `erdpy contract build` prior to running tests.
+Prior to running the below, make sure you check section called **Setting up dev environment (project development bootstrap)** above and your dev environment is configured correctly. You also need to run `erdpy contract build` (requires you to be online with internet connection) prior to running tests.
 
 The tests are located in the tests folder, in the rust_tests file. In order to run the tests one can use the command:
 

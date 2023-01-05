@@ -15,9 +15,9 @@ elrond_wasm_node::wasm_endpoints! {
     datanftmint
     (
         initializeContract
+        setTreasuryAddress
         mint
         burn
-        setTreasuryAddress
         setIsPaused
         setAntiSpamTax
         setWhiteListEnabled
