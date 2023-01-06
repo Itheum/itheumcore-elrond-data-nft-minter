@@ -1091,6 +1091,16 @@ fn mint_nft_ft_test() {
             )
         })
         .assert_ok();
+    // check if the data NFT-FT is not in the contract balance
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(
+                sc.blockchain()
+                    .get_sc_balance(&managed_token_id_wrapped!(SFT_TICKER), 1),
+                managed_biguint!(0u64)
+            )
+        })
+        .assert_ok();
 
     // [test] as minting succeeded, minted_per_address should increment by 1
     b_wrapper
