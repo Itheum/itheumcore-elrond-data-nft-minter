@@ -94,9 +94,12 @@ pub trait CollectionManagement:
     #[only_owner]
     #[endpoint(freeze)]
     fn freeze_collection_for_address(&self, address: &ManagedAddress) {
-        if self.black_list().insert(address.clone()) {
+        if self
+            .freezed_addresses_for_collection()
+            .insert(address.clone())
+        {
             let token_identifier = self.token_id().get_token_id();
-            self.set_blacklist_spot_event(&address);
+            self.set_collection_freeze_list_spot_event(&address);
             self.send()
                 .esdt_system_sc_proxy()
                 .freeze(&token_identifier, &address)
@@ -111,9 +114,9 @@ pub trait CollectionManagement:
     #[only_owner]
     #[endpoint(unfreeze)]
     fn unfreeze_collection_for_address(&self, address: &ManagedAddress) {
-        if self.black_list().remove(address) {
+        if self.freezed_addresses_for_collection().remove(address) {
             let token_identifier = self.token_id().get_token_id();
-            self.remove_blacklist_spot_event(&address);
+            self.remove_collection_freeze_list_spot_event(&address);
             self.send()
                 .esdt_system_sc_proxy()
                 .unfreeze(&token_identifier, &address)
@@ -129,13 +132,15 @@ pub trait CollectionManagement:
     fn freeze_single_token_for_address(&self, nonce: u64, address: &ManagedAddress) {
         let caller = self.blockchain().get_caller();
         self.require_is_privileged(&caller);
-        if self.black_list().insert(address.clone()) {
-            self.set_blacklist_spot_event(&address);
+        if !self.freezed_addresses_for_collection().contains(&address) {
+            let total_freezed = self.freezed_sfts_per_address(address).push(&nonce);
+            self.freezed_count(&address).set(&total_freezed);
+            self.set_freezed_sfts_per_address_event(&address, nonce);
             self.freeze_single_nft(nonce, &address)
                 .async_call()
                 .call_and_exit();
         } else {
-            sc_panic!("Address already in blacklist");
+            sc_panic!("Address already in collection blacklist");
         }
     }
 
@@ -144,13 +149,21 @@ pub trait CollectionManagement:
     fn unfreeze_single_token_for_address(&self, nonce: u64, address: &ManagedAddress) {
         let caller = self.blockchain().get_caller();
         self.require_is_privileged(&caller);
-        if self.black_list().remove(address) {
-            self.remove_blacklist_spot_event(&address);
-            self.unfreeze_single_nft(nonce, &address)
-                .async_call()
-                .call_and_exit();
+        let total_freezed = self.freezed_count(&address).get();
+        if !self.freezed_addresses_for_collection().contains(&address) {
+            for item in 1..=total_freezed {
+                if self.freezed_sfts_per_address(&address).get(item) == nonce {
+                    self.freezed_sfts_per_address(&address).clear_entry(item);
+                    self.freezed_count(&address)
+                        .set(&(self.freezed_sfts_per_address(&address).len()));
+                    self.remove_freezed_sfts_per_address_event(&address, nonce);
+                    self.unfreeze_single_nft(nonce, &address)
+                        .async_call()
+                        .call_and_exit();
+                }
+            }
         } else {
-            sc_panic!("Address not in blacklist");
+            sc_panic!("Address is in collection blacklist");
         }
     }
 
@@ -158,13 +171,23 @@ pub trait CollectionManagement:
     #[endpoint(wipeSingleNFT)]
     fn wipe_single_token_for_address(&self, nonce: u64, address: &ManagedAddress) {
         let caller = self.blockchain().get_caller();
+        let token_identifier = self.token_id().get_token_id();
         self.require_is_privileged(&caller);
-        if self.black_list().contains(&address) {
-            self.wipe_single_nft(nonce, &address)
-                .async_call()
-                .call_and_exit();
+        let total_freezed = self.freezed_count(&address).get();
+        if !self.freezed_addresses_for_collection().contains(&address) {
+            for item in 1..total_freezed {
+                if self.freezed_sfts_per_address(&address).get(item) == nonce {
+                    self.freezed_sfts_per_address(&address).clear_entry(item);
+                    self.freezed_count(&address)
+                        .set(&(self.freezed_sfts_per_address(&address).len()));
+                    self.wipe_event(&address, &token_identifier, nonce);
+                    self.wipe_single_nft(nonce, &address)
+                        .async_call()
+                        .call_and_exit();
+                }
+            }
         } else {
-            sc_panic!("Address is not freezed");
+            sc_panic!("Address is in collection blacklist");
         }
     }
 }

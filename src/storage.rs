@@ -80,9 +80,20 @@ pub trait StorageModule {
     #[storage_mapper("white_list")]
     fn white_list(&self) -> SetMapper<ManagedAddress>;
 
-    #[view(getBlackList)]
-    #[storage_mapper("black_list")]
-    fn black_list(&self) -> SetMapper<ManagedAddress>;
+    // Stores the addresses that have been freezed for the entire collection
+    #[view(getCollectionFreezedList)]
+    #[storage_mapper("collection_freezed_list")]
+    fn freezed_addresses_for_collection(&self) -> SetMapper<ManagedAddress>;
+
+    // Stores the actual nonces that have been freezed for an address in a vector
+    #[view(getSftsFreezedForAddress)]
+    #[storage_mapper("sfts_freezed_list_per_address")]
+    fn freezed_sfts_per_address(&self, address: &ManagedAddress) -> VecMapper<u64>;
+
+    // stores the total number of nonces freezed for an address
+    #[view(getFreezedCount)]
+    #[storage_mapper("freezed_count_per_address")]
+    fn freezed_count(&self, address: &ManagedAddress) -> SingleValueMapper<usize>;
 
     // Stores whether the contract is in private sale mode or not
     #[view(isWhiteListEnabled)]

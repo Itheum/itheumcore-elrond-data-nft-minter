@@ -7,7 +7,7 @@ use datanftmint::storage::*;
 use datanftmint::views::{UserDataOut, ViewsModule};
 use datanftmint::*;
 use elrond_wasm::contract_base::ContractBase;
-use elrond_wasm::types::MultiValueEncoded;
+use elrond_wasm::types::{ManagedVec, MultiValueEncoded};
 use elrond_wasm::{
     elrond_codec::Empty,
     storage::mappers::StorageTokenWrapper,
@@ -1213,6 +1213,11 @@ fn mint_nft_ft_test() {
     // [test] test if the get_user_data_out view returns the correct final state view based on our tests above
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
+            let nonces = sc.freezed_sfts_per_address(&managed_address!(first_user_address));
+            let mut frozen_nonces = ManagedVec::new();
+            for item in nonces.iter() {
+                frozen_nonces.push(item);
+            }
             let data_out = UserDataOut {
                 anti_spam_tax_value: sc.anti_spam_tax(&managed_token_id_wrapped!(TOKEN_ID)).get(),
                 is_paused: sc.is_paused().get(),
@@ -1231,6 +1236,10 @@ fn mint_nft_ft_test() {
                     .minted_per_address(&managed_address!(first_user_address))
                     .get(),
                 total_minted: sc.minted_tokens().get(),
+                frozen: sc
+                    .freezed_addresses_for_collection()
+                    .contains(&managed_address!(first_user_address)),
+                frozen_nonces: frozen_nonces,
             };
             assert_eq!(
                 sc.get_user_data_out(
