@@ -153,7 +153,7 @@ pub trait CollectionManagement:
         if !self.freezed_addresses_for_collection().contains(&address) {
             for item in 1..=total_freezed {
                 if self.freezed_sfts_per_address(&address).get(item) == nonce {
-                    self.freezed_sfts_per_address(&address).clear_entry(item);
+                    self.freezed_sfts_per_address(&address).swap_remove(item);
                     self.freezed_count(&address)
                         .set(&(self.freezed_sfts_per_address(&address).len()));
                     self.remove_freezed_sfts_per_address_event(&address, nonce);
@@ -175,9 +175,9 @@ pub trait CollectionManagement:
         self.require_is_privileged(&caller);
         let total_freezed = self.freezed_count(&address).get();
         if !self.freezed_addresses_for_collection().contains(&address) {
-            for item in 1..total_freezed {
+            for item in 1..=total_freezed {
                 if self.freezed_sfts_per_address(&address).get(item) == nonce {
-                    self.freezed_sfts_per_address(&address).clear_entry(item);
+                    self.freezed_sfts_per_address(&address).swap_remove(item);
                     self.freezed_count(&address)
                         .set(&(self.freezed_sfts_per_address(&address).len()));
                     self.wipe_event(&address, &token_identifier, nonce);

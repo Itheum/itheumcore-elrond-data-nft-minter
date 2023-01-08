@@ -40,9 +40,9 @@ elrond_wasm_node::wasm_endpoints! {
         mintTimeLimit
         lastMintTime
         getWhiteList
-        getCollectionBlackList
-        getBlackList
-        getFreezeCount
+        getCollectionFreezedList
+        getSftsFreezedForAddress
+        getFreezedCount
         isWhiteListEnabled
         getAdministrator
         getUserDataOut
