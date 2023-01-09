@@ -16,6 +16,8 @@ pub struct UserDataOut<M: ManagedTypeApi> {
     pub is_whitelisted: bool,
     pub minted_per_user: BigUint<M>,
     pub total_minted: BigUint<M>,
+    pub frozen: bool,
+    pub frozen_nonces: ManagedVec<M, u64>,
 }
 
 //Module that handles read-only endpoints (views) for the smart contract
@@ -40,6 +42,12 @@ pub trait ViewsModule: crate::storage::StorageModule {
             let is_whitelisted = self.white_list().contains(&address);
             let minted_per_user = self.minted_per_address(&address).get();
             let total_minted = self.minted_tokens().get();
+            let frozen = self.freezed_addresses_for_collection().contains(&address);
+            let nonces = self.freezed_sfts_per_address(&address);
+            let mut frozen_nonces = ManagedVec::new();
+            for item in nonces.iter() {
+                frozen_nonces.push(item);
+            }
 
             let user_data = UserDataOut {
                 anti_spam_tax_value,
@@ -53,6 +61,8 @@ pub trait ViewsModule: crate::storage::StorageModule {
                 is_whitelisted,
                 minted_per_user,
                 total_minted,
+                frozen,
+                frozen_nonces,
             };
             user_data
         }

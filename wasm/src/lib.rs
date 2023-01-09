@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           37
+// Endpoints:                           39
 // Async Callback:                       1
-// Total number of exported functions:  39
+// Total number of exported functions:  41
 
 #![no_std]
 
@@ -15,9 +15,9 @@ elrond_wasm_node::wasm_endpoints! {
     datanftmint
     (
         initializeContract
-        setTreasuryAddress
         mint
         burn
+        setTreasuryAddress
         setIsPaused
         setAntiSpamTax
         setWhiteListEnabled
@@ -40,7 +40,9 @@ elrond_wasm_node::wasm_endpoints! {
         mintTimeLimit
         lastMintTime
         getWhiteList
-        getBlackList
+        getCollectionFreezedList
+        getSftsFreezedForAddress
+        getFreezedCount
         isWhiteListEnabled
         getAdministrator
         getUserDataOut
