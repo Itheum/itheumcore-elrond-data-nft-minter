@@ -35,12 +35,14 @@ initializeContract(){
     # $2 = collection ticker
     # #3 = anti spam tax
     # $4 = mint time limit
+    # $5 = treasury address
 
     collection_name="0x$(echo -n ${1} | xxd -p -u | tr -d '\n')"
     collection_ticker="0x$(echo -n ${2} | xxd -p -u | tr -d '\n')"
     token_identifier=${TOKEN_HEX}
     anti_spam_tax=${3}
     mint_time_limit=${4}
+    treasury_address="0x$(erdpy wallet bech32 --decode ${5})"
     
 
     erdpy --verbose contract call ${ADDRESS} \
@@ -49,7 +51,7 @@ initializeContract(){
     --gas-limit=300000000 \
     --value=50000000000000000 \
     --function "initializeContract" \
-    --arguments $collection_name $collection_ticker $token_identifier $anti_spam_tax $mint_time_limit \
+    --arguments $collection_name $collection_ticker $token_identifier $anti_spam_tax $mint_time_limit $treasury_address \
     --proxy ${PROXY} \
     --chain ${CHAIN_ID} \
     --send || return
@@ -122,7 +124,7 @@ unfreeze(){
     erdpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
-    --gas-limit=90000000 \
+    --gas-limit=9000000 \
     --function "unfreeze" \
     --arguments $address \
     --proxy ${PROXY} \

@@ -19,13 +19,29 @@ pub trait EventsModule {
     #[event("whitelistSpotSet")]
     fn set_whitelist_spot_event(&self, #[indexed] address: &ManagedAddress);
 
-    // Emitted whenever a blacklist spot is set
-    #[event("blacklistSpotSet")]
-    fn set_blacklist_spot_event(&self, #[indexed] address: &ManagedAddress);
+    // Emitted whenever a freezed spot is set
+    #[event("collectionFreezeListSpotSet")]
+    fn set_collection_freeze_list_spot_event(&self, #[indexed] address: &ManagedAddress);
 
-    // Emitted whenever a blacklist spot is removed
-    #[event("blacklistSpotRemoved")]
-    fn remove_blacklist_spot_event(&self, #[indexed] address: &ManagedAddress);
+    // Emitted whenever a single NFT is frozen
+    #[event("freezedSftsPerAddress")]
+    fn set_freezed_sfts_per_address_event(
+        &self,
+        #[indexed] address: &ManagedAddress,
+        #[indexed] nonce: u64,
+    );
+
+    // Emitted whenever a single NFT is unfrozen
+    #[event("unFreezedSftsPerAddress")]
+    fn remove_freezed_sfts_per_address_event(
+        &self,
+        #[indexed] address: &ManagedAddress,
+        #[indexed] nonce: u64,
+    );
+
+    // Emitted whenever a collection freeze spot is removed
+    #[event("collectionFreezeListRemoved")]
+    fn remove_collection_freeze_list_spot_event(&self, #[indexed] address: &ManagedAddress);
 
     // Emitted whenever a whitelist spot is removed
     #[event("whitelistSpotRemoved")]
