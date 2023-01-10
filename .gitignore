@@ -11,6 +11,7 @@ interact-rs/
 wallets/
 commands.txt
 wallet.pem
+*.pem
 erdpy.data-storage.json
 deploy-devnet.interaction.json
 

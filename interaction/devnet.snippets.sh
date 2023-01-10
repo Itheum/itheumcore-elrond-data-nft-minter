@@ -57,7 +57,6 @@ initializeContract(){
     --send || return
 }
 
-
 pause(){
     erdpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
@@ -68,7 +67,6 @@ pause(){
     --chain ${CHAIN_ID} \
     --send || return
 }
-
 
 unpause(){
     erdpy --verbose contract call ${ADDRESS} \
@@ -97,8 +95,6 @@ freeze(){
     --send || return 
 }
 
-
-
 freezeSingleNFT(){
     # $1 = token nonce
     # $2 = address to freeze
@@ -124,14 +120,13 @@ unfreeze(){
     erdpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
-    --gas-limit=9000000 \
+    --gas-limit=90000000 \
     --function "unfreeze" \
     --arguments $address \
     --proxy ${PROXY} \
     --chain ${CHAIN_ID} \
     --send || return 
 }
-
 
 unFreezeSingleNFT(){
     # $1 = token nonce
@@ -150,7 +145,6 @@ unFreezeSingleNFT(){
     --send || return 
 }
 
-
 wipeSingleNFT(){
     # $1 = token nonce
     # $2 = address to wipe tokens from
@@ -167,7 +161,6 @@ wipeSingleNFT(){
     --chain ${CHAIN_ID} \
     --send || return 
 }
-
 
 burn(){
     #   $1 = NFT/SFT Token Identifier,
@@ -270,7 +263,6 @@ setWhiteListSpots(){
     --send || return
 }
 
-
 removeWhiteListSpots(){
     # $1 = address
 
@@ -286,7 +278,6 @@ removeWhiteListSpots(){
     --chain ${CHAIN_ID} \
     --send || return
 }
-
 
 setMintTimeLimit(){
     # $1 = mint time limit value u64
