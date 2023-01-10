@@ -404,6 +404,10 @@ Main view of the contract. Receives an address and a token identifier as argumen
 - **last_mint_time**: the last time a data NFT-FT was minted by the given address
 - **whitelist_enabled**: a boolean that indicates if the whitelist is enabled or not
 - **is_whitelisted**: a boolean that indicates if the given address is whitelisted or not
+- **minted_per_user**: total number of minted data NFT-FTs for given address
+- **total_minted**: the total number of minted data NFT-FTs
+- **frozen**: boolean that indicates if the given address is frozen or not for the entire collection
+- **frozen_nonces**: a list of frozen nonces (of the smart contract token) for the given address
 
 ## Development
 

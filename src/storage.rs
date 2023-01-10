@@ -88,7 +88,7 @@ pub trait StorageModule {
     // Stores the actual nonces that have been freezed for an address in a vector
     #[view(getSftsFreezedForAddress)]
     #[storage_mapper("sfts_freezed_list_per_address")]
-    fn freezed_sfts_per_address(&self, address: &ManagedAddress) -> VecMapper<u64>;
+    fn freezed_sfts_per_address(&self, address: &ManagedAddress) -> SetMapper<u64>;
 
     // stores the total number of nonces freezed for an address
     #[view(getFreezedCount)]
