@@ -141,7 +141,7 @@ pub trait CollectionManagement:
                     .async_call()
                     .call_and_exit();
             } else {
-                sc_panic!("Nonce not found in freeze list");
+                sc_panic!("Nonce is in freeze list");
             }
         } else {
             sc_panic!("Address is in collection freeze list");
