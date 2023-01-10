@@ -132,19 +132,15 @@ pub trait CollectionManagement:
     fn freeze_single_token_for_address(&self, nonce: u64, address: &ManagedAddress) {
         let caller = self.blockchain().get_caller();
         self.require_is_privileged(&caller);
-        if !self.freezed_addresses_for_collection().contains(&address) {
-            if self.freezed_sfts_per_address(&address).insert(nonce) {
-                let total_freezed = self.freezed_sfts_per_address(&address).len();
-                self.freezed_count(&address).set(&total_freezed);
-                self.set_freezed_sfts_per_address_event(&address, nonce);
-                self.freeze_single_nft(nonce, &address)
-                    .async_call()
-                    .call_and_exit();
-            } else {
-                sc_panic!("Nonce is in freeze list");
-            }
+        if self.freezed_sfts_per_address(&address).insert(nonce) {
+            let total_freezed = self.freezed_sfts_per_address(&address).len();
+            self.freezed_count(&address).set(&total_freezed);
+            self.set_freezed_sfts_per_address_event(&address, nonce);
+            self.freeze_single_nft(nonce, &address)
+                .async_call()
+                .call_and_exit();
         } else {
-            sc_panic!("Address is in collection freeze list");
+            sc_panic!("Nonce is in freeze list");
         }
     }
 
@@ -153,19 +149,15 @@ pub trait CollectionManagement:
     fn unfreeze_single_token_for_address(&self, nonce: u64, address: &ManagedAddress) {
         let caller = self.blockchain().get_caller();
         self.require_is_privileged(&caller);
-        if !self.freezed_addresses_for_collection().contains(&address) {
-            if self.freezed_sfts_per_address(&address).remove(&nonce) {
-                let total_freezed = self.freezed_sfts_per_address(&address).len();
-                self.freezed_count(&address).set(&total_freezed);
-                self.remove_freezed_sfts_per_address_event(&address, nonce);
-                self.unfreeze_single_nft(nonce, &address)
-                    .async_call()
-                    .call_and_exit();
-            } else {
-                sc_panic!("Nonce not found in freeze list");
-            }
+        if self.freezed_sfts_per_address(&address).remove(&nonce) {
+            let total_freezed = self.freezed_sfts_per_address(&address).len();
+            self.freezed_count(&address).set(&total_freezed);
+            self.remove_freezed_sfts_per_address_event(&address, nonce);
+            self.unfreeze_single_nft(nonce, &address)
+                .async_call()
+                .call_and_exit();
         } else {
-            sc_panic!("Address is in collection freeze list");
+            sc_panic!("Nonce not found in freeze list");
         }
     }
 
@@ -175,19 +167,15 @@ pub trait CollectionManagement:
         let caller = self.blockchain().get_caller();
         let token_identifier = self.token_id().get_token_id();
         self.require_is_privileged(&caller);
-        if !self.freezed_addresses_for_collection().contains(&address) {
-            if self.freezed_sfts_per_address(&address).remove(&nonce) {
-                let total_freezed = self.freezed_sfts_per_address(&address).len();
-                self.freezed_count(&address).set(&total_freezed);
-                self.wipe_event(&address, &token_identifier, nonce);
-                self.wipe_single_nft(nonce, &address)
-                    .async_call()
-                    .call_and_exit();
-            } else {
-                sc_panic!("Nonce not found in freeze list");
-            }
+        if self.freezed_sfts_per_address(&address).remove(&nonce) {
+            let total_freezed = self.freezed_sfts_per_address(&address).len();
+            self.freezed_count(&address).set(&total_freezed);
+            self.wipe_event(&address, &token_identifier, nonce);
+            self.wipe_single_nft(nonce, &address)
+                .async_call()
+                .call_and_exit();
         } else {
-            sc_panic!("Address is in collection blacklist");
+            sc_panic!("Nonce not found in freeze list");
         }
     }
 }
