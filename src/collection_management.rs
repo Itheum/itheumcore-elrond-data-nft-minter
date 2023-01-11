@@ -15,16 +15,16 @@ pub trait CollectionManagement:
         &self,
         nonce: u64,
         address: &ManagedAddress,
-    ) -> ContractCall<Self::Api, ()> {
+    ) -> ContractCallNoPayment<Self::Api, ()> {
         let token_identifier = self.token_id().get_token_id();
         let esdt_system_sc_address = self.send().esdt_system_sc_proxy().esdt_system_sc_address();
-        let mut contract_call: ContractCall<Self::Api, ()> = ContractCall::new(
+        let mut contract_call: ContractCallNoPayment<Self::Api, ()> = ContractCallNoPayment::new(
             esdt_system_sc_address,
             ManagedBuffer::new_from_bytes(FREEZE_SINGLE_NFT),
         );
-        contract_call.push_endpoint_arg(&token_identifier);
-        contract_call.push_endpoint_arg(&nonce);
-        contract_call.push_endpoint_arg(&address);
+        contract_call.proxy_arg(&token_identifier);
+        contract_call.proxy_arg(&nonce);
+        contract_call.proxy_arg(&address);
 
         self.freeze_event(&address, &token_identifier, nonce);
         contract_call
@@ -34,31 +34,35 @@ pub trait CollectionManagement:
         &self,
         nonce: u64,
         address: &ManagedAddress,
-    ) -> ContractCall<Self::Api, ()> {
+    ) -> ContractCallNoPayment<Self::Api, ()> {
         let token_identifier = self.token_id().get_token_id();
         let esdt_system_sc_address = self.send().esdt_system_sc_proxy().esdt_system_sc_address();
-        let mut contract_call: ContractCall<Self::Api, ()> = ContractCall::new(
+        let mut contract_call: ContractCallNoPayment<Self::Api, ()> = ContractCallNoPayment::new(
             esdt_system_sc_address,
             ManagedBuffer::new_from_bytes(UNFREEZE_SINGLE_NFT),
         );
-        contract_call.push_endpoint_arg(&token_identifier);
-        contract_call.push_endpoint_arg(&nonce);
-        contract_call.push_endpoint_arg(&address);
+        contract_call.proxy_arg(&token_identifier);
+        contract_call.proxy_arg(&nonce);
+        contract_call.proxy_arg(&address);
 
         self.unfreeze_event(&address, &token_identifier, nonce);
         contract_call
     }
 
-    fn wipe_single_nft(&self, nonce: u64, address: &ManagedAddress) -> ContractCall<Self::Api, ()> {
+    fn wipe_single_nft(
+        &self,
+        nonce: u64,
+        address: &ManagedAddress,
+    ) -> ContractCallNoPayment<Self::Api, ()> {
         let token_identifier = self.token_id().get_token_id();
         let esdt_system_sc_address = self.send().esdt_system_sc_proxy().esdt_system_sc_address();
-        let mut contract_call: ContractCall<Self::Api, ()> = ContractCall::new(
+        let mut contract_call: ContractCallNoPayment<Self::Api, ()> = ContractCallNoPayment::new(
             esdt_system_sc_address,
             ManagedBuffer::new_from_bytes(WIPE_SINGLE_NFT),
         );
-        contract_call.push_endpoint_arg(&token_identifier);
-        contract_call.push_endpoint_arg(&nonce);
-        contract_call.push_endpoint_arg(&address);
+        contract_call.proxy_arg(&token_identifier);
+        contract_call.proxy_arg(&nonce);
+        contract_call.proxy_arg(&address);
 
         self.wipe_event(&address, &token_identifier, nonce);
         contract_call

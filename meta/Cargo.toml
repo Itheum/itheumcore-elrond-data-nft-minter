@@ -11,10 +11,10 @@ authors = [ "Damian Ovidu - Itheum"]
 path = ".."
 
 [dependencies.elrond-wasm]
-version = "0.37.0"
+version = "0.38.0"
 
 [dependencies.elrond-wasm-modules]
-version = "0.37.0"
+version = "0.38.0"
 
 [dependencies.elrond-wasm-debug]
-version = "0.37.0"
+version = "0.38.0"
