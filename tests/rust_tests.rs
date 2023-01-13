@@ -2092,7 +2092,7 @@ fn freeze_sfts_per_address_function_test() {
             &setup.contract_wrapper,
             &rust_biguint!(0u64),
             |sc| {
-                sc.freeze_single_token_for_address(2u64, &managed_address!(first_user_address));
+                sc.freeze_single_token_for_address(1u64, &managed_address!(first_user_address));
             },
         )
         .assert_ok();
@@ -2101,8 +2101,8 @@ fn freeze_sfts_per_address_function_test() {
         .execute_query(&setup.contract_wrapper, |sc| {
             assert_eq!(
                 sc.freezed_sfts_per_address(&managed_address!(first_user_address))
-                    .len(),
-                1usize
+                    .contains(&1u64),
+                true
             );
             assert_eq!(
                 sc.freezed_count(&managed_address!(first_user_address))
@@ -2121,7 +2121,7 @@ fn freeze_sfts_per_address_function_test() {
             &rust_biguint!(0u64),
             |sc| {
                 sc.freezed_sfts_per_address(&managed_address!(first_user_address))
-                    .push(&2u64);
+                    .insert(2u64);
             },
         )
         .assert_ok();
@@ -2282,7 +2282,7 @@ fn unfreeze_sfts_per_address_function_test() {
             &rust_biguint!(0u64),
             |sc| {
                 sc.freezed_sfts_per_address(&managed_address!(first_user_address))
-                    .push(&1u64);
+                    .insert(1u64);
             },
         )
         .assert_ok();
@@ -2293,7 +2293,7 @@ fn unfreeze_sfts_per_address_function_test() {
             &rust_biguint!(0u64),
             |sc| {
                 sc.freezed_sfts_per_address(&managed_address!(first_user_address))
-                    .push(&2u64);
+                    .insert(2u64);
             },
         )
         .assert_ok();
@@ -2323,8 +2323,8 @@ fn unfreeze_sfts_per_address_function_test() {
         .execute_query(&setup.contract_wrapper, |sc| {
             assert_eq!(
                 sc.freezed_sfts_per_address(&managed_address!(first_user_address))
-                    .get(1usize),
-                1u64
+                    .contains(&1u64),
+                true
             );
             assert_eq!(
                 sc.freezed_sfts_per_address(&managed_address!(first_user_address))
@@ -2468,7 +2468,7 @@ fn wipe_function_test() {
             &rust_biguint!(0u64),
             |sc| {
                 sc.freezed_sfts_per_address(&managed_address!(first_user_address))
-                    .push(&1u64);
+                    .insert(1u64);
             },
         )
         .assert_ok();
@@ -2480,7 +2480,7 @@ fn wipe_function_test() {
             &rust_biguint!(0u64),
             |sc| {
                 sc.freezed_sfts_per_address(&managed_address!(first_user_address))
-                    .push(&2u64);
+                    .insert(2u64);
             },
         )
         .assert_ok();
@@ -2525,8 +2525,8 @@ fn wipe_function_test() {
         .execute_query(&setup.contract_wrapper, |sc| {
             assert_eq!(
                 sc.freezed_sfts_per_address(&managed_address!(first_user_address))
-                    .get(1usize),
-                1u64
+                    .contains(&1u64),
+                true
             );
             assert_eq!(
                 sc.freezed_sfts_per_address(&managed_address!(first_user_address))
