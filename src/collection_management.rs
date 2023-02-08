@@ -1,11 +1,11 @@
-elrond_wasm::imports!();
-elrond_wasm::derive_imports!();
+multiversx_sc::imports!();
+multiversx_sc::derive_imports!();
 
 const FREEZE_SINGLE_NFT: &[u8] = b"freezeSingleNFT";
 const UNFREEZE_SINGLE_NFT: &[u8] = b"unFreezeSingleNFT";
 const WIPE_SINGLE_NFT: &[u8] = b"wipeSingleNFT";
 
-#[elrond_wasm::module]
+#[multiversx_sc::module]
 pub trait CollectionManagement:
     crate::storage::StorageModule
     + crate::events::EventsModule

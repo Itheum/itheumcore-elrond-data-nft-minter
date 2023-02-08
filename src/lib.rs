@@ -1,7 +1,7 @@
 #![no_std]
 
-elrond_wasm::imports!();
-elrond_wasm::derive_imports!();
+multiversx_sc::imports!();
+multiversx_sc::derive_imports!();
 
 use crate::{callbacks::CallbackProxy, storage::DataNftAttributes};
 
@@ -12,7 +12,7 @@ pub mod nft_mint_utils;
 pub mod requirements;
 pub mod storage;
 pub mod views;
-#[elrond_wasm::contract]
+#[multiversx_sc::contract]
 pub trait DataNftMint:
     storage::StorageModule
     + events::EventsModule

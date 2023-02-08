@@ -1,5 +1,5 @@
-elrond_wasm::imports!();
-elrond_wasm::derive_imports!();
+multiversx_sc::imports!();
+multiversx_sc::derive_imports!();
 
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, PartialEq, Clone, Debug, TypeAbi)]
 pub struct DataNftAttributes<M: ManagedTypeApi> {
@@ -13,7 +13,7 @@ pub struct DataNftAttributes<M: ManagedTypeApi> {
 }
 
 // Module that handles the common storage of the smart contract
-#[elrond_wasm::module]
+#[multiversx_sc::module]
 pub trait StorageModule {
     // Stores the token identifier of the SFT to be minted
     #[view(getTokenId)]
