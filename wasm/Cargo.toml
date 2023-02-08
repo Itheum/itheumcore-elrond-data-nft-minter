@@ -3,7 +3,7 @@ name = "datanftmint-wasm"
 version = "0.0.0"
 edition = "2021"
 publish = false
-authors = [ "Damian Ovidu - Itheum"]
+authors = [ "Ovidiu Damian - Itheum","Bucur David - Itheum"]
 
 [lib]
 crate-type = [ "cdylib",]
@@ -23,9 +23,5 @@ panic = "abort"
 [dependencies.datanftmint]
 path = ".."
 
-[dependencies.elrond-wasm-node]
-version = "0.38.0"
-
-[dependencies.elrond-wasm-output]
-version = "0.38.0"
-features = [ "wasm-output-mode",]
+[dependencies.multiversx-sc-wasm-adapter]
+version = "0.39.4"

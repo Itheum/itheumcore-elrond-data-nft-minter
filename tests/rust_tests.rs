@@ -6,19 +6,17 @@ use datanftmint::requirements::RequirementsModule;
 use datanftmint::storage::*;
 use datanftmint::views::{UserDataOut, ViewsModule};
 use datanftmint::*;
-use elrond_wasm::contract_base::ContractBase;
-use elrond_wasm::types::{ManagedVec, MultiValueEncoded};
-use elrond_wasm::{
-    elrond_codec::Empty,
+use multiversx_sc::contract_base::ContractBase;
+use multiversx_sc::types::{ManagedVec, MultiValueEncoded};
+use multiversx_sc::{
+    codec::Empty,
     storage::mappers::StorageTokenWrapper,
     types::{Address, EsdtLocalRole},
 };
 
-use elrond_wasm_debug::tx_mock::TxContextRef;
-use elrond_wasm_debug::{
-    managed_address, managed_biguint, managed_buffer, managed_token_id, managed_token_id_wrapped,
-    rust_biguint, testing_framework::*, DebugApi,
-};
+use multiversx_sc_scenario::multiversx_chain_vm::tx_mock::TxContextRef;
+use multiversx_sc_scenario::testing_framework::{BlockchainStateWrapper, ContractObjWrapper};
+use multiversx_sc_scenario::*;
 
 pub const WASM_PATH: &'static str = "../output/datanftmint.wasm";
 pub const OWNER_EGLD_BALANCE: u128 = 100 * 10u128.pow(18u32);

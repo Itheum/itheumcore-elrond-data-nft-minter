@@ -1,5 +1,5 @@
-elrond_wasm::imports!();
-elrond_wasm::derive_imports!();
+multiversx_sc::imports!();
+multiversx_sc::derive_imports!();
 
 #[derive(
     Clone, NestedEncode, NestedDecode, TopEncode, TopDecode, TypeAbi, Debug, PartialEq, Eq,
@@ -21,7 +21,7 @@ pub struct UserDataOut<M: ManagedTypeApi> {
 }
 
 //Module that handles read-only endpoints (views) for the smart contract
-#[elrond_wasm::module]
+#[multiversx_sc::module]
 pub trait ViewsModule: crate::storage::StorageModule {
     // View that returns the above mentioned all-in-one structure for viewing data through one call
     #[view(getUserDataOut)]

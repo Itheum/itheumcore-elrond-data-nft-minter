@@ -3,16 +3,13 @@ name = "datanftmint"
 version = "0.0.0"
 edition = "2021"
 publish = false
-authors = [ "Damian Ovidu - Itheum"]
+authors = [ "Ovidiu Damian - Itheum","Bucur David - Itheum"]
 
 [lib]
 path = "src/lib.rs"
 
-[dependencies.elrond-wasm]
-version = "0.38.0"
+[dependencies.multiversx-sc]
+version = "0.39.4"
 
-[dependencies.elrond-wasm-modules]
-version = "0.38.0"
-
-[dev-dependencies.elrond-wasm-debug]
-version = "0.38.0"
+[dev-dependencies.multiversx-sc-scenario]
+version = "0.39.4"
