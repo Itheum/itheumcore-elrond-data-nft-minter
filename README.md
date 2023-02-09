@@ -427,7 +427,8 @@ cargo clean
 cargo build
 ```
 
-- The above should all work without any errors, next you can successfully run the following command to build via erdpy: `mxpy contract build`
+- The above should all work without any errors, next you can successfully run the following command to build via erdpy: `mxpy contract build` 
+- mxpy may ask you to install `nodejs` and `wasm-opt` to optimize the build, if so then follow instructions given by mxpy and do this
 - You can now run the tests. See "How to test" section below
 - You can now update code as needed
 
