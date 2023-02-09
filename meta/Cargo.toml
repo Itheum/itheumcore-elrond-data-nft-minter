@@ -7,7 +7,7 @@ authors = [ "Ovidiu Damian - Itheum","Bucur David - Itheum"]
 
 [dev-dependencies]
 
-[dependencies.data_market]
+[dependencies.datanftmint]
 path = ".."
 
 [dependencies.multiversx-sc]
