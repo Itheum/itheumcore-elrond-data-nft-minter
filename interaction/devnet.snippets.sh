@@ -1,17 +1,17 @@
-PROXY=https://devnet-gateway.elrond.com
+PROXY=https://devnet-gateway.multiversx.com
 CHAIN_ID="D"
 
 WALLET="./wallet.pem"
 USER="../wallet2.pem"
 
-ADDRESS=$(erdpy data load --key=address-devnet)
-DEPLOY_TRANSACTION=$(erdpy data load --key=deployTransaction-devnet)
+ADDRESS=$(mxpy data load --key=address-devnet)
+DEPLOY_TRANSACTION=$(mxpy data load --key=deployTransaction-devnet)
 
 TOKEN="ITHEUM-a61317"
 TOKEN_HEX="0x$(echo -n ${TOKEN} | xxd -p -u | tr -d '\n')"
 
 deploy(){
-    erdpy --verbose contract deploy \
+    mxpy --verbose contract deploy \
     --bytecode output/datanftmint.wasm \
     --outfile deployOutput \
     --metadata-not-readable \
@@ -23,11 +23,17 @@ deploy(){
     --recall-nonce \
     --outfile="./interaction/deploy-devnet.interaction.json" || return
 
-    TRANSACTION=$(erdpy data parse --file="./interaction/deploy-devnet.interaction.json" --expression="data['emittedTransactionHash']")
-    ADDRESS=$(erdpy data parse --file="./interaction/deploy-devnet.interaction.json" --expression="data['contractAddress']")
+    TRANSACTION=$(mxpy data parse --file="./interaction/deploy-devnet.interaction.json" --expression="data['emittedTransactionHash']")
+    ADDRESS=$(mxpy data parse --file="./interaction/deploy-devnet.interaction.json" --expression="data['contractAddress']")
 
-    erdpy data store --key=address-devnet --value=${ADDRESS}
-    erdpy data store --key=deployTransaction-devnet --value=${TRANSACTION}
+    mxpy data store --key=address-devnet --value=${ADDRESS}
+    mxpy data store --key=deployTransaction-devnet --value=${TRANSACTION}
+}
+
+# if you interact without calling deploy(), then you need to 1st run this to restore the vars from data
+restoreDeployData() {
+  TRANSACTION=$(mxpy data parse --file="./interaction/deploy-devnet.interaction.json" --expression="data['emittedTransactionHash']")
+  ADDRESS=$(mxpy data parse --file="./interaction/deploy-devnet.interaction.json" --expression="data['contractAddress']")
 }
 
 initializeContract(){
@@ -42,10 +48,10 @@ initializeContract(){
     token_identifier=${TOKEN_HEX}
     anti_spam_tax=${3}
     mint_time_limit=${4}
-    treasury_address="0x$(erdpy wallet bech32 --decode ${5})"
+    treasury_address="0x$(mxpy wallet bech32 --decode ${5})"
     
 
-    erdpy --verbose contract call ${ADDRESS} \
+    mxpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
     --gas-limit=300000000 \
@@ -58,7 +64,7 @@ initializeContract(){
 }
 
 pause(){
-    erdpy --verbose contract call ${ADDRESS} \
+    mxpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
     --gas-limit=90000000 \
@@ -69,7 +75,7 @@ pause(){
 }
 
 unpause(){
-    erdpy --verbose contract call ${ADDRESS} \
+    mxpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
     --gas-limit=90000000 \
@@ -82,9 +88,9 @@ unpause(){
 freeze(){
     # $1 = address to freeze
 
-    address="0x$(erdpy wallet bech32 --decode ${1})"
+    address="0x$(mxpy wallet bech32 --decode ${1})"
 
-    erdpy --verbose contract call ${ADDRESS} \
+    mxpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
     --gas-limit=90000000 \
@@ -99,9 +105,9 @@ freezeSingleNFT(){
     # $1 = token nonce
     # $2 = address to freeze
 
-    address="0x$(erdpy wallet bech32 --decode ${2})"
+    address="0x$(mxpy wallet bech32 --decode ${2})"
 
-    erdpy --verbose contract call ${ADDRESS} \
+    mxpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
     --gas-limit=90000000 \
@@ -115,9 +121,9 @@ freezeSingleNFT(){
 unfreeze(){
     # $1 = address to freeze
 
-    address="0x$(erdpy wallet bech32 --decode ${1})"
+    address="0x$(mxpy wallet bech32 --decode ${1})"
 
-    erdpy --verbose contract call ${ADDRESS} \
+    mxpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
     --gas-limit=90000000 \
@@ -132,9 +138,9 @@ unFreezeSingleNFT(){
     # $1 = token nonce
     # $2 = address to unfreeze
 
-    address="0x$(erdpy wallet bech32 --decode ${2})"
+    address="0x$(mxpy wallet bech32 --decode ${2})"
 
-    erdpy --verbose contract call ${ADDRESS} \
+    mxpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
     --gas-limit=90000000 \
@@ -149,9 +155,9 @@ wipeSingleNFT(){
     # $1 = token nonce
     # $2 = address to wipe tokens from
 
-    address="0x$(erdpy wallet bech32 --decode ${2})"
+    address="0x$(mxpy wallet bech32 --decode ${2})"
 
-    erdpy --verbose contract call ${ADDRESS} \
+    mxpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
     --gas-limit=90000000 \
@@ -167,11 +173,11 @@ burn(){
     #   $2 = NFT/SFT Token Nonce,
     #   $3 = NFT/SFT Token Amount,
 
-    user_address="$(erdpy wallet pem-address $USER)"
+    user_address="$(mxpy wallet pem-address $USER)"
     method="0x$(echo -n 'burn' | xxd -p -u | tr -d '\n')"
     sft_token="0x$(echo -n ${1} | xxd -p -u | tr -d '\n')"
 
-    erdpy --verbose contract call $user_address \
+    mxpy --verbose contract call $user_address \
         --recall-nonce \
         --pem=${USER} \
         --gas-limit=6000000 \
@@ -183,7 +189,7 @@ burn(){
 }
 
 pauseContract(){
-    erdpy --verbose contract call ${ADDRESS} \
+    mxpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
     --gas-limit=6000000 \
@@ -195,7 +201,7 @@ pauseContract(){
 }
 
 unPauseContract(){
-    erdpy --verbose contract call ${ADDRESS} \
+    mxpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
     --gas-limit=6000000 \
@@ -212,7 +218,7 @@ setAntiSpamTax(){
 
     token_identifier="0x$(echo -n ${1} | xxd -p -u | tr -d '\n')"
 
-    erdpy --verbose contract call ${ADDRESS} \
+    mxpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
     --gas-limit=6000000 \
@@ -224,7 +230,7 @@ setAntiSpamTax(){
 }
 
 enableWhiteList(){
-    erdpy --verbose contract call ${ADDRESS} \
+    mxpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
     --gas-limit=6000000 \
@@ -236,7 +242,7 @@ enableWhiteList(){
 }
 
 disableWhiteList(){
-    erdpy --verbose contract call ${ADDRESS} \
+    mxpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
     --gas-limit=6000000 \
@@ -250,9 +256,9 @@ disableWhiteList(){
 setWhiteListSpots(){
     # $1 = address
 
-    address="0x$(erdpy wallet bech32 --decode ${1})"
+    address="0x$(mxpy wallet bech32 --decode ${1})"
 
-    erdpy --verbose contract call ${ADDRESS} \
+    mxpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
     --gas-limit=6000000 \
@@ -266,9 +272,9 @@ setWhiteListSpots(){
 removeWhiteListSpots(){
     # $1 = address
 
-    address="0x$(erdpy wallet bech32 --decode ${1})"
+    address="0x$(mxpy wallet bech32 --decode ${1})"
 
-    erdpy --verbose contract call ${ADDRESS} \
+    mxpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
     --gas-limit=6000000 \
@@ -282,7 +288,7 @@ removeWhiteListSpots(){
 setMintTimeLimit(){
     # $1 = mint time limit value u64
 
-    erdpy --verbose contract call ${ADDRESS} \
+    mxpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
     --gas-limit=6000000 \
@@ -297,7 +303,7 @@ setRoyaltiesLimits(){
     # $1 = min royalties value
     # $2 = max royalties value
 
-    erdpy --verbose contract call ${ADDRESS} \
+    mxpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
     --gas-limit=6000000 \
@@ -311,7 +317,7 @@ setRoyaltiesLimits(){
 setMaxSupply(){
     # $1 = max supply value
 
-    erdpy --verbose contract call ${ADDRESS} \
+    mxpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
     --gas-limit=6000000 \
@@ -325,9 +331,9 @@ setMaxSupply(){
 setAdministrator(){
     # $1 = address
 
-    address="0x$(erdpy wallet bech32 --decode ${1})"
+    address="0x$(mxpy wallet bech32 --decode ${1})"
 
-    erdpy --verbose contract call ${ADDRESS} \
+    mxpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
     --gas-limit=6000000 \
@@ -359,7 +365,7 @@ mintTokenUsingEsdt(){
     title="0x$(echo -n ${9} | xxd -p -u | tr -d '\n')"
     description="0x$(echo -n ${10} | xxd -p -u | tr -d '\n')"
 
-    erdpy --verbose contract call $ADDRESS \
+    mxpy --verbose contract call $ADDRESS \
     --recall-nonce \
     --pem=${USER} \
     --gas-limit=100000000 \
@@ -390,7 +396,7 @@ mintTokenUsingEgld(){
     title="0x$(echo -n ${9} | xxd -p -u | tr -d '\n')"
     description="0x$(echo -n ${10} | xxd -p -u | tr -d '\n')"
 
-    erdpy --verbose contract call ${ADDRESS} \
+    mxpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
     --gas-limit=10000000 \
@@ -406,10 +412,10 @@ getUserDataOut(){
     # $1 = address
     # $2 = token identifier
 
-    address="0x$(erdpy wallet bech32 --decode ${1})"
+    address="0x$(mxpy wallet bech32 --decode ${1})"
     token_identifier="0x$(echo -n ${2} | xxd -p -u | tr -d '\n')"
 
-    erdpy --verbose contract query ${ADDRESS} \
+    mxpy --verbose contract query ${ADDRESS} \
     --proxy ${PROXY} \
     --function 'getUserDataOut' \
     --arguments $address $token_identifier     
