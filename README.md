@@ -10,7 +10,7 @@ This contract allows the owner of it to create an SFT collection towards which a
 
 ## Prerequisites
 
-This documentation assumes the user has previous programming experience. Moreover, the user should have a basic understanding of the Elrond blockchain. If you are new to the blockchain, please refer to the [Elrond documentation](https://docs.elrond.com/). In order to develop Elrond smart contract related solutions, one needs to have installed [erdpy](https://docs.elrond.com/sdk-and-tools/erdpy/installing-erdpy/).
+This documentation assumes the user has previous programming experience. Moreover, the user should have a basic understanding of the Elrond blockchain. If you are new to the blockchain, please refer to the [Elrond documentation](https://docs.elrond.com/). In order to develop Elrond smart contract related solutions, one needs to have installed [mxpy](https://docs.multiversx.com/sdk-and-tools/sdk-py/installing-mxpy).
 
 Understanding this document is also easier if one knows how [ESDT token transactions](https://docs.elrond.com/developers/esdt-tokens/#transfers-to-a-smart-contract) are structured on the Elrond blockchain and how [NFT tokens](https://docs.elrond.com/tokens/nft-tokens/) work on the Elrond Blockchain.
 
@@ -422,12 +422,12 @@ This smart contract aims to offer the Elrond community an audited NFT minter sma
 
 ```
 rustup default nightly
-erdpy deps install rust --overwrite
+mxpy deps install rust --overwrite
 cargo clean
 cargo build
 ```
 
-- The above should all work without any errors, next you can successfully run the following command to build via erdpy: `mxpy contract build` 
+- The above should all work without any errors, next you can successfully run the following command to build via mxpy: `mxpy contract build` 
 - mxpy may ask you to install `nodejs` and `wasm-opt` to optimize the build, if so then follow instructions given by mxpy and do this
 - You can now run the tests. See "How to test" section below
 - You can now update code as needed
@@ -445,7 +445,7 @@ The Smart Contract is structured in 6 files:
 
 ### How to test
 
-Prior to running the below, make sure you check section called **Setting up dev environment (project development bootstrap)** above and your dev environment is configured correctly. You also need to run `erdpy contract build` (requires you to be online with internet connection) prior to running tests.
+Prior to running the below, make sure you check section called **Setting up dev environment (project development bootstrap)** above and your dev environment is configured correctly. You also need to run `mxpy contract build` (requires you to be online with internet connection) prior to running tests.
 
 The tests are located in the tests folder, in the rust_tests file. In order to run the tests one can use the command:
 
@@ -463,7 +463,7 @@ Note: In order to run the tests, one has to use the rust nightly version. One ca
 
 ### How to deploy
 
-In order to deploy the smart contract on devnet one can use the interaction snippets present in the devnet. snippets file (which is located in the interactions folder). Before using the snippets, make sure to add your pem file in the root of the project under the name "wallet.pem" (or change the name to whichever one you wish to use in the interaction snippets). If you need info about how to derive a pem file you can find them [here](https://docs.elrond.com/sdk-and-tools/erdpy/deriving-the-wallet-pem-file/). To run the functions from the interaction file, one can use:
+In order to deploy the smart contract on devnet one can use the interaction snippets present in the devnet. snippets file (which is located in the interactions folder). Before using the snippets, make sure to add your pem file in the root of the project under the name "wallet.pem" (or change the name to whichever one you wish to use in the interaction snippets). If you need info about how to derive a pem file you can find them [here](https://docs.multiversx.com/sdk-and-tools/sdk-py/deriving-the-wallet-pem-file/). To run the functions from the interaction file, one can use:
 
 ```shell
     source interaction/devnet.snippets.sh
