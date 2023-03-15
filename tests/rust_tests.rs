@@ -1046,6 +1046,28 @@ fn mint_nft_ft_test() {
         )
         .assert_error(4, "Wrong amount of payment sent");
 
+    b_wrapper
+        .execute_tx(
+            &first_user_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(2u64),
+            |sc| {
+                sc.mint_token(
+                    managed_buffer!(USER_NFT_NAME),
+                    managed_buffer!(MEDIA_URI),
+                    managed_buffer!(METADATA_URI),
+                    managed_buffer!(DATA_MARSHAL),
+                    managed_buffer!(b""),
+                    managed_buffer!(DATA_PREVIEW),
+                    managed_biguint!(2000u64),
+                    managed_biguint!(5),
+                    managed_buffer!(USER_NFT_NAME),
+                    managed_buffer!(USER_NFT_NAME),
+                );
+            },
+        )
+        .assert_error(4, "URL is empty");
+
     // [setup] setting set_anti_spam_tax to 200 ITHEUM
     b_wrapper
         .execute_tx(
