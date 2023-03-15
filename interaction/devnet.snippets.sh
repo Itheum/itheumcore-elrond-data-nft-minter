@@ -348,31 +348,29 @@ mintTokenUsingEsdt(){
     # $1 = amount of esdt to send
     # $2 = name
     # $3 = media
-    # $4 = metadata
-    # $5 = data marshal
-    # $6 = data stream
-    # $7 = data preview
-    # $8 = royalties
-    # $9 = supply
-    # $10 = title
-    # $11 = description
+    # $4 = data marshal
+    # $5 = data stream
+    # $6 = data preview
+    # $7 = royalties
+    # $8 = supply
+    # $9 = title
+    # $10 = description
 
     method="0x$(echo -n 'mint' | xxd -p -u | tr -d '\n')"
     name="0x$(echo -n ${2} | xxd -p -u | tr -d '\n')"
     media="0x$(echo -n ${3} | xxd -p -u | tr -d '\n')"
-    metadata="0x$(echo -n ${4} | xxd -p -u | tr -d '\n')"
-    data_marshal="0x$(echo -n ${5} | xxd -p -u | tr -d '\n')"
-    data_stream="0x$(echo -n ${6} | xxd -p -u | tr -d '\n')"
-    data_preview="0x$(echo -n ${7} | xxd -p -u | tr -d '\n')"
-    title="0x$(echo -n ${10} | xxd -p -u | tr -d '\n')"
-    description="0x$(echo -n ${11} | xxd -p -u | tr -d '\n')"
+    data_marshal="0x$(echo -n ${4} | xxd -p -u | tr -d '\n')"
+    data_stream="0x$(echo -n ${5} | xxd -p -u | tr -d '\n')"
+    data_preview="0x$(echo -n ${6} | xxd -p -u | tr -d '\n')"
+    title="0x$(echo -n ${9} | xxd -p -u | tr -d '\n')"
+    description="0x$(echo -n ${10} | xxd -p -u | tr -d '\n')"
 
     mxpy --verbose contract call $ADDRESS \
     --recall-nonce \
     --pem=${USER} \
     --gas-limit=100000000 \
     --function "ESDTTransfer" \
-    --arguments ${TOKEN_HEX} $1 $method $name $media $metadata $data_marshal $data_stream $data_preview $7 $8 $title $description \
+    --arguments ${TOKEN_HEX} $1 $method $name $media $data_marshal $data_stream $data_preview $7 $8 $title $description \
     --proxy ${PROXY} \
     --chain ${CHAIN_ID} \
     --send || return
@@ -382,23 +380,21 @@ mintTokenUsingEgld(){
     # $1 = amount of egld to send
     # $2 = name
     # $3 = media
-    # $4 = metadata
-    # $5 = data marshal
-    # $6 = data stream
-    # $7 = data preview
-    # $8 = royalties
-    # $9 = supply
-    # $10 = title
-    # $11 = description
+    # $4 = data marshal
+    # $5 = data stream
+    # $6 = data preview
+    # $7 = royalties
+    # $8 = supply
+    # $9 = title
+    # $10 = description
 
     name="0x$(echo -n ${2} | xxd -p -u | tr -d '\n')"
     media="0x$(echo -n ${3} | xxd -p -u | tr -d '\n')"
-    metadata="0x$(echo -n ${4} | xxd -p -u | tr -d '\n')"
-    data_marshal="0x$(echo -n ${5} | xxd -p -u | tr -d '\n')"
-    data_stream="0x$(echo -n ${6} | xxd -p -u | tr -d '\n')"
-    data_preview="0x$(echo -n ${7} | xxd -p -u | tr -d '\n')"
-    title="0x$(echo -n ${10} | xxd -p -u | tr -d '\n')"
-    description="0x$(echo -n ${11} | xxd -p -u | tr -d '\n')"
+    data_marshal="0x$(echo -n ${4} | xxd -p -u | tr -d '\n')"
+    data_stream="0x$(echo -n ${5} | xxd -p -u | tr -d '\n')"
+    data_preview="0x$(echo -n ${6} | xxd -p -u | tr -d '\n')"
+    title="0x$(echo -n ${9} | xxd -p -u | tr -d '\n')"
+    description="0x$(echo -n ${10} | xxd -p -u | tr -d '\n')"
 
     mxpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
