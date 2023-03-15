@@ -1578,9 +1578,63 @@ fn url_validation_test() {
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
-            sc.require_url_is_valid(&managed_buffer!(b""));
+            sc.require_url_is_valid(&managed_buffer!(SFT_TICKER))
         })
-        .assert_user_error("URL is empty");
+        .assert_user_error("URL length is too small");
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_url_is_adequate_length(&managed_buffer!(SFT_TICKER))
+        })
+        .assert_user_error("URL length is too small");
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_url_is_valid(&managed_buffer!(&[
+                SFT_TICKER,
+                DATA_MARSHAL,
+                DATA_STREAM,
+                MEDIA_URI,
+                DATA_STREAM,
+                MEDIA_URI,
+                DATA_STREAM,
+                MEDIA_URI,
+                SFT_TICKER,
+                DATA_MARSHAL,
+                DATA_STREAM,
+                MEDIA_URI,
+                DATA_STREAM,
+                MEDIA_URI,
+                DATA_STREAM,
+                MEDIA_URI
+            ]
+            .concat()))
+        })
+        .assert_user_error("URL length is too big");
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_url_is_adequate_length(&managed_buffer!(&[
+                SFT_TICKER,
+                DATA_MARSHAL,
+                DATA_STREAM,
+                MEDIA_URI,
+                DATA_STREAM,
+                MEDIA_URI,
+                DATA_STREAM,
+                MEDIA_URI,
+                SFT_TICKER,
+                DATA_MARSHAL,
+                DATA_STREAM,
+                MEDIA_URI,
+                DATA_STREAM,
+                MEDIA_URI,
+                DATA_STREAM,
+                MEDIA_URI
+            ]
+            .concat()))
+        })
+        .assert_user_error("URL length is too big");
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {

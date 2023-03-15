@@ -90,6 +90,9 @@ pub trait RequirementsModule: crate::storage::StorageModule {
     }
 
     fn require_url_is_adequate_length(&self, url: &ManagedBuffer) {
+        let url_length = url.len();
         require!(!url.is_empty(), "URL is empty");
+        require!(url_length <= 300, "URL length is too big");
+        require!(url_length >= 20, "URL length is too small");
     }
 }
