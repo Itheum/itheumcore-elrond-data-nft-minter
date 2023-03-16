@@ -108,7 +108,7 @@ pub trait DataNftMint:
         self.require_minting_is_ready();
         self.require_url_is_valid(&data_marshal);
         self.require_url_is_valid(&data_preview);
-        require!(!data_stream.is_empty(), "URL is empty");
+        require!(!data_stream.is_empty(), "Data Stream is empty");
         self.require_url_is_valid(&media);
         self.require_url_is_valid(&metadata);
         self.require_sft_is_valid(&royalties, &supply);

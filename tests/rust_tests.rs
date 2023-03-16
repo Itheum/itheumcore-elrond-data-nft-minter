@@ -1066,7 +1066,7 @@ fn mint_nft_ft_test() {
                 );
             },
         )
-        .assert_error(4, "URL is empty");
+        .assert_error(4, "Data Stream is empty");
 
     // [setup] setting set_anti_spam_tax to 200 ITHEUM
     b_wrapper
