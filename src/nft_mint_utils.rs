@@ -14,9 +14,14 @@ pub trait NftMintUtils: crate::storage::StorageModule {
         hash_buffer
     }
 
-    fn create_uris(&self, media: ManagedBuffer) -> ManagedVec<ManagedBuffer> {
+    fn create_uris(
+        &self,
+        media: ManagedBuffer,
+        metadata: ManagedBuffer,
+    ) -> ManagedVec<ManagedBuffer> {
         let mut uris = ManagedVec::new();
         uris.push(media);
+        uris.push(metadata);
         uris
     }
 }

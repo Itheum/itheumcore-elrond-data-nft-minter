@@ -96,6 +96,7 @@ pub trait DataNftMint:
         &self,
         name: ManagedBuffer,
         media: ManagedBuffer,
+        metadata: ManagedBuffer,
         data_marshal: ManagedBuffer,
         data_stream: ManagedBuffer,
         data_preview: ManagedBuffer,
@@ -106,9 +107,10 @@ pub trait DataNftMint:
     ) -> DataNftAttributes<Self::Api> {
         self.require_minting_is_ready();
         self.require_url_is_valid(&data_marshal);
-        self.require_url_is_adequate_length(&data_stream);
         self.require_url_is_valid(&data_preview);
+        require!(!data_stream.is_empty(), "Data Stream is empty");
         self.require_url_is_valid(&media);
+        self.require_url_is_valid(&metadata);
         self.require_sft_is_valid(&royalties, &supply);
         let caller = self.blockchain().get_caller();
         let current_time = self.blockchain().get_block_timestamp();
@@ -148,7 +150,7 @@ pub trait DataNftMint:
             &royalties,
             &self.crate_hash_buffer(&data_marshal, &data_stream),
             &attributes,
-            &self.create_uris(media),
+            &self.create_uris(media, metadata),
         );
 
         self.send()

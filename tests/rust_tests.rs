@@ -7,7 +7,7 @@ use datanftmint::storage::*;
 use datanftmint::views::{UserDataOut, ViewsModule};
 use datanftmint::*;
 use multiversx_sc::contract_base::ContractBase;
-use multiversx_sc::types::{ManagedVec, MultiValueEncoded};
+use multiversx_sc::types::{ManagedBuffer, ManagedVec, MultiValueEncoded};
 use multiversx_sc::{
     codec::Empty,
     storage::mappers::StorageTokenWrapper,
@@ -28,7 +28,8 @@ pub const SFT_NAME: &[u8] = b"DATA NFT-FT";
 pub const DATA_MARSHAL: &[u8] = b"https://DATA-MARSHAL-ENCRYPTED/marshal";
 pub const DATA_STREAM: &[u8] = b"https://DATA-STREAM-ECRYPTED/stream";
 pub const DATA_PREVIEW: &[u8] = b"https://DATA-STREAM-ECRYPTED/stream-preview";
-pub const MEDIA_URI: &[u8] = b"https://ipfs.io/ipfs/123456abcdef/metadata.json";
+pub const MEDIA_URI: &[u8] = b"https://ipfs.io/ipfs/123456abcdef/media.json";
+pub const METADATA_URI: &[u8] = b"https://ipfs.io/ipfs/123456abcdef/metadata.json";
 pub const URL_WITH_SPACES: &[u8] = b"https://DATA-MARSHAL-ENCRYPTED/marshal with spaces";
 pub const URL_WITH_RETURN: &[u8] = b"https://DATA-MARSHAL-ENCRYPTED/marshal\r";
 pub const URL_WITHOUT_PROTOCOL: &[u8] = b"DATA-MARSHAL-ENCRYPTED/marshal/test/test/test";
@@ -479,7 +480,7 @@ fn nft_mint_utils_test() {
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
-            let uris = sc.create_uris(managed_buffer!(MEDIA_URI));
+            let uris = sc.create_uris(managed_buffer!(MEDIA_URI), managed_buffer!(METADATA_URI));
             let media_uri = uris.find(&managed_buffer!(MEDIA_URI));
             assert_eq!(media_uri, Some(0usize));
         })
@@ -765,6 +766,7 @@ fn mint_nft_ft_test() {
                 sc.mint_token(
                     managed_buffer!(USER_NFT_NAME),
                     managed_buffer!(MEDIA_URI),
+                    managed_buffer!(METADATA_URI),
                     managed_buffer!(DATA_MARSHAL),
                     managed_buffer!(DATA_STREAM),
                     managed_buffer!(DATA_PREVIEW),
@@ -821,6 +823,7 @@ fn mint_nft_ft_test() {
                 sc.mint_token(
                     managed_buffer!(USER_NFT_NAME),
                     managed_buffer!(MEDIA_URI),
+                    managed_buffer!(METADATA_URI),
                     managed_buffer!(DATA_MARSHAL),
                     managed_buffer!(DATA_STREAM),
                     managed_buffer!(DATA_PREVIEW),
@@ -843,6 +846,7 @@ fn mint_nft_ft_test() {
                 sc.mint_token(
                     managed_buffer!(USER_NFT_NAME),
                     managed_buffer!(MEDIA_URI),
+                    managed_buffer!(METADATA_URI),
                     managed_buffer!(DATA_MARSHAL),
                     managed_buffer!(DATA_STREAM),
                     managed_buffer!(DATA_PREVIEW),
@@ -876,6 +880,7 @@ fn mint_nft_ft_test() {
                 sc.mint_token(
                     managed_buffer!(USER_NFT_NAME),
                     managed_buffer!(MEDIA_URI),
+                    managed_buffer!(METADATA_URI),
                     managed_buffer!(DATA_MARSHAL),
                     managed_buffer!(DATA_STREAM),
                     managed_buffer!(DATA_PREVIEW),
@@ -898,6 +903,7 @@ fn mint_nft_ft_test() {
                 sc.mint_token(
                     managed_buffer!(USER_NFT_NAME),
                     managed_buffer!(MEDIA_URI),
+                    managed_buffer!(METADATA_URI),
                     managed_buffer!(DATA_MARSHAL),
                     managed_buffer!(DATA_STREAM),
                     managed_buffer!(DATA_PREVIEW),
@@ -920,6 +926,7 @@ fn mint_nft_ft_test() {
                 sc.mint_token(
                     managed_buffer!(USER_NFT_NAME),
                     managed_buffer!(MEDIA_URI),
+                    managed_buffer!(METADATA_URI),
                     managed_buffer!(DATA_MARSHAL),
                     managed_buffer!(DATA_STREAM),
                     managed_buffer!(DATA_PREVIEW),
@@ -954,6 +961,7 @@ fn mint_nft_ft_test() {
                 sc.mint_token(
                     managed_buffer!(USER_NFT_NAME),
                     managed_buffer!(MEDIA_URI),
+                    managed_buffer!(METADATA_URI),
                     managed_buffer!(DATA_MARSHAL),
                     managed_buffer!(DATA_STREAM),
                     managed_buffer!(DATA_PREVIEW),
@@ -1002,6 +1010,7 @@ fn mint_nft_ft_test() {
                 sc.mint_token(
                     managed_buffer!(USER_NFT_NAME),
                     managed_buffer!(MEDIA_URI),
+                    managed_buffer!(METADATA_URI),
                     managed_buffer!(DATA_MARSHAL),
                     managed_buffer!(DATA_STREAM),
                     managed_buffer!(DATA_PREVIEW),
@@ -1024,6 +1033,7 @@ fn mint_nft_ft_test() {
                 sc.mint_token(
                     managed_buffer!(USER_NFT_NAME),
                     managed_buffer!(MEDIA_URI),
+                    managed_buffer!(METADATA_URI),
                     managed_buffer!(DATA_MARSHAL),
                     managed_buffer!(DATA_STREAM),
                     managed_buffer!(DATA_PREVIEW),
@@ -1035,6 +1045,28 @@ fn mint_nft_ft_test() {
             },
         )
         .assert_error(4, "Wrong amount of payment sent");
+
+    b_wrapper
+        .execute_tx(
+            &first_user_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(2u64),
+            |sc| {
+                sc.mint_token(
+                    managed_buffer!(USER_NFT_NAME),
+                    managed_buffer!(MEDIA_URI),
+                    managed_buffer!(METADATA_URI),
+                    managed_buffer!(DATA_MARSHAL),
+                    managed_buffer!(b""),
+                    managed_buffer!(DATA_PREVIEW),
+                    managed_biguint!(2000u64),
+                    managed_biguint!(5),
+                    managed_buffer!(USER_NFT_NAME),
+                    managed_buffer!(USER_NFT_NAME),
+                );
+            },
+        )
+        .assert_error(4, "Data Stream is empty");
 
     // [setup] setting set_anti_spam_tax to 200 ITHEUM
     b_wrapper
@@ -1061,6 +1093,7 @@ fn mint_nft_ft_test() {
                 sc.mint_token(
                     managed_buffer!(USER_NFT_NAME),
                     managed_buffer!(MEDIA_URI),
+                    managed_buffer!(METADATA_URI),
                     managed_buffer!(DATA_MARSHAL),
                     managed_buffer!(DATA_STREAM),
                     managed_buffer!(DATA_PREVIEW),
@@ -1137,6 +1170,7 @@ fn mint_nft_ft_test() {
                 sc.mint_token(
                     managed_buffer!(USER_NFT_NAME),
                     managed_buffer!(MEDIA_URI),
+                    managed_buffer!(METADATA_URI),
                     managed_buffer!(DATA_MARSHAL),
                     managed_buffer!(DATA_STREAM),
                     managed_buffer!(DATA_PREVIEW),
@@ -1178,6 +1212,7 @@ fn mint_nft_ft_test() {
                 sc.mint_token(
                     managed_buffer!(USER_NFT_NAME),
                     managed_buffer!(MEDIA_URI),
+                    managed_buffer!(METADATA_URI),
                     managed_buffer!(DATA_MARSHAL),
                     managed_buffer!(data_stream_2),
                     managed_buffer!(data_preview_2),
@@ -1268,6 +1303,13 @@ fn mint_nft_ft_test() {
                 title: managed_buffer!(USER_NFT_NAME),
                 description: managed_buffer!(USER_NFT_NAME),
             };
+
+            let mut correct_uris: ManagedVec<DebugApi, ManagedBuffer<DebugApi>> = ManagedVec::new();
+
+            correct_uris.push(managed_buffer!(MEDIA_URI));
+            correct_uris.push(managed_buffer!(METADATA_URI));
+
+            assert_eq!(correct_uris, token_data.uris);
 
             assert_eq!(test_attributes, attributes);
         })
@@ -1487,6 +1529,7 @@ fn burn_token_test() {
                 sc.mint_token(
                     managed_buffer!(USER_NFT_NAME),
                     managed_buffer!(MEDIA_URI),
+                    managed_buffer!(METADATA_URI),
                     managed_buffer!(DATA_MARSHAL),
                     managed_buffer!(DATA_STREAM),
                     managed_buffer!(DATA_PREVIEW),
@@ -1805,6 +1848,7 @@ fn freeze_function_test() {
                 sc.mint_token(
                     managed_buffer!(USER_NFT_NAME),
                     managed_buffer!(MEDIA_URI),
+                    managed_buffer!(METADATA_URI),
                     managed_buffer!(DATA_MARSHAL),
                     managed_buffer!(DATA_STREAM),
                     managed_buffer!(DATA_PREVIEW),
@@ -1917,6 +1961,7 @@ fn unfreeze_function_test() {
                 sc.mint_token(
                     managed_buffer!(USER_NFT_NAME),
                     managed_buffer!(MEDIA_URI),
+                    managed_buffer!(METADATA_URI),
                     managed_buffer!(DATA_MARSHAL),
                     managed_buffer!(DATA_STREAM),
                     managed_buffer!(DATA_PREVIEW),
@@ -2039,6 +2084,7 @@ fn freeze_sfts_per_address_function_test() {
                 sc.mint_token(
                     managed_buffer!(USER_NFT_NAME),
                     managed_buffer!(MEDIA_URI),
+                    managed_buffer!(METADATA_URI),
                     managed_buffer!(DATA_MARSHAL),
                     managed_buffer!(DATA_STREAM),
                     managed_buffer!(DATA_PREVIEW),
@@ -2062,6 +2108,7 @@ fn freeze_sfts_per_address_function_test() {
                 sc.mint_token(
                     managed_buffer!(USER_NFT_NAME),
                     managed_buffer!(MEDIA_URI),
+                    managed_buffer!(METADATA_URI),
                     managed_buffer!(DATA_MARSHAL),
                     managed_buffer!(DATA_STREAM),
                     managed_buffer!(DATA_PREVIEW),
@@ -2228,6 +2275,7 @@ fn unfreeze_sfts_per_address_function_test() {
                 sc.mint_token(
                     managed_buffer!(USER_NFT_NAME),
                     managed_buffer!(MEDIA_URI),
+                    managed_buffer!(METADATA_URI),
                     managed_buffer!(DATA_MARSHAL),
                     managed_buffer!(DATA_STREAM),
                     managed_buffer!(DATA_PREVIEW),
@@ -2251,6 +2299,7 @@ fn unfreeze_sfts_per_address_function_test() {
                 sc.mint_token(
                     managed_buffer!(USER_NFT_NAME),
                     managed_buffer!(MEDIA_URI),
+                    managed_buffer!(METADATA_URI),
                     managed_buffer!(DATA_MARSHAL),
                     managed_buffer!(DATA_STREAM),
                     managed_buffer!(DATA_PREVIEW),
@@ -2414,6 +2463,7 @@ fn wipe_function_test() {
                 sc.mint_token(
                     managed_buffer!(USER_NFT_NAME),
                     managed_buffer!(MEDIA_URI),
+                    managed_buffer!(METADATA_URI),
                     managed_buffer!(DATA_MARSHAL),
                     managed_buffer!(DATA_STREAM),
                     managed_buffer!(DATA_PREVIEW),
@@ -2437,6 +2487,7 @@ fn wipe_function_test() {
                 sc.mint_token(
                     managed_buffer!(USER_NFT_NAME),
                     managed_buffer!(MEDIA_URI),
+                    managed_buffer!(METADATA_URI),
                     managed_buffer!(DATA_MARSHAL),
                     managed_buffer!(DATA_STREAM),
                     managed_buffer!(DATA_PREVIEW),
