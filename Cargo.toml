@@ -9,7 +9,7 @@ authors = [ "Ovidiu Damian - Itheum","Bucur David - Itheum"]
 path = "src/lib.rs"
 
 [dependencies.multiversx-sc]
-version = "0.39.4"
+version = "0.39.7"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "0.39.4"
+version = "0.39.7"

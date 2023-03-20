@@ -11,7 +11,7 @@ authors = [ "Ovidiu Damian - Itheum","Bucur David - Itheum"]
 path = ".."
 
 [dependencies.multiversx-sc]
-version = "0.39.4"
+version = "0.39.7"
 
 [dependencies.multiversx-sc-meta]
-version = "0.39.4"
+version = "0.39.7"
