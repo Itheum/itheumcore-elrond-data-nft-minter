@@ -1,6 +1,9 @@
 use std::u8;
 
 use datanftmint::collection_management::CollectionManagement;
+use datanftmint::errors::{
+    ERR_MAX_ROYALTIES_TOO_HIGH, ERR_MIN_ROYALTIES_BIGGER_THAN_MAX_ROYALTIES,
+};
 use datanftmint::nft_mint_utils::*;
 use datanftmint::requirements::RequirementsModule;
 use datanftmint::storage::*;
@@ -743,6 +746,24 @@ fn requirements_test() {
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
             sc.require_minting_is_allowed(&managed_address!(first_user_address), 15u64);
+        })
+        .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_royalties_are_valid(&managed_biguint!(10u64), &managed_biguint!(1u64));
+        })
+        .assert_user_error(ERR_MIN_ROYALTIES_BIGGER_THAN_MAX_ROYALTIES);
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_royalties_are_valid(&managed_biguint!(1u64), &managed_biguint!(10001u64))
+        })
+        .assert_user_error(ERR_MAX_ROYALTIES_TOO_HIGH);
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_royalties_are_valid(&managed_biguint!(1u64), &managed_biguint!(10000u64))
         })
         .assert_ok();
 }

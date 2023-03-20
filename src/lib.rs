@@ -7,6 +7,7 @@ use crate::{callbacks::CallbackProxy, storage::DataNftAttributes};
 
 pub mod callbacks;
 pub mod collection_management;
+pub mod errors;
 pub mod events;
 pub mod nft_mint_utils;
 pub mod requirements;
