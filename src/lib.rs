@@ -29,13 +29,15 @@ pub trait DataNftMint:
         self.is_paused().set(true);
         self.mint_pause_toggle_event(&true);
 
-        self.whitelist_enabled().set(true);
+        self.whitelist_enabled().set_if_empty(true);
         self.whitelist_enable_toggle_event(&true);
 
-        self.min_royalties().set(BigUint::from(0u64));
-        self.max_royalties().set(BigUint::from(8000u64));
+        self.set_royalties_limits_event(&BigUint::from(0u64), &BigUint::from(8000u64));
+        self.min_royalties().set_if_empty(BigUint::from(0u64));
+        self.max_royalties().set_if_empty(BigUint::from(8000u64));
 
-        self.max_supply().set(&BigUint::from(20u64));
+        self.set_max_supply_event(&BigUint::from(20u64));
+        self.max_supply().set_if_empty(&BigUint::from(20u64));
     }
 
     // Endpoint used by the owner in the first place to initialize the contract with all the data needed for the SFT token creation

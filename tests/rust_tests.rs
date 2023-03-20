@@ -115,6 +115,26 @@ fn deploy_test() {
             &rust_biguint!(0u64),
             |sc| {
                 sc.init();
+                sc.set_royalties_limits(managed_biguint!(1u64), managed_biguint!(2u64));
+                sc.set_max_supply(managed_biguint!(21u64));
+                sc.set_is_paused(false);
+            },
+        )
+        .assert_ok();
+
+    setup
+        .blockchain_wrapper
+        .execute_tx(
+            &setup.owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.init();
+                assert_eq!(sc.min_royalties().get(), managed_biguint!(1u64));
+                assert_eq!(sc.max_royalties().get(), managed_biguint!(2u64));
+                assert_eq!(sc.max_supply().get(), managed_biguint!(21u64));
+                assert_eq!(sc.whitelist_enabled().get(), true);
+                assert_eq!(sc.is_paused().get(), true);
             },
         )
         .assert_ok();
