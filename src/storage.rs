@@ -76,17 +76,17 @@ pub trait StorageModule {
     fn whitelist(&self) -> SetMapper<ManagedAddress>;
 
     // Stores the addresses that have been frozen for the entire collection
-    #[view(getCollectionfrozenList)]
+    #[view(getCollectionFrozenList)]
     #[storage_mapper("collection_frozen_list")]
     fn frozen_addresses_for_collection(&self) -> SetMapper<ManagedAddress>;
 
     // Stores the actual nonces that have been frozen for an address in a vector
-    #[view(getSftsfrozenForAddress)]
+    #[view(getSftsFrozenForAddress)]
     #[storage_mapper("sfts_frozen_list_per_address")]
     fn frozen_sfts_per_address(&self, address: &ManagedAddress) -> SetMapper<u64>;
 
     // stores the total number of nonces frozen for an address
-    #[view(getfrozenCount)]
+    #[view(getFrozenCount)]
     #[storage_mapper("frozen_count_per_address")]
     fn frozen_count(&self, address: &ManagedAddress) -> SingleValueMapper<usize>;
 
