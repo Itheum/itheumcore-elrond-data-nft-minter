@@ -60,11 +60,6 @@ pub trait StorageModule {
     #[storage_mapper("minted_per_address")]
     fn minted_per_address(&self, address: &ManagedAddress) -> SingleValueMapper<BigUint>;
 
-    // Stores whether the contract has been initialized or not
-    #[view(getContractInitialized)]
-    #[storage_mapper("contract_initialized")]
-    fn contract_initialized(&self) -> SingleValueMapper<bool>; // [TO DO] Delete
-
     // Stores the amount of time in seconds that an address has to wait before minting again
     #[view(mintTimeLimit)]
     #[storage_mapper("mint_time_limit")]
