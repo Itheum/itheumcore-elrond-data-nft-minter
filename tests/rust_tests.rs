@@ -537,7 +537,7 @@ fn requirements_test() {
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
-            sc.require_minting_is_ready();
+            sc.require_ready_for_minting_and_burning();
         })
         .assert_error(4, "Minting is not ready");
 
@@ -554,7 +554,7 @@ fn requirements_test() {
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
-            sc.require_minting_is_ready();
+            sc.require_ready_for_minting_and_burning();
         })
         .assert_error(4, "Minting is not ready");
 
@@ -569,7 +569,7 @@ fn requirements_test() {
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
-            sc.require_minting_is_ready();
+            sc.require_ready_for_minting_and_burning();
         })
         .assert_error(4, "Minting is not ready");
 
@@ -586,13 +586,13 @@ fn requirements_test() {
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
-            sc.require_minting_is_ready();
+            sc.require_ready_for_minting_and_burning();
         })
         .assert_ok();
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
-            sc.require_minting_is_ready();
+            sc.require_ready_for_minting_and_burning();
         })
         .assert_ok();
 
@@ -756,7 +756,7 @@ fn mint_nft_ft_test() {
     let first_user_address = &setup.first_user_address;
     let treasury_address = &setup.treasury_address;
 
-    // [test] when deployed a smart contract is paused and token_id is empty so require_minting_is_ready asserts
+    // [test] when deployed a smart contract is paused and token_id is empty so require_ready_for_minting_and_burning asserts
     b_wrapper
         .execute_tx(
             &first_user_address,

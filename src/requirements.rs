@@ -5,7 +5,7 @@ multiversx_sc::derive_imports!();
 #[multiversx_sc::module]
 pub trait RequirementsModule: crate::storage::StorageModule {
     // Checks whether the owner of the smart contract did all the prerequisites for the minting process to start and contract is not paused
-    fn require_minting_is_ready(&self) {
+    fn require_ready_for_minting_and_burning(&self) {
         let mut is_mint_ready = true;
         if self.is_paused().get() {
             is_mint_ready = false;

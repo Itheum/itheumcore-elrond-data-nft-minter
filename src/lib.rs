@@ -105,7 +105,7 @@ pub trait DataNftMint:
         title: ManagedBuffer,
         description: ManagedBuffer,
     ) -> DataNftAttributes<Self::Api> {
-        self.require_minting_is_ready();
+        self.require_ready_for_minting_and_burning();
         self.require_url_is_valid(&data_marshal);
         self.require_url_is_valid(&data_preview);
         require!(!data_stream.is_empty(), "Data Stream is empty");
@@ -176,7 +176,7 @@ pub trait DataNftMint:
     #[payable("*")]
     #[endpoint(burn)]
     fn burn_token(&self) {
-        self.require_minting_is_ready();
+        self.require_ready_for_minting_and_burning();
         let caller = self.blockchain().get_caller();
         let payment = self.call_value().single_esdt();
         self.token_id()
