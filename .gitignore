@@ -15,5 +15,5 @@ wallet.pem
 erdpy.data-storage.json
 mxpy.data-storage.json
 deploy-devnet.interaction.json
-
+coverage.sh
 .DS_Store

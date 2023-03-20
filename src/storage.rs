@@ -63,7 +63,7 @@ pub trait StorageModule {
     // Stores whether the contract has been initialized or not
     #[view(getContractInitialized)]
     #[storage_mapper("contract_initialized")]
-    fn contract_initialized(&self) -> SingleValueMapper<bool>;
+    fn contract_initialized(&self) -> SingleValueMapper<bool>; // [TO DO] Delete
 
     // Stores the amount of time in seconds that an address has to wait before minting again
     #[view(mintTimeLimit)]
@@ -75,30 +75,30 @@ pub trait StorageModule {
     #[storage_mapper("last_mint_time")]
     fn last_mint_time(&self, address: &ManagedAddress) -> SingleValueMapper<u64>;
 
-    // Stores how many SFTs each address can mint during private sale
+    // Stores how many SFTs each address can mint during private sale // [TO DO] Delete
     #[view(getWhiteList)]
-    #[storage_mapper("white_list")]
-    fn white_list(&self) -> SetMapper<ManagedAddress>;
+    #[storage_mapper("whitelist")]
+    fn whitelist(&self) -> SetMapper<ManagedAddress>;
 
-    // Stores the addresses that have been freezed for the entire collection
-    #[view(getCollectionFreezedList)]
-    #[storage_mapper("collection_freezed_list")]
-    fn freezed_addresses_for_collection(&self) -> SetMapper<ManagedAddress>;
+    // Stores the addresses that have been frozen for the entire collection
+    #[view(getCollectionfrozenList)]
+    #[storage_mapper("collection_frozen_list")]
+    fn frozen_addresses_for_collection(&self) -> SetMapper<ManagedAddress>;
 
-    // Stores the actual nonces that have been freezed for an address in a vector
-    #[view(getSftsFreezedForAddress)]
-    #[storage_mapper("sfts_freezed_list_per_address")]
-    fn freezed_sfts_per_address(&self, address: &ManagedAddress) -> SetMapper<u64>;
+    // Stores the actual nonces that have been frozen for an address in a vector
+    #[view(getSftsfrozenForAddress)]
+    #[storage_mapper("sfts_frozen_list_per_address")]
+    fn frozen_sfts_per_address(&self, address: &ManagedAddress) -> SetMapper<u64>;
 
-    // stores the total number of nonces freezed for an address
-    #[view(getFreezedCount)]
-    #[storage_mapper("freezed_count_per_address")]
-    fn freezed_count(&self, address: &ManagedAddress) -> SingleValueMapper<usize>;
+    // stores the total number of nonces frozen for an address
+    #[view(getfrozenCount)]
+    #[storage_mapper("frozen_count_per_address")]
+    fn frozen_count(&self, address: &ManagedAddress) -> SingleValueMapper<usize>;
 
     // Stores whether the contract is in private sale mode or not
     #[view(isWhiteListEnabled)]
-    #[storage_mapper("white_list_enabled")]
-    fn white_list_enabled(&self) -> SingleValueMapper<bool>;
+    #[storage_mapper("whitelist_enabled")]
+    fn whitelist_enabled(&self) -> SingleValueMapper<bool>;
 
     // Stores admin address
     #[view(getAdministrator)]

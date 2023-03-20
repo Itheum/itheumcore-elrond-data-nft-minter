@@ -28,10 +28,10 @@ pub trait RequirementsModule: crate::storage::StorageModule {
             "You need to wait more time before minting again"
         );
 
-        let whitelist_enabled = self.white_list_enabled().get();
+        let whitelist_enabled = self.whitelist_enabled().get();
         if whitelist_enabled {
             require!(
-                self.white_list().contains(address),
+                self.whitelist().contains(address),
                 "You are not whitelisted"
             );
         }

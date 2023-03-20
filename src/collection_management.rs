@@ -99,7 +99,7 @@ pub trait CollectionManagement:
     #[endpoint(freeze)]
     fn freeze_collection_for_address(&self, address: &ManagedAddress) {
         if self
-            .freezed_addresses_for_collection()
+            .frozen_addresses_for_collection()
             .insert(address.clone())
         {
             let token_identifier = self.token_id().get_token_id();
@@ -118,7 +118,7 @@ pub trait CollectionManagement:
     #[only_owner]
     #[endpoint(unfreeze)]
     fn unfreeze_collection_for_address(&self, address: &ManagedAddress) {
-        if self.freezed_addresses_for_collection().remove(address) {
+        if self.frozen_addresses_for_collection().remove(address) {
             let token_identifier = self.token_id().get_token_id();
             self.remove_collection_freeze_list_spot_event(&address);
             self.send()
@@ -136,10 +136,10 @@ pub trait CollectionManagement:
     fn freeze_single_token_for_address(&self, nonce: u64, address: &ManagedAddress) {
         let caller = self.blockchain().get_caller();
         self.require_is_privileged(&caller);
-        if self.freezed_sfts_per_address(&address).insert(nonce) {
-            let total_freezed = self.freezed_sfts_per_address(&address).len();
-            self.freezed_count(&address).set(&total_freezed);
-            self.set_freezed_sfts_per_address_event(&address, nonce);
+        if self.frozen_sfts_per_address(&address).insert(nonce) {
+            let total_frozen = self.frozen_sfts_per_address(&address).len();
+            self.frozen_count(&address).set(&total_frozen);
+            self.set_frozen_sfts_per_address_event(&address, nonce);
             self.freeze_single_nft(nonce, &address)
                 .async_call()
                 .call_and_exit();
@@ -153,10 +153,10 @@ pub trait CollectionManagement:
     fn unfreeze_single_token_for_address(&self, nonce: u64, address: &ManagedAddress) {
         let caller = self.blockchain().get_caller();
         self.require_is_privileged(&caller);
-        if self.freezed_sfts_per_address(&address).remove(&nonce) {
-            let total_freezed = self.freezed_sfts_per_address(&address).len();
-            self.freezed_count(&address).set(&total_freezed);
-            self.remove_freezed_sfts_per_address_event(&address, nonce);
+        if self.frozen_sfts_per_address(&address).remove(&nonce) {
+            let total_frozen = self.frozen_sfts_per_address(&address).len();
+            self.frozen_count(&address).set(&total_frozen);
+            self.remove_frozen_sfts_per_address_event(&address, nonce);
             self.unfreeze_single_nft(nonce, &address)
                 .async_call()
                 .call_and_exit();
@@ -171,9 +171,9 @@ pub trait CollectionManagement:
         let caller = self.blockchain().get_caller();
         let token_identifier = self.token_id().get_token_id();
         self.require_is_privileged(&caller);
-        if self.freezed_sfts_per_address(&address).remove(&nonce) {
-            let total_freezed = self.freezed_sfts_per_address(&address).len();
-            self.freezed_count(&address).set(&total_freezed);
+        if self.frozen_sfts_per_address(&address).remove(&nonce) {
+            let total_frozen = self.frozen_sfts_per_address(&address).len();
+            self.frozen_count(&address).set(&total_frozen);
             self.wipe_event(&address, &token_identifier, nonce);
             self.wipe_single_nft(nonce, &address)
                 .async_call()

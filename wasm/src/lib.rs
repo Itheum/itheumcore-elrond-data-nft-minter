@@ -44,9 +44,9 @@ multiversx_sc_wasm_adapter::endpoints! {
         mintTimeLimit
         lastMintTime
         getWhiteList
-        getCollectionFreezedList
-        getSftsFreezedForAddress
-        getFreezedCount
+        getCollectionfrozenList
+        getSftsfrozenForAddress
+        getfrozenCount
         isWhiteListEnabled
         getAdministrator
         getUserDataOut

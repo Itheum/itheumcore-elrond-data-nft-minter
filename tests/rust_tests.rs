@@ -207,13 +207,13 @@ fn value_setters_test() {
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
-            assert_eq!(sc.white_list_enabled().get(), true)
+            assert_eq!(sc.whitelist_enabled().get(), true)
         })
         .assert_ok();
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
-            assert_eq!(sc.white_list().len(), 0usize)
+            assert_eq!(sc.whitelist().len(), 0usize)
         })
         .assert_ok();
 
@@ -469,7 +469,7 @@ fn nft_mint_utils_test() {
             let data_buffer = managed_buffer!(&[DATA_MARSHAL, DATA_STREAM].concat());
             let data_hash = sc.crypto().sha256(data_buffer).as_managed_buffer().clone();
             assert_eq!(
-                sc.crate_hash_buffer(
+                sc.create_hash_buffer(
                     &managed_buffer!(DATA_MARSHAL),
                     &managed_buffer!(DATA_STREAM)
                 ),
@@ -1246,7 +1246,7 @@ fn mint_nft_ft_test() {
     // [test] test if the get_user_data_out view returns the correct final state view based on our tests above
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
-            let nonces = sc.freezed_sfts_per_address(&managed_address!(first_user_address));
+            let nonces = sc.frozen_sfts_per_address(&managed_address!(first_user_address));
             let mut frozen_nonces = ManagedVec::new();
             for item in nonces.iter() {
                 frozen_nonces.push(item);
@@ -1261,16 +1261,16 @@ fn mint_nft_ft_test() {
                 last_mint_time: sc
                     .last_mint_time(&managed_address!(first_user_address))
                     .get(),
-                whitelist_enabled: sc.white_list_enabled().get(),
+                whitelist_enabled: sc.whitelist_enabled().get(),
                 is_whitelisted: sc
-                    .white_list()
+                    .whitelist()
                     .contains(&managed_address!(first_user_address)),
                 minted_per_user: sc
                     .minted_per_address(&managed_address!(first_user_address))
                     .get(),
                 total_minted: sc.minted_tokens().get(),
                 frozen: sc
-                    .freezed_addresses_for_collection()
+                    .frozen_addresses_for_collection()
                     .contains(&managed_address!(first_user_address)),
                 frozen_nonces: frozen_nonces,
             };
@@ -1341,7 +1341,7 @@ fn mint_nft_ft_test() {
 }
 
 #[test] //Tests whether the whitelist functionality works as expected
-fn white_list_test() {
+fn whitelist_test() {
     let mut setup = setup_contract(datanftmint::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
     let owner_address = &setup.owner_address;
@@ -1365,7 +1365,7 @@ fn white_list_test() {
             &setup.contract_wrapper,
             &rust_biguint!(0),
             |sc| {
-                sc.set_white_list_enabled(true);
+                sc.set_whitelist_enabled(true);
             },
         )
         .assert_ok();
@@ -1376,7 +1376,7 @@ fn white_list_test() {
             &setup.contract_wrapper,
             &rust_biguint!(0),
             |sc| {
-                sc.set_white_list_enabled(true);
+                sc.set_whitelist_enabled(true);
             },
         )
         .assert_ok();
@@ -1696,7 +1696,7 @@ fn privileges_test() {
             &user_address,
             &setup.contract_wrapper,
             &rust_biguint!(0u64),
-            |sc| sc.set_white_list_enabled(false),
+            |sc| sc.set_whitelist_enabled(false),
         )
         .assert_user_error("Address is not privileged");
 
@@ -1877,7 +1877,7 @@ fn freeze_function_test() {
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
             assert_eq!(
-                sc.freezed_addresses_for_collection()
+                sc.frozen_addresses_for_collection()
                     .contains(&managed_address!(first_user_address)),
                 true
             );
@@ -1980,7 +1980,7 @@ fn unfreeze_function_test() {
             &setup.contract_wrapper,
             &rust_biguint!(0u64),
             |sc| {
-                sc.freezed_addresses_for_collection()
+                sc.frozen_addresses_for_collection()
                     .insert(managed_address!(first_user_address));
             },
         )
@@ -2000,7 +2000,7 @@ fn unfreeze_function_test() {
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
             assert_eq!(
-                sc.freezed_addresses_for_collection()
+                sc.frozen_addresses_for_collection()
                     .contains(&managed_address!(first_user_address)),
                 false
             );
@@ -2145,13 +2145,12 @@ fn freeze_sfts_per_address_function_test() {
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
             assert_eq!(
-                sc.freezed_sfts_per_address(&managed_address!(first_user_address))
+                sc.frozen_sfts_per_address(&managed_address!(first_user_address))
                     .contains(&1u64),
                 true
             );
             assert_eq!(
-                sc.freezed_count(&managed_address!(first_user_address))
-                    .get(),
+                sc.frozen_count(&managed_address!(first_user_address)).get(),
                 1usize
             );
         })
@@ -2165,19 +2164,19 @@ fn freeze_sfts_per_address_function_test() {
             &setup.contract_wrapper,
             &rust_biguint!(0u64),
             |sc| {
-                sc.freezed_sfts_per_address(&managed_address!(first_user_address))
+                sc.frozen_sfts_per_address(&managed_address!(first_user_address))
                     .insert(2u64);
             },
         )
         .assert_ok();
-    // setting the freezed count to 2
+    // setting the frozen count to 2
     b_wrapper
         .execute_tx(
             &owner_address,
             &setup.contract_wrapper,
             &rust_biguint!(0u64),
             |sc| {
-                sc.freezed_count(&managed_address!(first_user_address))
+                sc.frozen_count(&managed_address!(first_user_address))
                     .set(2usize);
             },
         )
@@ -2186,13 +2185,12 @@ fn freeze_sfts_per_address_function_test() {
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
             assert_eq!(
-                sc.freezed_sfts_per_address(&managed_address!(first_user_address))
+                sc.frozen_sfts_per_address(&managed_address!(first_user_address))
                     .len(),
                 2usize
             );
             assert_eq!(
-                sc.freezed_count(&managed_address!(first_user_address))
-                    .get(),
+                sc.frozen_count(&managed_address!(first_user_address)).get(),
                 2usize
             );
         })
@@ -2328,7 +2326,7 @@ fn unfreeze_sfts_per_address_function_test() {
             &setup.contract_wrapper,
             &rust_biguint!(0u64),
             |sc| {
-                sc.freezed_sfts_per_address(&managed_address!(first_user_address))
+                sc.frozen_sfts_per_address(&managed_address!(first_user_address))
                     .insert(1u64);
             },
         )
@@ -2339,7 +2337,7 @@ fn unfreeze_sfts_per_address_function_test() {
             &setup.contract_wrapper,
             &rust_biguint!(0u64),
             |sc| {
-                sc.freezed_sfts_per_address(&managed_address!(first_user_address))
+                sc.frozen_sfts_per_address(&managed_address!(first_user_address))
                     .insert(2u64);
             },
         )
@@ -2351,7 +2349,7 @@ fn unfreeze_sfts_per_address_function_test() {
             &setup.contract_wrapper,
             &rust_biguint!(0u64),
             |sc| {
-                sc.freezed_count(&managed_address!(first_user_address))
+                sc.frozen_count(&managed_address!(first_user_address))
                     .set(2usize);
             },
         )
@@ -2365,22 +2363,21 @@ fn unfreeze_sfts_per_address_function_test() {
             |sc| sc.unfreeze_single_token_for_address(2u64, &managed_address!(first_user_address)),
         )
         .assert_ok();
-    // check if the token is removed from the freezed_sfts_per_address array
+    // check if the token is removed from the frozen_sfts_per_address array
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
             assert_eq!(
-                sc.freezed_sfts_per_address(&managed_address!(first_user_address))
+                sc.frozen_sfts_per_address(&managed_address!(first_user_address))
                     .contains(&1u64),
                 true
             );
             assert_eq!(
-                sc.freezed_sfts_per_address(&managed_address!(first_user_address))
+                sc.frozen_sfts_per_address(&managed_address!(first_user_address))
                     .len(),
                 1usize
             );
             assert_eq!(
-                sc.freezed_count(&managed_address!(first_user_address))
-                    .get(),
+                sc.frozen_count(&managed_address!(first_user_address)).get(),
                 1usize
             );
         })
@@ -2509,14 +2506,14 @@ fn wipe_function_test() {
             );
         })
         .assert_ok();
-    // We push the minted tokens to the freezed storage
+    // We push the minted tokens to the frozen storage
     b_wrapper
         .execute_tx(
             &owner_address,
             &setup.contract_wrapper,
             &rust_biguint!(0u64),
             |sc| {
-                sc.freezed_sfts_per_address(&managed_address!(first_user_address))
+                sc.frozen_sfts_per_address(&managed_address!(first_user_address))
                     .insert(1u64);
             },
         )
@@ -2528,34 +2525,33 @@ fn wipe_function_test() {
             &setup.contract_wrapper,
             &rust_biguint!(0u64),
             |sc| {
-                sc.freezed_sfts_per_address(&managed_address!(first_user_address))
+                sc.frozen_sfts_per_address(&managed_address!(first_user_address))
                     .insert(2u64);
             },
         )
         .assert_ok();
-    // We check if the freezed storage has the correct values
+    // We check if the frozen storage has the correct values
     b_wrapper
         .execute_tx(
             &owner_address,
             &setup.contract_wrapper,
             &rust_biguint!(0u64),
             |sc| {
-                sc.freezed_count(&managed_address!(first_user_address))
+                sc.frozen_count(&managed_address!(first_user_address))
                     .set(2usize);
             },
         )
         .assert_ok();
-    // We check if the freezed storage has the correct values
+    // We check if the frozen storage has the correct values
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
             assert_eq!(
-                sc.freezed_sfts_per_address(&managed_address!(first_user_address))
+                sc.frozen_sfts_per_address(&managed_address!(first_user_address))
                     .len(),
                 2usize
             );
             assert_eq!(
-                sc.freezed_count(&managed_address!(first_user_address))
-                    .get(),
+                sc.frozen_count(&managed_address!(first_user_address)).get(),
                 2usize
             );
         })
@@ -2569,22 +2565,21 @@ fn wipe_function_test() {
             |sc| sc.wipe_single_token_for_address(2u64, &managed_address!(first_user_address)),
         )
         .assert_ok();
-    // We check if the freezed storage has the correct values after the wipe
+    // We check if the frozen storage has the correct values after the wipe
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
             assert_eq!(
-                sc.freezed_sfts_per_address(&managed_address!(first_user_address))
+                sc.frozen_sfts_per_address(&managed_address!(first_user_address))
                     .contains(&1u64),
                 true
             );
             assert_eq!(
-                sc.freezed_sfts_per_address(&managed_address!(first_user_address))
+                sc.frozen_sfts_per_address(&managed_address!(first_user_address))
                     .len(),
                 1usize
             );
             assert_eq!(
-                sc.freezed_count(&managed_address!(first_user_address))
-                    .get(),
+                sc.frozen_count(&managed_address!(first_user_address)).get(),
                 1usize
             );
         })

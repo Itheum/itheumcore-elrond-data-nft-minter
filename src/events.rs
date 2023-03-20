@@ -19,21 +19,21 @@ pub trait EventsModule {
     #[event("whitelistSpotSet")]
     fn set_whitelist_spot_event(&self, #[indexed] address: &ManagedAddress);
 
-    // Emitted whenever a freezed spot is set
+    // Emitted whenever a frozen spot is set
     #[event("collectionFreezeListSpotSet")]
     fn set_collection_freeze_list_spot_event(&self, #[indexed] address: &ManagedAddress);
 
     // Emitted whenever a single NFT is frozen
-    #[event("freezedSftsPerAddress")]
-    fn set_freezed_sfts_per_address_event(
+    #[event("frozenSftsPerAddress")]
+    fn set_frozen_sfts_per_address_event(
         &self,
         #[indexed] address: &ManagedAddress,
         #[indexed] nonce: u64,
     );
 
     // Emitted whenever a single NFT is unfrozen
-    #[event("unFreezedSftsPerAddress")]
-    fn remove_freezed_sfts_per_address_event(
+    #[event("unfrozenSftsPerAddress")]
+    fn remove_frozen_sfts_per_address_event(
         &self,
         #[indexed] address: &ManagedAddress,
         #[indexed] nonce: u64,
@@ -83,7 +83,7 @@ pub trait EventsModule {
     #[event("unpauseCollection")]
     fn unpause_collection_event(&self, #[indexed] token_identifier: &TokenIdentifier);
 
-    // Emitted whenever an address is freezed
+    // Emitted whenever an address is frozen
     #[event("freeze")]
     fn freeze_event(
         &self,
@@ -92,7 +92,7 @@ pub trait EventsModule {
         #[indexed] nonce: u64,
     );
 
-    // Emitted whenever an address is unfreezed
+    // Emitted whenever an address is unfrozen
     #[event("unfreeze")]
     fn unfreeze_event(
         &self,

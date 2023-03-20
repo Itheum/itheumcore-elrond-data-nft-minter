@@ -28,7 +28,7 @@ pub trait DataNftMint:
         self.is_paused().set(true);
         self.mint_pause_toggle_event(&true);
 
-        self.white_list_enabled().set(true);
+        self.whitelist_enabled().set(true);
         self.whitelist_enable_toggle_event(&true);
 
         self.min_royalties().set(BigUint::from(0u64));
@@ -148,7 +148,7 @@ pub trait DataNftMint:
             &supply,
             &name,
             &royalties,
-            &self.crate_hash_buffer(&data_marshal, &data_stream),
+            &self.create_hash_buffer(&data_marshal, &data_stream),
             &attributes,
             &self.create_uris(media, metadata),
         );
@@ -220,11 +220,11 @@ pub trait DataNftMint:
 
     // Endpoint that will be used by the owner and privileged address to change the whitelist enable value.
     #[endpoint(setWhiteListEnabled)]
-    fn set_white_list_enabled(&self, is_enabled: bool) {
+    fn set_whitelist_enabled(&self, is_enabled: bool) {
         let caller = self.blockchain().get_caller();
         self.require_is_privileged(&caller);
         self.whitelist_enable_toggle_event(&is_enabled);
-        self.white_list_enabled().set(is_enabled);
+        self.whitelist_enabled().set(is_enabled);
     }
 
     // Endpoint that will be used by the owner and privileged address to set whitelist spots.
@@ -234,7 +234,7 @@ pub trait DataNftMint:
         let caller = self.blockchain().get_caller();
         self.require_is_privileged(&caller);
         for item in whitelist.into_iter() {
-            if self.white_list().insert(item.clone()) {
+            if self.whitelist().insert(item.clone()) {
                 self.set_whitelist_spot_event(&item);
             } else {
                 sc_panic!("Address already in whitelist");
@@ -249,7 +249,7 @@ pub trait DataNftMint:
         let caller = self.blockchain().get_caller();
         self.require_is_privileged(&caller);
         for item in whitelist.into_iter() {
-            if self.white_list().remove(&item.clone()) {
+            if self.whitelist().remove(&item.clone()) {
                 self.remove_whitelist_spot_event(&item);
             } else {
                 sc_panic!("Address not in whitelist");
