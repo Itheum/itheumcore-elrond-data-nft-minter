@@ -85,9 +85,10 @@ pub trait RequirementsModule: crate::storage::StorageModule {
             require!(url_vec[i] == starts_with[i], "URL must start with https://");
         }
         for i in 0..url_length {
-            if url_vec[i] == 32 || url_vec[i] == 10 || url_vec[i] == 13 {
-                sc_panic!("URL contains invalid characters");
-            }
+            require!(
+                url_vec[i] > 32 && url_vec[i] < 127,
+                "URL contains invalid characters"
+            )
         }
     }
 
@@ -95,7 +96,7 @@ pub trait RequirementsModule: crate::storage::StorageModule {
         let url_length = url.len();
         require!(!url.is_empty(), "URL is empty");
         require!(url_length <= 300, "URL length is too big");
-        require!(url_length >= 20, "URL length is too small");
+        require!(url_length >= 15, "URL length is too small");
     }
 
     fn require_royalties_are_valid(&self, min_royalties: &BigUint, max_royalties: &BigUint) {
