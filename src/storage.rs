@@ -50,7 +50,7 @@ pub trait StorageModule {
     #[storage_mapper("min_royalties")]
     fn min_royalties(&self) -> SingleValueMapper<BigUint>;
 
-    // Stores max SFT supply
+    // Stores max SFT supply a user can mint
     #[view(getMaxSupply)]
     #[storage_mapper("max_supply")]
     fn max_supply(&self) -> SingleValueMapper<BigUint>;
@@ -70,7 +70,7 @@ pub trait StorageModule {
     #[storage_mapper("last_mint_time")]
     fn last_mint_time(&self, address: &ManagedAddress) -> SingleValueMapper<u64>;
 
-    // Stores how many SFTs each address can mint during private sale // [TO DO] Delete
+    // Stores the addresses that are whitelisted to mint
     #[view(getWhiteList)]
     #[storage_mapper("whitelist")]
     fn whitelist(&self) -> SetMapper<ManagedAddress>;

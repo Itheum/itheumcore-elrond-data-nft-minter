@@ -75,7 +75,7 @@ pub trait RequirementsModule: crate::storage::StorageModule {
         }
     }
 
-    // Checks whether the uris are valid
+    // Checks whether the URL passed is valid (characters, starts with https://)
     fn require_url_is_valid(&self, url: &ManagedBuffer) {
         let url_length = url.len();
         let starts_with: &[u8] = b"https://";
@@ -92,6 +92,7 @@ pub trait RequirementsModule: crate::storage::StorageModule {
         }
     }
 
+    // Checks whether the URL passed has a valid length
     fn require_url_is_adequate_length(&self, url: &ManagedBuffer) {
         let url_length = url.len();
         require!(!url.is_empty(), "URL is empty");
@@ -99,6 +100,7 @@ pub trait RequirementsModule: crate::storage::StorageModule {
         require!(url_length >= 15, "URL length is too small");
     }
 
+    // Checks whether the royalties passed are valid
     fn require_royalties_are_valid(&self, min_royalties: &BigUint, max_royalties: &BigUint) {
         require!(
             min_royalties <= max_royalties,

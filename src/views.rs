@@ -43,11 +43,10 @@ pub trait ViewsModule: crate::storage::StorageModule {
             let minted_per_user = self.minted_per_address(&address).get();
             let total_minted = self.minted_tokens().get();
             let frozen = self.frozen_addresses_for_collection().contains(&address);
-            let nonces = self.frozen_sfts_per_address(&address);
-            let mut frozen_nonces = ManagedVec::new();
-            for item in nonces.iter() {
-                frozen_nonces.push(item);
-            }
+            let frozen_nonces = self
+                .frozen_sfts_per_address(&address)
+                .iter()
+                .collect::<ManagedVec<u64>>();
 
             let user_data = UserDataOut {
                 anti_spam_tax_value,
