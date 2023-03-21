@@ -228,6 +228,7 @@ fn value_setters_test() {
     let b_wrapper = &mut setup.blockchain_wrapper;
     let owner_address = &setup.owner_address;
     let administrator_address = &setup.first_user_address;
+    let treasury_address = &setup.treasury_address;
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
@@ -300,6 +301,15 @@ fn value_setters_test() {
             |sc| {
                 sc.set_royalties_limits(managed_biguint!(0u64), managed_biguint!(100u64));
             },
+        )
+        .assert_ok();
+
+    b_wrapper
+        .execute_tx(
+            owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| sc.set_treasury_address(managed_address!(treasury_address)),
         )
         .assert_ok();
 
@@ -1619,7 +1629,7 @@ fn burn_token_test() {
             &owner_address,
             &setup.contract_wrapper,
             &rust_biguint!(0),
-            |sc| sc.set_anti_spam_tax(managed_token_id_wrapped!(TOKEN_ID), managed_biguint!(200)),
+            |sc| sc.set_anti_spam_tax(managed_token_id_wrapped!("EGLD"), managed_biguint!(200)),
         )
         .assert_ok();
 
@@ -1663,12 +1673,10 @@ fn burn_token_test() {
         .assert_ok();
 
     b_wrapper
-        .execute_esdt_transfer(
-            first_user_address,
+        .execute_tx(
+            &first_user_address,
             &setup.contract_wrapper,
-            TOKEN_ID,
-            0,
-            &rust_biguint!(200),
+            &rust_biguint!(200u64),
             |sc| {
                 sc.mint_token(
                     managed_buffer!(USER_NFT_NAME),
@@ -1983,6 +1991,21 @@ fn freeze_function_test() {
             &setup.contract_wrapper,
             &rust_biguint!(0u64),
             |sc| {
+                sc.frozen_addresses_for_collection()
+                    .insert(managed_address!(first_user_address));
+                sc.freeze_collection_for_address(&managed_address!(first_user_address));
+            },
+        )
+        .assert_user_error("Address is in collection freeze list");
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.frozen_addresses_for_collection()
+                    .remove(&managed_address!(first_user_address));
                 sc.freeze_collection_for_address(&managed_address!(first_user_address));
             },
         )
@@ -2089,6 +2112,18 @@ fn unfreeze_function_test() {
             },
         )
         .assert_ok();
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.unfreeze_collection_for_address(&managed_address!(first_user_address));
+            },
+        )
+        .assert_user_error("Address is not in collection freeze list");
+
     // [test] freeze collection for address
     b_wrapper
         .execute_tx(
