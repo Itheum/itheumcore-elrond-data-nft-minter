@@ -12,21 +12,6 @@ pub trait Callbacks: crate::storage::StorageModule {
         match result {
             ManagedAsyncCallResult::Ok(token_id) => {
                 self.token_id().set_token_id(token_id.unwrap_esdt());
-                self.send()
-                    .esdt_system_sc_proxy()
-                    .set_special_roles(
-                        &self.blockchain().get_sc_address(),
-                        &self.token_id().get_token_id(),
-                        [
-                            EsdtLocalRole::NftCreate,
-                            EsdtLocalRole::NftBurn,
-                            EsdtLocalRole::NftAddQuantity,
-                        ][..]
-                            .iter()
-                            .cloned(),
-                    )
-                    .async_call()
-                    .call_and_exit()
             }
             ManagedAsyncCallResult::Err(_) => {
                 let caller = self.blockchain().get_owner_address();
