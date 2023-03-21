@@ -620,6 +620,12 @@ fn requirements_test() {
         .assert_ok();
 
     b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_token_issued();
+        })
+        .assert_user_error("Token not issued");
+
+    b_wrapper
         .execute_tx(
             &owner_address,
             &setup.contract_wrapper,
@@ -660,6 +666,12 @@ fn requirements_test() {
             &rust_biguint!(5u64 * 10u64.pow(16u32)),
             |sc| sc.token_id().set_token_id(managed_token_id!(SFT_TICKER)),
         )
+        .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_token_issued();
+        })
         .assert_ok();
 
     b_wrapper
