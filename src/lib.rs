@@ -112,6 +112,7 @@ pub trait DataNftMint:
                     .cloned(),
             )
             .async_call()
+            .with_callback(self.callbacks().set_local_roles_callback())
             .call_and_exit();
     }
 

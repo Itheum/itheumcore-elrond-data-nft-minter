@@ -1,6 +1,7 @@
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
+// [TO DO] Tests for callbacks
 #[multiversx_sc::module]
 pub trait Callbacks: crate::storage::StorageModule {
     // Callback used to set the Token ID and the special roles for the SFT token.
@@ -21,6 +22,18 @@ pub trait Callbacks: crate::storage::StorageModule {
                     self.send()
                         .direct(&caller, &returned.token_identifier, 0, &returned.amount);
                 }
+            }
+        }
+    }
+
+    #[callback]
+    fn set_local_roles_callback(&self, #[call_result] result: ManagedAsyncCallResult<()>) {
+        match result {
+            ManagedAsyncCallResult::Ok(_) => {
+                self.roles_are_set().set(true);
+            }
+            ManagedAsyncCallResult::Err(_) => {
+                self.roles_are_set().set(false);
             }
         }
     }

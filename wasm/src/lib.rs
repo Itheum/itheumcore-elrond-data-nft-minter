@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           38
+// Endpoints:                           40
 // Async Callback:                       1
-// Total number of exported functions:  40
+// Total number of exported functions:  42
 
 #![no_std]
 #![feature(alloc_error_handler, lang_items)]
@@ -19,6 +19,7 @@ multiversx_sc_wasm_adapter::endpoints! {
     datanftmint
     (
         initializeContract
+        setLocalRoles
         mint
         burn
         setTreasuryAddress
@@ -47,6 +48,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         getSftsFrozenForAddress
         getFrozenCount
         isWhiteListEnabled
+        getRolesAreSet
         getAdministrator
         getUserDataOut
         pause
