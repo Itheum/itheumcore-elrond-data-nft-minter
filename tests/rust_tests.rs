@@ -10,6 +10,7 @@ use datanftmint::storage::*;
 use datanftmint::views::{UserDataOut, ViewsModule};
 use datanftmint::*;
 use multiversx_sc::contract_base::ContractBase;
+
 use multiversx_sc::types::{ManagedBuffer, ManagedVec, MultiValueEncoded};
 use multiversx_sc::{
     codec::Empty,
@@ -461,6 +462,77 @@ fn anti_spam_tax_test() {
         .assert_ok();
 }
 
+#[test]
+fn set_local_roles_test() {
+    let mut setup = setup_contract(datanftmint::contract_obj);
+    let b_wrapper = &mut setup.blockchain_wrapper;
+    let owner_address = &setup.owner_address;
+    let treasury_address = &setup.treasury_address;
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(5u64 * 10u64.pow(16u32)),
+            |sc| {
+                sc.initialize_contract(
+                    managed_buffer!(COLLECTION_NAME),
+                    managed_buffer!(SFT_TICKER),
+                    &managed_token_id_wrapped!(TOKEN_ID),
+                    managed_biguint!(1_000_000),
+                    MINT_TIME_LIMIT,
+                    managed_address!(treasury_address),
+                )
+            },
+        )
+        .assert_ok();
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.set_local_roles();
+            },
+        )
+        .assert_user_error("Token not issued");
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(sc.roles_are_set().get(), false);
+        })
+        .assert_ok();
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(5u64 * 10u64.pow(16u32)),
+            |sc| sc.token_id().set_token_id(managed_token_id!(SFT_TICKER)),
+        )
+        .assert_ok();
+
+    b_wrapper.set_esdt_local_roles(setup.contract_wrapper.address_ref(), SFT_TICKER, ROLES);
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.roles_are_set().set(true);
+            },
+        )
+        .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(sc.roles_are_set().get(), true);
+        })
+        .assert_ok();
+}
+
 #[test] // Tests whether minting utilities for string creations works correctly.
         // Tests whether the concatenation and sha256 hash encryption works correctly.
 fn nft_mint_utils_test() {
@@ -611,10 +683,27 @@ fn requirements_test() {
         .execute_query(&setup.contract_wrapper, |sc| {
             sc.require_ready_for_minting_and_burning();
         })
+        .assert_user_error("Minting is not ready");
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.roles_are_set().set(false);
+
+            assert_eq!(sc.roles_are_set().get(), false);
+        })
         .assert_ok();
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_ready_for_minting_and_burning();
+        })
+        .assert_user_error("Minting is not ready");
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.roles_are_set().set(true);
+            assert_eq!(sc.roles_are_set().get(), true);
+
             sc.require_ready_for_minting_and_burning();
         })
         .assert_ok();
@@ -828,6 +917,7 @@ fn mint_nft_ft_test() {
             &rust_biguint!(0u64),
             |sc| {
                 sc.set_is_paused(false);
+                sc.roles_are_set().set(true);
             },
         )
         .assert_ok();
@@ -1542,6 +1632,7 @@ fn burn_token_test() {
             &rust_biguint!(0u64),
             |sc| {
                 sc.set_is_paused(false);
+                sc.roles_are_set().set(true);
             },
         )
         .assert_ok();
@@ -1808,6 +1899,7 @@ fn freeze_function_test() {
             &rust_biguint!(0u64),
             |sc| {
                 sc.set_is_paused(false);
+                sc.roles_are_set().set(true);
             },
         )
         .assert_ok();
@@ -1921,6 +2013,7 @@ fn unfreeze_function_test() {
             &rust_biguint!(0u64),
             |sc| {
                 sc.set_is_paused(false);
+                sc.roles_are_set().set(true);
             },
         )
         .assert_ok();
@@ -2044,6 +2137,7 @@ fn freeze_sfts_per_address_function_test() {
             &rust_biguint!(0u64),
             |sc| {
                 sc.set_is_paused(false);
+                sc.roles_are_set().set(true);
             },
         )
         .assert_ok();
@@ -2233,6 +2327,7 @@ fn unfreeze_sfts_per_address_function_test() {
             &rust_biguint!(0u64),
             |sc| {
                 sc.set_is_paused(false);
+                sc.roles_are_set().set(true);
             },
         )
         .assert_ok();
@@ -2420,6 +2515,7 @@ fn wipe_function_test() {
             &rust_biguint!(0u64),
             |sc| {
                 sc.set_is_paused(false);
+                sc.roles_are_set().set(true);
             },
         )
         .assert_ok();
