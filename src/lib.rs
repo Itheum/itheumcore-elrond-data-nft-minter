@@ -70,7 +70,7 @@ pub trait DataNftMint:
         self.set_mint_time_limit_event(&mint_time_limit);
         self.mint_time_limit().set(mint_time_limit);
         self.treasury_address().set(&treasury_address);
-        // Collection issuing and giving NFT creation rights to the contract.
+        // Collection issuing
         self.send()
             .esdt_system_sc_proxy()
             .issue_semi_fungible(
@@ -89,6 +89,29 @@ pub trait DataNftMint:
             )
             .async_call()
             .with_callback(self.callbacks().issue_callback())
+            .call_and_exit();
+    }
+
+    // Endpoint used by the owner to set the special roles to the contract
+    #[only_owner]
+    #[endpoint(setLocalRoles)]
+    fn set_local_roles(&self) {
+        self.require_token_issued();
+
+        self.send()
+            .esdt_system_sc_proxy()
+            .set_special_roles(
+                &self.blockchain().get_sc_address(),
+                &self.token_id().get_token_id(),
+                [
+                    EsdtLocalRole::NftCreate,
+                    EsdtLocalRole::NftBurn,
+                    EsdtLocalRole::NftAddQuantity,
+                ][..]
+                    .iter()
+                    .cloned(),
+            )
+            .async_call()
             .call_and_exit();
     }
 

@@ -111,4 +111,9 @@ pub trait RequirementsModule: crate::storage::StorageModule {
             ERR_MAX_ROYALTIES_TOO_HIGH
         );
     }
+
+    // Checks whether the token is issued
+    fn require_token_issued(&self) {
+        require!(!self.token_id().is_empty(), "Token not issued");
+    }
 }
