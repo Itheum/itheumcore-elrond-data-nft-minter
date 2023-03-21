@@ -11,6 +11,7 @@ pub trait Callbacks: crate::storage::StorageModule {
     ) {
         match result {
             ManagedAsyncCallResult::Ok(token_id) => {
+                require!(self.token_id().is_empty(), "Token already issued");
                 self.token_id().set_token_id(token_id.unwrap_esdt());
             }
             ManagedAsyncCallResult::Err(_) => {
