@@ -299,7 +299,29 @@ fn value_setters_test() {
             &setup.contract_wrapper,
             &rust_biguint!(0u64),
             |sc| {
-                sc.set_royalties_limits(managed_biguint!(0u64), managed_biguint!(100u64));
+                sc.set_royalties_limits(managed_biguint!(10u64), managed_biguint!(1u64));
+            },
+        )
+        .assert_user_error(ERR_MIN_ROYALTIES_BIGGER_THAN_MAX_ROYALTIES);
+
+    b_wrapper
+        .execute_tx(
+            administrator_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.set_royalties_limits(managed_biguint!(10u64), managed_biguint!(100000u64));
+            },
+        )
+        .assert_user_error(ERR_MAX_ROYALTIES_TOO_HIGH);
+
+    b_wrapper
+        .execute_tx(
+            administrator_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.set_royalties_limits(managed_biguint!(1u64), managed_biguint!(10u64));
             },
         )
         .assert_ok();
