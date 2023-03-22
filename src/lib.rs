@@ -297,8 +297,8 @@ pub trait DataNftMint:
     fn set_royalties_limits(&self, min_royalties: BigUint, max_royalties: BigUint) {
         let caller = self.blockchain().get_caller();
         self.require_is_privileged(&caller);
-        self.set_royalties_limits_event(&min_royalties, &max_royalties);
         self.require_royalties_are_valid(&min_royalties, &max_royalties);
+        self.set_royalties_limits_event(&min_royalties, &max_royalties);
         self.min_royalties().set(min_royalties);
         self.max_royalties().set(max_royalties);
     }
