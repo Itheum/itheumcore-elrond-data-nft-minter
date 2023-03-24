@@ -1,4 +1,11 @@
-use crate::errors::{ERR_MAX_ROYALTIES_TOO_HIGH, ERR_MIN_ROYALTIES_BIGGER_THAN_MAX_ROYALTIES};
+use crate::errors::{
+    ERR_MAX_ROYALTIES_TOO_HIGH, ERR_MAX_SUPPLY_EXCEEDED, ERR_MINTING_AND_BURNING_NOT_ALLOWED,
+    ERR_MIN_ROYALTIES_BIGGER_THAN_MAX_ROYALTIES, ERR_NOT_PRIVILEGED, ERR_NOT_URL,
+    ERR_NOT_WHITELISTED, ERR_ROYALTIES_ARE_BIGGER_THAN_MAX_ROYALTIES,
+    ERR_ROYALTIES_ARE_SMALLER_THAN_MIN_ROYALTIES, ERR_SUPLLY_HIGHER_THAN_ZERO,
+    ERR_TOKEN_NOT_ISSUED, ERR_URL_INVALID_CHARACTERS, ERR_URL_IS_EMPTY, ERR_URL_TOO_BIG,
+    ERR_URL_TOO_SMALL, ERR_VALUE_MUST_BE_POSITIVE, ERR_WAIT_MORE_TIME,
+};
 
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
@@ -22,7 +29,7 @@ pub trait RequirementsModule: crate::storage::StorageModule {
         if self.roles_are_set().is_empty() || self.roles_are_set().get() == false {
             is_mint_ready = false;
         }
-        require!(is_mint_ready, "Minting is not ready");
+        require!(is_mint_ready, ERR_MINTING_AND_BURNING_NOT_ALLOWED);
     }
 
     // Checks whether the address trying to mint is allowed to do so
@@ -31,21 +38,18 @@ pub trait RequirementsModule: crate::storage::StorageModule {
         let mint_time_limit = self.mint_time_limit().get();
         require!(
             current_time - last_mint_time >= mint_time_limit,
-            "You need to wait more time before minting again"
+            ERR_WAIT_MORE_TIME
         );
 
         let whitelist_enabled = self.whitelist_enabled().get();
         if whitelist_enabled {
-            require!(
-                self.whitelist().contains(address),
-                "You are not whitelisted"
-            );
+            require!(self.whitelist().contains(address), ERR_NOT_WHITELISTED);
         }
     }
 
     // Checks whether a value is bigger than zero
     fn require_value_is_positive(&self, value: &BigUint) {
-        require!(value > &BigUint::zero(), "Value must be higher than zero");
+        require!(value > &BigUint::zero(), ERR_VALUE_MUST_BE_POSITIVE);
     }
 
     // Checks whether SFT creation conditions are met
@@ -55,27 +59,21 @@ pub trait RequirementsModule: crate::storage::StorageModule {
         let max_supply = self.max_supply().get();
         require!(
             royalties <= &max_royalties,
-            "Royalties are bigger than max royalties"
+            ERR_ROYALTIES_ARE_BIGGER_THAN_MAX_ROYALTIES
         );
         require!(
             royalties >= &min_royalties,
-            "Royalties are smaller than min royalties"
+            ERR_ROYALTIES_ARE_SMALLER_THAN_MIN_ROYALTIES
         );
-        require!(supply <= &max_supply, "Max supply exceeded");
-        require!(supply > &BigUint::zero(), "Supply must be higher than zero");
+        require!(supply <= &max_supply, ERR_MAX_SUPPLY_EXCEEDED);
+        require!(supply > &BigUint::zero(), ERR_SUPLLY_HIGHER_THAN_ZERO);
     }
 
     // Checks whether address is privileged
     fn require_is_privileged(&self, address: &ManagedAddress) {
         if &self.blockchain().get_owner_address() != address {
-            require!(
-                !&self.administrator().is_empty(),
-                "Address is not privileged"
-            );
-            require!(
-                &self.administrator().get() == address,
-                "Address is not privileged"
-            );
+            require!(!&self.administrator().is_empty(), ERR_NOT_PRIVILEGED);
+            require!(&self.administrator().get() == address, ERR_NOT_PRIVILEGED);
         }
     }
 
@@ -86,12 +84,12 @@ pub trait RequirementsModule: crate::storage::StorageModule {
         self.require_url_is_adequate_length(url);
         let url_vec = url.to_boxed_bytes().into_vec();
         for i in 0..starts_with.len() {
-            require!(url_vec[i] == starts_with[i], "URL must start with https://");
+            require!(url_vec[i] == starts_with[i], ERR_NOT_URL);
         }
         for i in 0..url_length {
             require!(
                 url_vec[i] > 32 && url_vec[i] < 127,
-                "URL contains invalid characters"
+                ERR_URL_INVALID_CHARACTERS
             )
         }
     }
@@ -99,9 +97,9 @@ pub trait RequirementsModule: crate::storage::StorageModule {
     // Checks whether the URL passed has a valid length
     fn require_url_is_adequate_length(&self, url: &ManagedBuffer) {
         let url_length = url.len();
-        require!(!url.is_empty(), "URL is empty");
-        require!(url_length <= 300, "URL length is too big");
-        require!(url_length >= 15, "URL length is too small");
+        require!(!url.is_empty(), ERR_URL_IS_EMPTY);
+        require!(url_length <= 300, ERR_URL_TOO_BIG);
+        require!(url_length >= 15, ERR_URL_TOO_SMALL);
     }
 
     // Checks whether the royalties passed are valid
@@ -118,6 +116,6 @@ pub trait RequirementsModule: crate::storage::StorageModule {
 
     // Checks whether the token is issued
     fn require_token_issued(&self) {
-        require!(!self.token_id().is_empty(), "Token not issued");
+        require!(!self.token_id().is_empty(), ERR_TOKEN_NOT_ISSUED);
     }
 }

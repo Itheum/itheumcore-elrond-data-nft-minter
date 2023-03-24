@@ -1,3 +1,5 @@
+use crate::errors::ERR_TOKEN_ISSUED;
+
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
@@ -12,7 +14,7 @@ pub trait Callbacks: crate::storage::StorageModule {
     ) {
         match result {
             ManagedAsyncCallResult::Ok(token_id) => {
-                require!(self.token_id().is_empty(), "Token already issued");
+                require!(self.token_id().is_empty(), ERR_TOKEN_ISSUED);
                 self.token_id().set_token_id(token_id.unwrap_esdt());
             }
             ManagedAsyncCallResult::Err(_) => {

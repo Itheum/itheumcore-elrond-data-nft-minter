@@ -672,7 +672,7 @@ fn requirements_test() {
         .execute_query(&setup.contract_wrapper, |sc| {
             sc.require_ready_for_minting_and_burning();
         })
-        .assert_error(4, "Minting is not ready");
+        .assert_error(4, "Minting and burning not allowed");
 
     b_wrapper
         .execute_tx(
@@ -689,7 +689,7 @@ fn requirements_test() {
         .execute_query(&setup.contract_wrapper, |sc| {
             sc.require_ready_for_minting_and_burning();
         })
-        .assert_error(4, "Minting is not ready");
+        .assert_error(4, "Minting and burning not allowed");
 
     b_wrapper
         .execute_tx(
@@ -710,7 +710,7 @@ fn requirements_test() {
         .execute_query(&setup.contract_wrapper, |sc| {
             sc.require_ready_for_minting_and_burning();
         })
-        .assert_error(4, "Minting is not ready");
+        .assert_error(4, "Minting and burning not allowed");
 
     b_wrapper
         .execute_tx(
@@ -727,7 +727,7 @@ fn requirements_test() {
         .execute_query(&setup.contract_wrapper, |sc| {
             sc.require_ready_for_minting_and_burning();
         })
-        .assert_user_error("Minting is not ready");
+        .assert_user_error("Minting and burning not allowed");
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
@@ -741,7 +741,7 @@ fn requirements_test() {
         .execute_query(&setup.contract_wrapper, |sc| {
             sc.require_ready_for_minting_and_burning();
         })
-        .assert_user_error("Minting is not ready");
+        .assert_user_error("Minting and burning not allowed");
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
@@ -951,7 +951,7 @@ fn mint_nft_ft_test() {
                 );
             },
         )
-        .assert_error(4, "Minting is not ready");
+        .assert_error(4, "Minting and burning not allowed");
 
     // [setup] owner unpauses contract
     b_wrapper

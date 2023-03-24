@@ -1,3 +1,8 @@
+use crate::errors::{
+    ERR_ADDRESS_NOT_IN_COLLECTION_FREEZE_LIST, ERR_ADDRES_IS_IN_COLLECTION_FREEZE_LIST,
+    ERR_NONCE_IN_FREEZE_LIST, ERR_NONCE_NOT_FOUND_IN_FREEZE_LIST,
+};
+
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
@@ -110,7 +115,7 @@ pub trait CollectionManagement:
                 .async_call()
                 .call_and_exit();
         } else {
-            sc_panic!("Address is in collection freeze list");
+            sc_panic!(ERR_ADDRES_IS_IN_COLLECTION_FREEZE_LIST);
         }
     }
 
@@ -127,7 +132,7 @@ pub trait CollectionManagement:
                 .async_call()
                 .call_and_exit();
         } else {
-            sc_panic!("Address is not in collection freeze list");
+            sc_panic!(ERR_ADDRESS_NOT_IN_COLLECTION_FREEZE_LIST);
         }
     }
 
@@ -144,7 +149,7 @@ pub trait CollectionManagement:
                 .async_call()
                 .call_and_exit();
         } else {
-            sc_panic!("Nonce is in freeze list");
+            sc_panic!(ERR_NONCE_IN_FREEZE_LIST);
         }
     }
 
@@ -161,7 +166,7 @@ pub trait CollectionManagement:
                 .async_call()
                 .call_and_exit();
         } else {
-            sc_panic!("Nonce not found in freeze list");
+            sc_panic!(ERR_NONCE_NOT_FOUND_IN_FREEZE_LIST);
         }
     }
 
@@ -179,7 +184,7 @@ pub trait CollectionManagement:
                 .async_call()
                 .call_and_exit();
         } else {
-            sc_panic!("Nonce not found in freeze list");
+            sc_panic!(ERR_NONCE_NOT_FOUND_IN_FREEZE_LIST);
         }
     }
 }

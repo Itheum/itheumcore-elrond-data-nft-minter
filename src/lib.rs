@@ -3,7 +3,14 @@
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
-use crate::{callbacks::CallbackProxy, storage::DataNftAttributes};
+use crate::{
+    callbacks::CallbackProxy,
+    errors::{
+        ERR_ALREADY_IN_WHITE_LIST, ERR_CONTRACT_ALREADY_INITIALIZED, ERR_DATA_STREAM_IS_EMPTY,
+        ERR_ISSUE_COST, ERR_NOT_IN_WHITELIST, ERR_WHITELIST_IS_EMPTY, ERR_WRONG_AMOUNT_OF_PAYMENT,
+    },
+    storage::DataNftAttributes,
+};
 
 pub mod callbacks;
 pub mod collection_management;
@@ -53,14 +60,11 @@ pub trait DataNftMint:
         mint_time_limit: u64,
         treasury_address: ManagedAddress,
     ) {
-        require!(
-            self.token_id().is_empty(),
-            "Contract was already initialized"
-        );
+        require!(self.token_id().is_empty(), ERR_CONTRACT_ALREADY_INITIALIZED);
         let issue_cost = self.call_value().egld_value();
         require!(
             issue_cost == BigUint::from(5u64) * BigUint::from(10u64).pow(16u32),
-            "Issue cost is 0.05 eGLD"
+            ERR_ISSUE_COST
         );
 
         self.set_anti_spam_tax_event(&anti_spam_tax_token, &anti_spam_tax_value);
@@ -135,7 +139,7 @@ pub trait DataNftMint:
         self.require_ready_for_minting_and_burning();
         self.require_url_is_valid(&data_marshal);
         self.require_url_is_valid(&data_preview);
-        require!(!data_stream.is_empty(), "Data Stream is empty");
+        require!(!data_stream.is_empty(), ERR_DATA_STREAM_IS_EMPTY);
         self.require_url_is_valid(&media);
         self.require_url_is_valid(&metadata);
         self.require_sft_is_valid(&royalties, &supply);
@@ -148,7 +152,7 @@ pub trait DataNftMint:
         let price = self.anti_spam_tax(&payment.token_identifier).get();
         // The contract will panic if the user tries to use a token which is has not been set as buyable by the owner.
         self.require_value_is_positive(&payment.amount);
-        require!(&payment.amount == &price, "Wrong amount of payment sent");
+        require!(&payment.amount == &price, ERR_WRONG_AMOUNT_OF_PAYMENT);
 
         let one_token = BigUint::from(1u64);
         self.minted_per_address(&caller)
@@ -257,14 +261,14 @@ pub trait DataNftMint:
     // Endpoint that will be used by the owner and privileged address to set whitelist spots.
     #[endpoint(setWhiteListSpots)]
     fn set_whitelist_spots(&self, whitelist: MultiValueEncoded<ManagedAddress>) {
-        require!(!whitelist.is_empty(), "Given whitelist is empty");
+        require!(!whitelist.is_empty(), ERR_WHITELIST_IS_EMPTY);
         let caller = self.blockchain().get_caller();
         self.require_is_privileged(&caller);
         for item in whitelist.into_iter() {
             if self.whitelist().insert(item.clone()) {
                 self.set_whitelist_spot_event(&item);
             } else {
-                sc_panic!("Address already in whitelist");
+                sc_panic!(ERR_ALREADY_IN_WHITE_LIST);
             }
         }
     }
@@ -272,14 +276,14 @@ pub trait DataNftMint:
     // Endpoint that will be used by the owner privileged address to unset whitelist spots.
     #[endpoint(removeWhiteListSpots)]
     fn remove_whitelist_spots(&self, whitelist: MultiValueEncoded<ManagedAddress>) {
-        require!(!whitelist.is_empty(), "Given whitelist is empty");
+        require!(!whitelist.is_empty(), ERR_WHITELIST_IS_EMPTY);
         let caller = self.blockchain().get_caller();
         self.require_is_privileged(&caller);
         for item in whitelist.into_iter() {
             if self.whitelist().remove(&item.clone()) {
                 self.remove_whitelist_spot_event(&item);
             } else {
-                sc_panic!("Address not in whitelist");
+                sc_panic!(ERR_NOT_IN_WHITELIST);
             }
         }
     }
