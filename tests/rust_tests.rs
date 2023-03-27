@@ -1420,43 +1420,47 @@ fn mint_nft_ft_test() {
 
     // [test] test if the get_user_data_out view returns the correct final state view based on our tests above
     b_wrapper
-        .execute_query(&setup.contract_wrapper, |sc| {
-            let nonces = sc.frozen_sfts_per_address(&managed_address!(first_user_address));
-            let mut frozen_nonces = ManagedVec::new();
-            for item in nonces.iter() {
-                frozen_nonces.push(item);
-            }
-            let data_out = UserDataOut {
-                anti_spam_tax_value: sc.anti_spam_tax(&managed_token_id_wrapped!(TOKEN_ID)).get(),
-                is_paused: sc.is_paused().get(),
-                max_royalties: sc.max_royalties().get(),
-                min_royalties: sc.min_royalties().get(),
-                max_supply: sc.max_supply().get(),
-                mint_time_limit: sc.mint_time_limit().get(),
-                last_mint_time: sc
-                    .last_mint_time(&managed_address!(first_user_address))
-                    .get(),
-                whitelist_enabled: sc.whitelist_enabled().get(),
-                is_whitelisted: sc
-                    .whitelist()
-                    .contains(&managed_address!(first_user_address)),
-                minted_per_user: sc
-                    .minted_per_address(&managed_address!(first_user_address))
-                    .get(),
-                total_minted: sc.minted_tokens().get(),
-                frozen: sc
-                    .frozen_addresses_for_collection()
-                    .contains(&managed_address!(first_user_address)),
-                frozen_nonces: frozen_nonces,
-            };
-            assert_eq!(
-                sc.get_user_data_out(
-                    &managed_address!(first_user_address),
-                    &managed_token_id_wrapped!(TOKEN_ID)
-                ),
-                data_out
-            );
-        })
+        .execute_tx(
+            first_user_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                let nonces = sc.frozen_sfts_per_address(&managed_address!(first_user_address));
+                let mut frozen_nonces = ManagedVec::new();
+                for item in nonces.iter() {
+                    frozen_nonces.push(item);
+                }
+                let data_out = UserDataOut {
+                    anti_spam_tax_value: sc
+                        .anti_spam_tax(&managed_token_id_wrapped!(TOKEN_ID))
+                        .get(),
+                    is_paused: sc.is_paused().get(),
+                    max_royalties: sc.max_royalties().get(),
+                    min_royalties: sc.min_royalties().get(),
+                    max_supply: sc.max_supply().get(),
+                    mint_time_limit: sc.mint_time_limit().get(),
+                    last_mint_time: sc
+                        .last_mint_time(&managed_address!(first_user_address))
+                        .get(),
+                    whitelist_enabled: sc.whitelist_enabled().get(),
+                    is_whitelisted: sc
+                        .whitelist()
+                        .contains(&managed_address!(first_user_address)),
+                    minted_per_user: sc
+                        .minted_per_address(&managed_address!(first_user_address))
+                        .get(),
+                    total_minted: sc.minted_tokens().get(),
+                    frozen: sc
+                        .frozen_addresses_for_collection()
+                        .contains(&managed_address!(first_user_address)),
+                    frozen_nonces: frozen_nonces,
+                };
+                assert_eq!(
+                    sc.get_user_data_out(&managed_token_id_wrapped!(TOKEN_ID)),
+                    data_out
+                );
+            },
+        )
         .assert_ok();
 
     // [test] test if DataNftAttributes of 1st (nonce) SFT minted above matches on-chain state (and if creator attr holds user address)

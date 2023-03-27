@@ -48,7 +48,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         getSftsFrozenForAddress
         getFrozenCount
         isWhiteListEnabled
-        getRolesAreSet
+        rolesAreSet
         getAdministrator
         getUserDataOut
         pause
