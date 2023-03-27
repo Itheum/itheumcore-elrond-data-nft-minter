@@ -3,7 +3,6 @@ use crate::errors::ERR_TOKEN_ISSUED;
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
-// [TO DO] Tests for callbacks
 #[multiversx_sc::module]
 pub trait Callbacks: crate::storage::StorageModule {
     // Callback used to set the Token ID and the special roles for the SFT token.
