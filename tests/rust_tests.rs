@@ -2,7 +2,8 @@ use std::u8;
 
 use datanftmint::collection_management::CollectionManagement;
 use datanftmint::errors::{
-    ERR_MAX_ROYALTIES_TOO_HIGH, ERR_MIN_ROYALTIES_BIGGER_THAN_MAX_ROYALTIES,
+    ERR_FIELD_IS_EMPTY, ERR_MAX_ROYALTIES_TOO_HIGH, ERR_MIN_ROYALTIES_BIGGER_THAN_MAX_ROYALTIES,
+    ERR_TOO_MANY_CHARS,
 };
 use datanftmint::nft_mint_utils::*;
 use datanftmint::requirements::RequirementsModule;
@@ -917,6 +918,48 @@ fn requirements_test() {
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
             sc.require_royalties_are_valid(&managed_biguint!(1u64), &managed_biguint!(10000u64))
+        })
+        .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_title_description_are_valid(&managed_buffer!(b""), &managed_buffer!(b""))
+        })
+        .assert_user_error(ERR_FIELD_IS_EMPTY);
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_title_description_are_valid(
+                &managed_buffer!(b""),
+                &managed_buffer!(b"RANDOM"),
+            )
+        })
+        .assert_user_error(ERR_FIELD_IS_EMPTY);
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_title_description_are_valid(
+                &managed_buffer!(b"Random"),
+                &managed_buffer!(b""),
+            )
+        })
+        .assert_user_error(ERR_FIELD_IS_EMPTY);
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_title_description_are_valid(
+                &managed_buffer!(b"Random"),
+                &managed_buffer!(&[1u8; 401]),
+            )
+        })
+        .assert_user_error(ERR_TOO_MANY_CHARS);
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_title_description_are_valid(
+                &managed_buffer!(b"Random"),
+                &managed_buffer!(&[1u8; 400]),
+            )
         })
         .assert_ok();
 }

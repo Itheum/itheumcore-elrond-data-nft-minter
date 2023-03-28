@@ -31,3 +31,5 @@ pub const ERR_NONCE_IN_FREEZE_LIST: &str = "Nonce is in freeze list";
 pub const ERR_ADDRESS_NOT_IN_COLLECTION_FREEZE_LIST: &str =
     "Address is not in collection freeze list";
 pub const ERR_ADDRES_IS_IN_COLLECTION_FREEZE_LIST: &str = "Address is in collection freeze list";
+pub const ERR_FIELD_IS_EMPTY: &str = "Field is empty";
+pub const ERR_TOO_MANY_CHARS: &str = "Too many characters";

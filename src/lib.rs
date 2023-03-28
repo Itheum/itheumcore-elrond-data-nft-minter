@@ -137,12 +137,16 @@ pub trait DataNftMint:
         description: ManagedBuffer,
     ) -> DataNftAttributes<Self::Api> {
         self.require_ready_for_minting_and_burning();
+        require!(!data_stream.is_empty(), ERR_DATA_STREAM_IS_EMPTY);
+
         self.require_url_is_valid(&data_marshal);
         self.require_url_is_valid(&data_preview);
-        require!(!data_stream.is_empty(), ERR_DATA_STREAM_IS_EMPTY);
         self.require_url_is_valid(&media);
         self.require_url_is_valid(&metadata);
+
+        self.require_title_description_are_valid(&title, &description);
         self.require_sft_is_valid(&royalties, &supply);
+
         let caller = self.blockchain().get_caller();
         let current_time = self.blockchain().get_block_timestamp();
         self.require_minting_is_allowed(&caller, current_time);

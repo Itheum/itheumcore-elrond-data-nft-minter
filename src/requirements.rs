@@ -1,10 +1,11 @@
 use crate::errors::{
-    ERR_MAX_ROYALTIES_TOO_HIGH, ERR_MAX_SUPPLY_EXCEEDED, ERR_MINTING_AND_BURNING_NOT_ALLOWED,
-    ERR_MIN_ROYALTIES_BIGGER_THAN_MAX_ROYALTIES, ERR_NOT_PRIVILEGED, ERR_NOT_URL,
-    ERR_NOT_WHITELISTED, ERR_ROYALTIES_ARE_BIGGER_THAN_MAX_ROYALTIES,
-    ERR_ROYALTIES_ARE_SMALLER_THAN_MIN_ROYALTIES, ERR_SUPLLY_HIGHER_THAN_ZERO,
-    ERR_TOKEN_NOT_ISSUED, ERR_URL_INVALID_CHARACTERS, ERR_URL_IS_EMPTY, ERR_URL_TOO_BIG,
-    ERR_URL_TOO_SMALL, ERR_VALUE_MUST_BE_POSITIVE, ERR_WAIT_MORE_TIME,
+    ERR_FIELD_IS_EMPTY, ERR_MAX_ROYALTIES_TOO_HIGH, ERR_MAX_SUPPLY_EXCEEDED,
+    ERR_MINTING_AND_BURNING_NOT_ALLOWED, ERR_MIN_ROYALTIES_BIGGER_THAN_MAX_ROYALTIES,
+    ERR_NOT_PRIVILEGED, ERR_NOT_URL, ERR_NOT_WHITELISTED,
+    ERR_ROYALTIES_ARE_BIGGER_THAN_MAX_ROYALTIES, ERR_ROYALTIES_ARE_SMALLER_THAN_MIN_ROYALTIES,
+    ERR_SUPLLY_HIGHER_THAN_ZERO, ERR_TOKEN_NOT_ISSUED, ERR_TOO_MANY_CHARS,
+    ERR_URL_INVALID_CHARACTERS, ERR_URL_IS_EMPTY, ERR_URL_TOO_BIG, ERR_URL_TOO_SMALL,
+    ERR_VALUE_MUST_BE_POSITIVE, ERR_WAIT_MORE_TIME,
 };
 
 multiversx_sc::imports!();
@@ -74,6 +75,16 @@ pub trait RequirementsModule: crate::storage::StorageModule {
             require!(!&self.administrator().is_empty(), ERR_NOT_PRIVILEGED);
             require!(&self.administrator().get() == address, ERR_NOT_PRIVILEGED);
         }
+    }
+
+    fn require_title_description_are_valid(
+        &self,
+        title: &ManagedBuffer,
+        description: &ManagedBuffer,
+    ) {
+        require!(!title.is_empty(), ERR_FIELD_IS_EMPTY);
+        require!(!description.is_empty(), ERR_FIELD_IS_EMPTY);
+        require!(description.len() <= 400, ERR_TOO_MANY_CHARS);
     }
 
     // Checks whether the URL passed is valid (characters, starts with https://)
