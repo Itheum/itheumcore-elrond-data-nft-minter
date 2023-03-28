@@ -161,13 +161,13 @@ pub trait DataNftMint:
         self.minted_tokens().update(|n| *n += &one_token);
 
         let attributes: DataNftAttributes<Self::Api> = DataNftAttributes {
-            creation_time: self.blockchain().get_block_timestamp(),
+            creation_time: current_time,
             creator: caller.clone(),
             data_marshal_url: data_marshal.clone(),
             data_stream_url: data_stream.clone(),
-            data_preview_url: data_preview.clone(),
-            title: title.clone(),
-            description: description.clone(),
+            data_preview_url: data_preview,
+            title,
+            description,
         };
 
         let token_identifier = self.token_id().get_token_id();
