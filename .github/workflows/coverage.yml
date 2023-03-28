@@ -1,0 +1,28 @@
+name: Coverage
+
+on:
+  pull_request:
+    branches:
+      - main
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install latest nightly
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          override: true
+          components: rustfmt, clippy
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+      - name: Making coverage dir
+        run: mkdir coverage
+      - name: Generate code coverage
+        run: cargo llvm-cov --lcov --output-path coverage/lcov.info --ignore-filename-regex '(callbacks.rs|views.rs|events.rs|storage.rs)'
+      - name: Generating report
+        uses: vebr/jest-lcov-reporter@v0.2.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          lcov-file: ./coverage/lcov.info
