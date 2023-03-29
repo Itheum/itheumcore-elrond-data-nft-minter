@@ -193,16 +193,12 @@ pub trait DataNftMint:
 
         let treasury_address = self.treasury_address().get();
 
-        if payment.token_identifier.is_egld() {
-            self.send().direct_egld(&treasury_address, &payment.amount);
-        } else {
-            self.send().direct_esdt(
-                &treasury_address,
-                &payment.token_identifier.unwrap_esdt(),
-                payment.token_nonce,
-                &payment.amount,
-            );
-        }
+        self.send().direct(
+            &treasury_address,
+            &payment.token_identifier,
+            payment.token_nonce,
+            &payment.amount,
+        );
 
         attributes
     }

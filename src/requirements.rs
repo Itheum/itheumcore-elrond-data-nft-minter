@@ -83,6 +83,7 @@ pub trait RequirementsModule: crate::storage::StorageModule {
         description: &ManagedBuffer,
     ) {
         require!(!title.is_empty(), ERR_FIELD_IS_EMPTY);
+        require!(title.len() <= 30, ERR_TOO_MANY_CHARS);
         require!(!description.is_empty(), ERR_FIELD_IS_EMPTY);
         require!(description.len() <= 400, ERR_TOO_MANY_CHARS);
     }
@@ -108,7 +109,7 @@ pub trait RequirementsModule: crate::storage::StorageModule {
     fn require_url_is_adequate_length(&self, url: &ManagedBuffer) {
         let url_length = url.len();
         require!(!url.is_empty(), ERR_URL_IS_EMPTY);
-        require!(url_length <= 300, ERR_URL_TOO_BIG);
+        require!(url_length <= 400, ERR_URL_TOO_BIG);
         require!(url_length >= 15, ERR_URL_TOO_SMALL);
     }
 
