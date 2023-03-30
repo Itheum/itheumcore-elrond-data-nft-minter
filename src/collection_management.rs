@@ -1,5 +1,5 @@
 use crate::errors::{
-    ERR_ADDRESS_NOT_IN_COLLECTION_FREEZE_LIST, ERR_ADDRES_IS_IN_COLLECTION_FREEZE_LIST,
+    ERR_ADDRESS_NOT_IN_COLLECTION_FREEZE_LIST, ERR_ADDRESS_IS_IN_COLLECTION_FREEZE_LIST,
     ERR_NONCE_IN_FREEZE_LIST, ERR_NONCE_NOT_FOUND_IN_FREEZE_LIST,
 };
 
@@ -115,7 +115,7 @@ pub trait CollectionManagement:
                 .async_call()
                 .call_and_exit();
         } else {
-            sc_panic!(ERR_ADDRES_IS_IN_COLLECTION_FREEZE_LIST);
+            sc_panic!(ERR_ADDRESS_IS_IN_COLLECTION_FREEZE_LIST);
         }
     }
 

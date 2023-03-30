@@ -3,7 +3,7 @@ use crate::errors::{
     ERR_MINTING_AND_BURNING_NOT_ALLOWED, ERR_MIN_ROYALTIES_BIGGER_THAN_MAX_ROYALTIES,
     ERR_NOT_PRIVILEGED, ERR_NOT_URL, ERR_NOT_WHITELISTED,
     ERR_ROYALTIES_ARE_BIGGER_THAN_MAX_ROYALTIES, ERR_ROYALTIES_ARE_SMALLER_THAN_MIN_ROYALTIES,
-    ERR_SUPLLY_HIGHER_THAN_ZERO, ERR_TOKEN_NOT_ISSUED, ERR_TOO_MANY_CHARS,
+    ERR_SUPPLY_HIGHER_THAN_ZERO, ERR_TOKEN_NOT_ISSUED, ERR_TOO_MANY_CHARS,
     ERR_URL_INVALID_CHARACTERS, ERR_URL_IS_EMPTY, ERR_URL_TOO_BIG, ERR_URL_TOO_SMALL,
     ERR_VALUE_MUST_BE_POSITIVE, ERR_WAIT_MORE_TIME,
 };
@@ -66,7 +66,7 @@ pub trait RequirementsModule: crate::storage::StorageModule {
             ERR_ROYALTIES_ARE_SMALLER_THAN_MIN_ROYALTIES
         );
         require!(supply <= &max_supply, ERR_MAX_SUPPLY_EXCEEDED);
-        require!(supply > &BigUint::zero(), ERR_SUPLLY_HIGHER_THAN_ZERO);
+        require!(supply > &BigUint::zero(), ERR_SUPPLY_HIGHER_THAN_ZERO);
     }
 
     // Checks whether address is privileged
@@ -116,11 +116,11 @@ pub trait RequirementsModule: crate::storage::StorageModule {
     // Checks whether the royalties passed are valid
     fn require_royalties_are_valid(&self, min_royalties: &BigUint, max_royalties: &BigUint) {
         require!(
-            min_royalties <= max_royalties,
+            min_royalties < max_royalties,
             ERR_MIN_ROYALTIES_BIGGER_THAN_MAX_ROYALTIES
         );
         require!(
-            max_royalties <= &BigUint::from(10000u64),
+            max_royalties < &BigUint::from(10000u64),
             ERR_MAX_ROYALTIES_TOO_HIGH
         );
     }
