@@ -911,13 +911,13 @@ fn requirements_test() {
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
-            sc.require_royalties_are_valid(&managed_biguint!(1u64), &managed_biguint!(10001u64))
+            sc.require_royalties_are_valid(&managed_biguint!(1u64), &managed_biguint!(10000u64))
         })
         .assert_user_error(ERR_MAX_ROYALTIES_TOO_HIGH);
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
-            sc.require_royalties_are_valid(&managed_biguint!(1u64), &managed_biguint!(10000u64))
+            sc.require_royalties_are_valid(&managed_biguint!(1u64), &managed_biguint!(9900u64))
         })
         .assert_ok();
 

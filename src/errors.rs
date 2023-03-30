@@ -8,7 +8,7 @@ pub const ERR_URL_IS_EMPTY: &str = "URL is empty";
 pub const ERR_URL_INVALID_CHARACTERS: &str = "URL contains invalid characters";
 pub const ERR_NOT_URL: &str = "URL must start with https://";
 pub const ERR_NOT_PRIVILEGED: &str = "Address is not privileged";
-pub const ERR_SUPLLY_HIGHER_THAN_ZERO: &str = "Supply must be higher than zero";
+pub const ERR_SUPPLY_HIGHER_THAN_ZERO: &str = "Supply must be higher than zero";
 pub const ERR_MAX_SUPPLY_EXCEEDED: &str = "Max supply exceeded";
 pub const ERR_ROYALTIES_ARE_SMALLER_THAN_MIN_ROYALTIES: &str =
     "Royalties are smaller than min royalties";
@@ -30,6 +30,6 @@ pub const ERR_NONCE_NOT_FOUND_IN_FREEZE_LIST: &str = "Nonce not found in freeze 
 pub const ERR_NONCE_IN_FREEZE_LIST: &str = "Nonce is in freeze list";
 pub const ERR_ADDRESS_NOT_IN_COLLECTION_FREEZE_LIST: &str =
     "Address is not in collection freeze list";
-pub const ERR_ADDRES_IS_IN_COLLECTION_FREEZE_LIST: &str = "Address is in collection freeze list";
+pub const ERR_ADDRESS_IS_IN_COLLECTION_FREEZE_LIST: &str = "Address is in collection freeze list";
 pub const ERR_FIELD_IS_EMPTY: &str = "Field is empty";
 pub const ERR_TOO_MANY_CHARS: &str = "Too many characters";
