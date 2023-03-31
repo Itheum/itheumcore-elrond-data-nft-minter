@@ -25,9 +25,12 @@ pub struct UserDataOut<M: ManagedTypeApi> {
 pub trait ViewsModule: crate::storage::StorageModule {
     // View that returns the above mentioned all-in-one structure for viewing data through one call
     #[view(getUserDataOut)]
-    fn get_user_data_out(&self, tax_token: &EgldOrEsdtTokenIdentifier) -> UserDataOut<Self::Api> {
+    fn get_user_data_out(
+        &self,
+        address: &ManagedAddress,
+        tax_token: &EgldOrEsdtTokenIdentifier,
+    ) -> UserDataOut<Self::Api> {
         {
-            let address = self.blockchain().get_caller();
             let anti_spam_tax_value = self.anti_spam_tax(tax_token).get(); //if it returns 0 the token is not supported
             let is_paused = self.is_paused().get();
             let max_royalties = self.max_royalties().get();

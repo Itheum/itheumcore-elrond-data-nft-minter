@@ -1499,7 +1499,10 @@ fn mint_nft_ft_test() {
                     frozen_nonces: frozen_nonces,
                 };
                 assert_eq!(
-                    sc.get_user_data_out(&managed_token_id_wrapped!(TOKEN_ID)),
+                    sc.get_user_data_out(
+                        &managed_address!(first_user_address),
+                        &managed_token_id_wrapped!(TOKEN_ID)
+                    ),
                     data_out
                 );
             },
