@@ -36,7 +36,7 @@ pub trait DataNftMint:
         self.is_paused().set(true);
         self.mint_pause_toggle_event(&true);
 
-        self.whitelist_enabled().set_if_empty(true);
+        self.whitelist_enabled().set(true);
         self.whitelist_enable_toggle_event(&true);
 
         self.set_royalties_limits_event(&BigUint::from(0u64), &BigUint::from(8000u64));
