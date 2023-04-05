@@ -63,6 +63,19 @@ initializeContract(){
     --send || return
 }
 
+
+setLocalRoles()
+{
+    mxpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=90000000 \
+    --function "setLocalRoles" \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return
+}
+
 pause(){
     mxpy --verbose contract call ${ADDRESS} \
     --recall-nonce \

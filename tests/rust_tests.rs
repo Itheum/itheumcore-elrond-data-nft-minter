@@ -1,12 +1,17 @@
 use std::u8;
 
 use datanftmint::collection_management::CollectionManagement;
+use datanftmint::errors::{
+    ERR_FIELD_IS_EMPTY, ERR_MAX_ROYALTIES_TOO_HIGH, ERR_MIN_ROYALTIES_BIGGER_THAN_MAX_ROYALTIES,
+    ERR_TOO_MANY_CHARS,
+};
 use datanftmint::nft_mint_utils::*;
 use datanftmint::requirements::RequirementsModule;
 use datanftmint::storage::*;
 use datanftmint::views::{UserDataOut, ViewsModule};
 use datanftmint::*;
 use multiversx_sc::contract_base::ContractBase;
+
 use multiversx_sc::types::{ManagedBuffer, ManagedVec, MultiValueEncoded};
 use multiversx_sc::{
     codec::Empty,
@@ -112,6 +117,26 @@ fn deploy_test() {
             &rust_biguint!(0u64),
             |sc| {
                 sc.init();
+                sc.set_royalties_limits(managed_biguint!(1u64), managed_biguint!(2u64));
+                sc.set_max_supply(managed_biguint!(21u64));
+                sc.set_is_paused(false);
+            },
+        )
+        .assert_ok();
+
+    setup
+        .blockchain_wrapper
+        .execute_tx(
+            &setup.owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.init();
+                assert_eq!(sc.min_royalties().get(), managed_biguint!(1u64));
+                assert_eq!(sc.max_royalties().get(), managed_biguint!(2u64));
+                assert_eq!(sc.max_supply().get(), managed_biguint!(21u64));
+                assert_eq!(sc.whitelist_enabled().get(), true);
+                assert_eq!(sc.is_paused().get(), true);
             },
         )
         .assert_ok();
@@ -204,16 +229,17 @@ fn value_setters_test() {
     let b_wrapper = &mut setup.blockchain_wrapper;
     let owner_address = &setup.owner_address;
     let administrator_address = &setup.first_user_address;
+    let treasury_address = &setup.treasury_address;
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
-            assert_eq!(sc.white_list_enabled().get(), true)
+            assert_eq!(sc.whitelist_enabled().get(), true)
         })
         .assert_ok();
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
-            assert_eq!(sc.white_list().len(), 0usize)
+            assert_eq!(sc.whitelist().len(), 0usize)
         })
         .assert_ok();
 
@@ -274,8 +300,39 @@ fn value_setters_test() {
             &setup.contract_wrapper,
             &rust_biguint!(0u64),
             |sc| {
-                sc.set_royalties_limits(managed_biguint!(0u64), managed_biguint!(100u64));
+                sc.set_royalties_limits(managed_biguint!(10u64), managed_biguint!(1u64));
             },
+        )
+        .assert_user_error(ERR_MIN_ROYALTIES_BIGGER_THAN_MAX_ROYALTIES);
+
+    b_wrapper
+        .execute_tx(
+            administrator_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.set_royalties_limits(managed_biguint!(10u64), managed_biguint!(100000u64));
+            },
+        )
+        .assert_user_error(ERR_MAX_ROYALTIES_TOO_HIGH);
+
+    b_wrapper
+        .execute_tx(
+            administrator_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.set_royalties_limits(managed_biguint!(1u64), managed_biguint!(10u64));
+            },
+        )
+        .assert_ok();
+
+    b_wrapper
+        .execute_tx(
+            owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| sc.set_treasury_address(managed_address!(treasury_address)),
         )
         .assert_ok();
 
@@ -438,6 +495,77 @@ fn anti_spam_tax_test() {
         .assert_ok();
 }
 
+#[test]
+fn set_local_roles_test() {
+    let mut setup = setup_contract(datanftmint::contract_obj);
+    let b_wrapper = &mut setup.blockchain_wrapper;
+    let owner_address = &setup.owner_address;
+    let treasury_address = &setup.treasury_address;
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(5u64 * 10u64.pow(16u32)),
+            |sc| {
+                sc.initialize_contract(
+                    managed_buffer!(COLLECTION_NAME),
+                    managed_buffer!(SFT_TICKER),
+                    &managed_token_id_wrapped!(TOKEN_ID),
+                    managed_biguint!(1_000_000),
+                    MINT_TIME_LIMIT,
+                    managed_address!(treasury_address),
+                )
+            },
+        )
+        .assert_ok();
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.set_local_roles();
+            },
+        )
+        .assert_user_error("Token not issued");
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(sc.roles_are_set().get(), false);
+        })
+        .assert_ok();
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(5u64 * 10u64.pow(16u32)),
+            |sc| sc.token_id().set_token_id(managed_token_id!(SFT_TICKER)),
+        )
+        .assert_ok();
+
+    b_wrapper.set_esdt_local_roles(setup.contract_wrapper.address_ref(), SFT_TICKER, ROLES);
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.roles_are_set().set(true);
+            },
+        )
+        .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(sc.roles_are_set().get(), true);
+        })
+        .assert_ok();
+}
+
 #[test] // Tests whether minting utilities for string creations works correctly.
         // Tests whether the concatenation and sha256 hash encryption works correctly.
 fn nft_mint_utils_test() {
@@ -469,7 +597,7 @@ fn nft_mint_utils_test() {
             let data_buffer = managed_buffer!(&[DATA_MARSHAL, DATA_STREAM].concat());
             let data_hash = sc.crypto().sha256(data_buffer).as_managed_buffer().clone();
             assert_eq!(
-                sc.crate_hash_buffer(
+                sc.create_hash_buffer(
                     &managed_buffer!(DATA_MARSHAL),
                     &managed_buffer!(DATA_STREAM)
                 ),
@@ -525,6 +653,12 @@ fn requirements_test() {
         .assert_ok();
 
     b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_token_issued();
+        })
+        .assert_user_error("Token not issued");
+
+    b_wrapper
         .execute_tx(
             &owner_address,
             &setup.contract_wrapper,
@@ -537,9 +671,9 @@ fn requirements_test() {
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
-            sc.require_minting_is_ready();
+            sc.require_ready_for_minting_and_burning();
         })
-        .assert_error(4, "Minting is not ready");
+        .assert_error(4, "Minting and burning not allowed");
 
     b_wrapper
         .execute_tx(
@@ -554,9 +688,9 @@ fn requirements_test() {
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
-            sc.require_minting_is_ready();
+            sc.require_ready_for_minting_and_burning();
         })
-        .assert_error(4, "Minting is not ready");
+        .assert_error(4, "Minting and burning not allowed");
 
     b_wrapper
         .execute_tx(
@@ -569,9 +703,15 @@ fn requirements_test() {
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
-            sc.require_minting_is_ready();
+            sc.require_token_issued();
         })
-        .assert_error(4, "Minting is not ready");
+        .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_ready_for_minting_and_burning();
+        })
+        .assert_error(4, "Minting and burning not allowed");
 
     b_wrapper
         .execute_tx(
@@ -586,13 +726,30 @@ fn requirements_test() {
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
-            sc.require_minting_is_ready();
+            sc.require_ready_for_minting_and_burning();
+        })
+        .assert_user_error("Minting and burning not allowed");
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.roles_are_set().set(false);
+
+            assert_eq!(sc.roles_are_set().get(), false);
         })
         .assert_ok();
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
-            sc.require_minting_is_ready();
+            sc.require_ready_for_minting_and_burning();
+        })
+        .assert_user_error("Minting and burning not allowed");
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.roles_are_set().set(true);
+            assert_eq!(sc.roles_are_set().get(), true);
+
+            sc.require_ready_for_minting_and_burning();
         })
         .assert_ok();
 
@@ -745,6 +902,66 @@ fn requirements_test() {
             sc.require_minting_is_allowed(&managed_address!(first_user_address), 15u64);
         })
         .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_royalties_are_valid(&managed_biguint!(10u64), &managed_biguint!(1u64));
+        })
+        .assert_user_error(ERR_MIN_ROYALTIES_BIGGER_THAN_MAX_ROYALTIES);
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_royalties_are_valid(&managed_biguint!(1u64), &managed_biguint!(10000u64))
+        })
+        .assert_user_error(ERR_MAX_ROYALTIES_TOO_HIGH);
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_royalties_are_valid(&managed_biguint!(1u64), &managed_biguint!(9900u64))
+        })
+        .assert_ok();
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_title_description_are_valid(&managed_buffer!(b""), &managed_buffer!(b""))
+        })
+        .assert_user_error(ERR_FIELD_IS_EMPTY);
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_title_description_are_valid(
+                &managed_buffer!(b""),
+                &managed_buffer!(b"RANDOM"),
+            )
+        })
+        .assert_user_error(ERR_FIELD_IS_EMPTY);
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_title_description_are_valid(
+                &managed_buffer!(b"Random"),
+                &managed_buffer!(b""),
+            )
+        })
+        .assert_user_error(ERR_FIELD_IS_EMPTY);
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_title_description_are_valid(
+                &managed_buffer!(b"Random"),
+                &managed_buffer!(&[1u8; 401]),
+            )
+        })
+        .assert_user_error(ERR_TOO_MANY_CHARS);
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_title_description_are_valid(
+                &managed_buffer!(b"Random"),
+                &managed_buffer!(&[1u8; 400]),
+            )
+        })
+        .assert_ok();
 }
 
 #[test] // Tests whether minting works correctly.
@@ -756,7 +973,7 @@ fn mint_nft_ft_test() {
     let first_user_address = &setup.first_user_address;
     let treasury_address = &setup.treasury_address;
 
-    // [test] when deployed a smart contract is paused and token_id is empty so require_minting_is_ready asserts
+    // [test] when deployed a smart contract is paused and token_id is empty so require_ready_for_minting_and_burning asserts
     b_wrapper
         .execute_tx(
             &first_user_address,
@@ -777,7 +994,7 @@ fn mint_nft_ft_test() {
                 );
             },
         )
-        .assert_error(4, "Minting is not ready");
+        .assert_error(4, "Minting and burning not allowed");
 
     // [setup] owner unpauses contract
     b_wrapper
@@ -787,6 +1004,7 @@ fn mint_nft_ft_test() {
             &rust_biguint!(0u64),
             |sc| {
                 sc.set_is_paused(false);
+                sc.roles_are_set().set(true);
             },
         )
         .assert_ok();
@@ -1245,43 +1463,50 @@ fn mint_nft_ft_test() {
 
     // [test] test if the get_user_data_out view returns the correct final state view based on our tests above
     b_wrapper
-        .execute_query(&setup.contract_wrapper, |sc| {
-            let nonces = sc.freezed_sfts_per_address(&managed_address!(first_user_address));
-            let mut frozen_nonces = ManagedVec::new();
-            for item in nonces.iter() {
-                frozen_nonces.push(item);
-            }
-            let data_out = UserDataOut {
-                anti_spam_tax_value: sc.anti_spam_tax(&managed_token_id_wrapped!(TOKEN_ID)).get(),
-                is_paused: sc.is_paused().get(),
-                max_royalties: sc.max_royalties().get(),
-                min_royalties: sc.min_royalties().get(),
-                max_supply: sc.max_supply().get(),
-                mint_time_limit: sc.mint_time_limit().get(),
-                last_mint_time: sc
-                    .last_mint_time(&managed_address!(first_user_address))
-                    .get(),
-                whitelist_enabled: sc.white_list_enabled().get(),
-                is_whitelisted: sc
-                    .white_list()
-                    .contains(&managed_address!(first_user_address)),
-                minted_per_user: sc
-                    .minted_per_address(&managed_address!(first_user_address))
-                    .get(),
-                total_minted: sc.minted_tokens().get(),
-                frozen: sc
-                    .freezed_addresses_for_collection()
-                    .contains(&managed_address!(first_user_address)),
-                frozen_nonces: frozen_nonces,
-            };
-            assert_eq!(
-                sc.get_user_data_out(
-                    &managed_address!(first_user_address),
-                    &managed_token_id_wrapped!(TOKEN_ID)
-                ),
-                data_out
-            );
-        })
+        .execute_tx(
+            first_user_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                let nonces = sc.frozen_sfts_per_address(&managed_address!(first_user_address));
+                let mut frozen_nonces = ManagedVec::new();
+                for item in nonces.iter() {
+                    frozen_nonces.push(item);
+                }
+                let data_out = UserDataOut {
+                    anti_spam_tax_value: sc
+                        .anti_spam_tax(&managed_token_id_wrapped!(TOKEN_ID))
+                        .get(),
+                    is_paused: sc.is_paused().get(),
+                    max_royalties: sc.max_royalties().get(),
+                    min_royalties: sc.min_royalties().get(),
+                    max_supply: sc.max_supply().get(),
+                    mint_time_limit: sc.mint_time_limit().get(),
+                    last_mint_time: sc
+                        .last_mint_time(&managed_address!(first_user_address))
+                        .get(),
+                    whitelist_enabled: sc.whitelist_enabled().get(),
+                    is_whitelisted: sc
+                        .whitelist()
+                        .contains(&managed_address!(first_user_address)),
+                    minted_per_user: sc
+                        .minted_per_address(&managed_address!(first_user_address))
+                        .get(),
+                    total_minted: sc.minted_tokens().get(),
+                    frozen: sc
+                        .frozen_addresses_for_collection()
+                        .contains(&managed_address!(first_user_address)),
+                    frozen_nonces: frozen_nonces,
+                };
+                assert_eq!(
+                    sc.get_user_data_out(
+                        &managed_address!(first_user_address),
+                        &managed_token_id_wrapped!(TOKEN_ID)
+                    ),
+                    data_out
+                );
+            },
+        )
         .assert_ok();
 
     // [test] test if DataNftAttributes of 1st (nonce) SFT minted above matches on-chain state (and if creator attr holds user address)
@@ -1341,7 +1566,7 @@ fn mint_nft_ft_test() {
 }
 
 #[test] //Tests whether the whitelist functionality works as expected
-fn white_list_test() {
+fn whitelist_test() {
     let mut setup = setup_contract(datanftmint::contract_obj);
     let b_wrapper = &mut setup.blockchain_wrapper;
     let owner_address = &setup.owner_address;
@@ -1365,7 +1590,7 @@ fn white_list_test() {
             &setup.contract_wrapper,
             &rust_biguint!(0),
             |sc| {
-                sc.set_white_list_enabled(true);
+                sc.set_whitelist_enabled(true);
             },
         )
         .assert_ok();
@@ -1376,7 +1601,7 @@ fn white_list_test() {
             &setup.contract_wrapper,
             &rust_biguint!(0),
             |sc| {
-                sc.set_white_list_enabled(true);
+                sc.set_whitelist_enabled(true);
             },
         )
         .assert_ok();
@@ -1476,7 +1701,7 @@ fn burn_token_test() {
             &owner_address,
             &setup.contract_wrapper,
             &rust_biguint!(0),
-            |sc| sc.set_anti_spam_tax(managed_token_id_wrapped!(TOKEN_ID), managed_biguint!(200)),
+            |sc| sc.set_anti_spam_tax(managed_token_id_wrapped!("EGLD"), managed_biguint!(200)),
         )
         .assert_ok();
 
@@ -1501,6 +1726,7 @@ fn burn_token_test() {
             &rust_biguint!(0u64),
             |sc| {
                 sc.set_is_paused(false);
+                sc.roles_are_set().set(true);
             },
         )
         .assert_ok();
@@ -1519,12 +1745,10 @@ fn burn_token_test() {
         .assert_ok();
 
     b_wrapper
-        .execute_esdt_transfer(
-            first_user_address,
+        .execute_tx(
+            &first_user_address,
             &setup.contract_wrapper,
-            TOKEN_ID,
-            0,
-            &rust_biguint!(200),
+            &rust_biguint!(200u64),
             |sc| {
                 sc.mint_token(
                     managed_buffer!(USER_NFT_NAME),
@@ -1600,43 +1824,13 @@ fn url_validation_test() {
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
-            sc.require_url_is_valid(&managed_buffer!(SFT_TICKER))
-        })
-        .assert_user_error("URL length is too small");
-
-    b_wrapper
-        .execute_query(&setup.contract_wrapper, |sc| {
-            sc.require_url_is_adequate_length(&managed_buffer!(SFT_TICKER))
+            sc.require_url_is_adequate_length(&managed_buffer!(b"https://to.sm"));
         })
         .assert_user_error("URL length is too small");
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
             sc.require_url_is_valid(&managed_buffer!(&[
-                SFT_TICKER,
-                DATA_MARSHAL,
-                DATA_STREAM,
-                MEDIA_URI,
-                DATA_STREAM,
-                MEDIA_URI,
-                DATA_STREAM,
-                MEDIA_URI,
-                SFT_TICKER,
-                DATA_MARSHAL,
-                DATA_STREAM,
-                MEDIA_URI,
-                DATA_STREAM,
-                MEDIA_URI,
-                DATA_STREAM,
-                MEDIA_URI
-            ]
-            .concat()))
-        })
-        .assert_user_error("URL length is too big");
-
-    b_wrapper
-        .execute_query(&setup.contract_wrapper, |sc| {
-            sc.require_url_is_adequate_length(&managed_buffer!(&[
                 SFT_TICKER,
                 DATA_MARSHAL,
                 DATA_STREAM,
@@ -1696,7 +1890,7 @@ fn privileges_test() {
             &user_address,
             &setup.contract_wrapper,
             &rust_biguint!(0u64),
-            |sc| sc.set_white_list_enabled(false),
+            |sc| sc.set_whitelist_enabled(false),
         )
         .assert_user_error("Address is not privileged");
 
@@ -1797,6 +1991,7 @@ fn freeze_function_test() {
             &rust_biguint!(0u64),
             |sc| {
                 sc.set_is_paused(false);
+                sc.roles_are_set().set(true);
             },
         )
         .assert_ok();
@@ -1868,6 +2063,21 @@ fn freeze_function_test() {
             &setup.contract_wrapper,
             &rust_biguint!(0u64),
             |sc| {
+                sc.frozen_addresses_for_collection()
+                    .insert(managed_address!(first_user_address));
+                sc.freeze_collection_for_address(&managed_address!(first_user_address));
+            },
+        )
+        .assert_user_error("Address is in collection freeze list");
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.frozen_addresses_for_collection()
+                    .remove(&managed_address!(first_user_address));
                 sc.freeze_collection_for_address(&managed_address!(first_user_address));
             },
         )
@@ -1877,7 +2087,7 @@ fn freeze_function_test() {
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
             assert_eq!(
-                sc.freezed_addresses_for_collection()
+                sc.frozen_addresses_for_collection()
                     .contains(&managed_address!(first_user_address)),
                 true
             );
@@ -1910,6 +2120,7 @@ fn unfreeze_function_test() {
             &rust_biguint!(0u64),
             |sc| {
                 sc.set_is_paused(false);
+                sc.roles_are_set().set(true);
             },
         )
         .assert_ok();
@@ -1973,6 +2184,18 @@ fn unfreeze_function_test() {
             },
         )
         .assert_ok();
+
+    b_wrapper
+        .execute_tx(
+            &owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.unfreeze_collection_for_address(&managed_address!(first_user_address));
+            },
+        )
+        .assert_user_error("Address is not in collection freeze list");
+
     // [test] freeze collection for address
     b_wrapper
         .execute_tx(
@@ -1980,7 +2203,7 @@ fn unfreeze_function_test() {
             &setup.contract_wrapper,
             &rust_biguint!(0u64),
             |sc| {
-                sc.freezed_addresses_for_collection()
+                sc.frozen_addresses_for_collection()
                     .insert(managed_address!(first_user_address));
             },
         )
@@ -2000,7 +2223,7 @@ fn unfreeze_function_test() {
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
             assert_eq!(
-                sc.freezed_addresses_for_collection()
+                sc.frozen_addresses_for_collection()
                     .contains(&managed_address!(first_user_address)),
                 false
             );
@@ -2033,6 +2256,7 @@ fn freeze_sfts_per_address_function_test() {
             &rust_biguint!(0u64),
             |sc| {
                 sc.set_is_paused(false);
+                sc.roles_are_set().set(true);
             },
         )
         .assert_ok();
@@ -2145,13 +2369,12 @@ fn freeze_sfts_per_address_function_test() {
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
             assert_eq!(
-                sc.freezed_sfts_per_address(&managed_address!(first_user_address))
+                sc.frozen_sfts_per_address(&managed_address!(first_user_address))
                     .contains(&1u64),
                 true
             );
             assert_eq!(
-                sc.freezed_count(&managed_address!(first_user_address))
-                    .get(),
+                sc.frozen_count(&managed_address!(first_user_address)).get(),
                 1usize
             );
         })
@@ -2165,19 +2388,19 @@ fn freeze_sfts_per_address_function_test() {
             &setup.contract_wrapper,
             &rust_biguint!(0u64),
             |sc| {
-                sc.freezed_sfts_per_address(&managed_address!(first_user_address))
+                sc.frozen_sfts_per_address(&managed_address!(first_user_address))
                     .insert(2u64);
             },
         )
         .assert_ok();
-    // setting the freezed count to 2
+    // setting the frozen count to 2
     b_wrapper
         .execute_tx(
             &owner_address,
             &setup.contract_wrapper,
             &rust_biguint!(0u64),
             |sc| {
-                sc.freezed_count(&managed_address!(first_user_address))
+                sc.frozen_count(&managed_address!(first_user_address))
                     .set(2usize);
             },
         )
@@ -2186,13 +2409,12 @@ fn freeze_sfts_per_address_function_test() {
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
             assert_eq!(
-                sc.freezed_sfts_per_address(&managed_address!(first_user_address))
+                sc.frozen_sfts_per_address(&managed_address!(first_user_address))
                     .len(),
                 2usize
             );
             assert_eq!(
-                sc.freezed_count(&managed_address!(first_user_address))
-                    .get(),
+                sc.frozen_count(&managed_address!(first_user_address)).get(),
                 2usize
             );
         })
@@ -2224,6 +2446,7 @@ fn unfreeze_sfts_per_address_function_test() {
             &rust_biguint!(0u64),
             |sc| {
                 sc.set_is_paused(false);
+                sc.roles_are_set().set(true);
             },
         )
         .assert_ok();
@@ -2328,7 +2551,7 @@ fn unfreeze_sfts_per_address_function_test() {
             &setup.contract_wrapper,
             &rust_biguint!(0u64),
             |sc| {
-                sc.freezed_sfts_per_address(&managed_address!(first_user_address))
+                sc.frozen_sfts_per_address(&managed_address!(first_user_address))
                     .insert(1u64);
             },
         )
@@ -2339,7 +2562,7 @@ fn unfreeze_sfts_per_address_function_test() {
             &setup.contract_wrapper,
             &rust_biguint!(0u64),
             |sc| {
-                sc.freezed_sfts_per_address(&managed_address!(first_user_address))
+                sc.frozen_sfts_per_address(&managed_address!(first_user_address))
                     .insert(2u64);
             },
         )
@@ -2351,7 +2574,7 @@ fn unfreeze_sfts_per_address_function_test() {
             &setup.contract_wrapper,
             &rust_biguint!(0u64),
             |sc| {
-                sc.freezed_count(&managed_address!(first_user_address))
+                sc.frozen_count(&managed_address!(first_user_address))
                     .set(2usize);
             },
         )
@@ -2365,22 +2588,21 @@ fn unfreeze_sfts_per_address_function_test() {
             |sc| sc.unfreeze_single_token_for_address(2u64, &managed_address!(first_user_address)),
         )
         .assert_ok();
-    // check if the token is removed from the freezed_sfts_per_address array
+    // check if the token is removed from the frozen_sfts_per_address array
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
             assert_eq!(
-                sc.freezed_sfts_per_address(&managed_address!(first_user_address))
+                sc.frozen_sfts_per_address(&managed_address!(first_user_address))
                     .contains(&1u64),
                 true
             );
             assert_eq!(
-                sc.freezed_sfts_per_address(&managed_address!(first_user_address))
+                sc.frozen_sfts_per_address(&managed_address!(first_user_address))
                     .len(),
                 1usize
             );
             assert_eq!(
-                sc.freezed_count(&managed_address!(first_user_address))
-                    .get(),
+                sc.frozen_count(&managed_address!(first_user_address)).get(),
                 1usize
             );
         })
@@ -2412,6 +2634,7 @@ fn wipe_function_test() {
             &rust_biguint!(0u64),
             |sc| {
                 sc.set_is_paused(false);
+                sc.roles_are_set().set(true);
             },
         )
         .assert_ok();
@@ -2509,14 +2732,14 @@ fn wipe_function_test() {
             );
         })
         .assert_ok();
-    // We push the minted tokens to the freezed storage
+    // We push the minted tokens to the frozen storage
     b_wrapper
         .execute_tx(
             &owner_address,
             &setup.contract_wrapper,
             &rust_biguint!(0u64),
             |sc| {
-                sc.freezed_sfts_per_address(&managed_address!(first_user_address))
+                sc.frozen_sfts_per_address(&managed_address!(first_user_address))
                     .insert(1u64);
             },
         )
@@ -2528,34 +2751,33 @@ fn wipe_function_test() {
             &setup.contract_wrapper,
             &rust_biguint!(0u64),
             |sc| {
-                sc.freezed_sfts_per_address(&managed_address!(first_user_address))
+                sc.frozen_sfts_per_address(&managed_address!(first_user_address))
                     .insert(2u64);
             },
         )
         .assert_ok();
-    // We check if the freezed storage has the correct values
+    // We check if the frozen storage has the correct values
     b_wrapper
         .execute_tx(
             &owner_address,
             &setup.contract_wrapper,
             &rust_biguint!(0u64),
             |sc| {
-                sc.freezed_count(&managed_address!(first_user_address))
+                sc.frozen_count(&managed_address!(first_user_address))
                     .set(2usize);
             },
         )
         .assert_ok();
-    // We check if the freezed storage has the correct values
+    // We check if the frozen storage has the correct values
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
             assert_eq!(
-                sc.freezed_sfts_per_address(&managed_address!(first_user_address))
+                sc.frozen_sfts_per_address(&managed_address!(first_user_address))
                     .len(),
                 2usize
             );
             assert_eq!(
-                sc.freezed_count(&managed_address!(first_user_address))
-                    .get(),
+                sc.frozen_count(&managed_address!(first_user_address)).get(),
                 2usize
             );
         })
@@ -2569,22 +2791,21 @@ fn wipe_function_test() {
             |sc| sc.wipe_single_token_for_address(2u64, &managed_address!(first_user_address)),
         )
         .assert_ok();
-    // We check if the freezed storage has the correct values after the wipe
+    // We check if the frozen storage has the correct values after the wipe
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
             assert_eq!(
-                sc.freezed_sfts_per_address(&managed_address!(first_user_address))
+                sc.frozen_sfts_per_address(&managed_address!(first_user_address))
                     .contains(&1u64),
                 true
             );
             assert_eq!(
-                sc.freezed_sfts_per_address(&managed_address!(first_user_address))
+                sc.frozen_sfts_per_address(&managed_address!(first_user_address))
                     .len(),
                 1usize
             );
             assert_eq!(
-                sc.freezed_count(&managed_address!(first_user_address))
-                    .get(),
+                sc.frozen_count(&managed_address!(first_user_address)).get(),
                 1usize
             );
         })

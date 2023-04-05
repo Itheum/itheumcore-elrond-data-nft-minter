@@ -3,7 +3,7 @@ multiversx_sc::derive_imports!();
 
 #[multiversx_sc::module]
 pub trait NftMintUtils: crate::storage::StorageModule {
-    fn crate_hash_buffer(
+    fn create_hash_buffer(
         &self,
         data_marshal: &ManagedBuffer,
         data_stream: &ManagedBuffer,

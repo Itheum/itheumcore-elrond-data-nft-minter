@@ -3,10 +3,18 @@
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
-use crate::{callbacks::CallbackProxy, storage::DataNftAttributes};
+use crate::{
+    callbacks::CallbackProxy,
+    errors::{
+        ERR_ALREADY_IN_WHITE_LIST, ERR_CONTRACT_ALREADY_INITIALIZED, ERR_DATA_STREAM_IS_EMPTY,
+        ERR_ISSUE_COST, ERR_NOT_IN_WHITELIST, ERR_WHITELIST_IS_EMPTY, ERR_WRONG_AMOUNT_OF_PAYMENT,
+    },
+    storage::DataNftAttributes,
+};
 
 pub mod callbacks;
 pub mod collection_management;
+pub mod errors;
 pub mod events;
 pub mod nft_mint_utils;
 pub mod requirements;
@@ -28,13 +36,15 @@ pub trait DataNftMint:
         self.is_paused().set(true);
         self.mint_pause_toggle_event(&true);
 
-        self.white_list_enabled().set(true);
+        self.whitelist_enabled().set(true);
         self.whitelist_enable_toggle_event(&true);
 
-        self.min_royalties().set(BigUint::from(0u64));
-        self.max_royalties().set(BigUint::from(8000u64));
+        self.set_royalties_limits_event(&BigUint::from(0u64), &BigUint::from(8000u64));
+        self.min_royalties().set_if_empty(BigUint::from(0u64));
+        self.max_royalties().set_if_empty(BigUint::from(8000u64));
 
-        self.max_supply().set(&BigUint::from(20u64));
+        self.set_max_supply_event(&BigUint::from(20u64));
+        self.max_supply().set_if_empty(&BigUint::from(20u64));
     }
 
     // Endpoint used by the owner in the first place to initialize the contract with all the data needed for the SFT token creation
@@ -50,14 +60,11 @@ pub trait DataNftMint:
         mint_time_limit: u64,
         treasury_address: ManagedAddress,
     ) {
-        require!(
-            self.token_id().is_empty(),
-            "Contract was already initialized"
-        );
+        require!(self.token_id().is_empty(), ERR_CONTRACT_ALREADY_INITIALIZED);
         let issue_cost = self.call_value().egld_value();
         require!(
             issue_cost == BigUint::from(5u64) * BigUint::from(10u64).pow(16u32),
-            "Issue cost is 0.05 eGLD"
+            ERR_ISSUE_COST
         );
 
         self.set_anti_spam_tax_event(&anti_spam_tax_token, &anti_spam_tax_value);
@@ -67,7 +74,7 @@ pub trait DataNftMint:
         self.set_mint_time_limit_event(&mint_time_limit);
         self.mint_time_limit().set(mint_time_limit);
         self.treasury_address().set(&treasury_address);
-        // Collection issuing and giving NFT creation rights to the contract.
+        // Collection issuing
         self.send()
             .esdt_system_sc_proxy()
             .issue_semi_fungible(
@@ -89,6 +96,30 @@ pub trait DataNftMint:
             .call_and_exit();
     }
 
+    // Endpoint used by the owner to set the special roles to the contract
+    #[only_owner]
+    #[endpoint(setLocalRoles)]
+    fn set_local_roles(&self) {
+        self.require_token_issued();
+
+        self.send()
+            .esdt_system_sc_proxy()
+            .set_special_roles(
+                &self.blockchain().get_sc_address(),
+                &self.token_id().get_token_id(),
+                [
+                    EsdtLocalRole::NftCreate,
+                    EsdtLocalRole::NftBurn,
+                    EsdtLocalRole::NftAddQuantity,
+                ][..]
+                    .iter()
+                    .cloned(),
+            )
+            .async_call()
+            .with_callback(self.callbacks().set_local_roles_callback())
+            .call_and_exit();
+    }
+
     // Public endpoint used to mint Data NFT-FTs.
     #[payable("*")]
     #[endpoint(mint)]
@@ -105,13 +136,17 @@ pub trait DataNftMint:
         title: ManagedBuffer,
         description: ManagedBuffer,
     ) -> DataNftAttributes<Self::Api> {
-        self.require_minting_is_ready();
+        self.require_ready_for_minting_and_burning();
+        require!(!data_stream.is_empty(), ERR_DATA_STREAM_IS_EMPTY);
+
         self.require_url_is_valid(&data_marshal);
         self.require_url_is_valid(&data_preview);
-        require!(!data_stream.is_empty(), "Data Stream is empty");
         self.require_url_is_valid(&media);
         self.require_url_is_valid(&metadata);
+
+        self.require_title_description_are_valid(&title, &description);
         self.require_sft_is_valid(&royalties, &supply);
+
         let caller = self.blockchain().get_caller();
         let current_time = self.blockchain().get_block_timestamp();
         self.require_minting_is_allowed(&caller, current_time);
@@ -121,7 +156,7 @@ pub trait DataNftMint:
         let price = self.anti_spam_tax(&payment.token_identifier).get();
         // The contract will panic if the user tries to use a token which is has not been set as buyable by the owner.
         self.require_value_is_positive(&payment.amount);
-        require!(&payment.amount == &price, "Wrong amount of payment sent");
+        require!(&payment.amount == &price, ERR_WRONG_AMOUNT_OF_PAYMENT);
 
         let one_token = BigUint::from(1u64);
         self.minted_per_address(&caller)
@@ -130,13 +165,13 @@ pub trait DataNftMint:
         self.minted_tokens().update(|n| *n += &one_token);
 
         let attributes: DataNftAttributes<Self::Api> = DataNftAttributes {
-            creation_time: self.blockchain().get_block_timestamp(),
+            creation_time: current_time,
             creator: caller.clone(),
             data_marshal_url: data_marshal.clone(),
             data_stream_url: data_stream.clone(),
-            data_preview_url: data_preview.clone(),
-            title: title.clone(),
-            description: description.clone(),
+            data_preview_url: data_preview,
+            title,
+            description,
         };
 
         let token_identifier = self.token_id().get_token_id();
@@ -148,7 +183,7 @@ pub trait DataNftMint:
             &supply,
             &name,
             &royalties,
-            &self.crate_hash_buffer(&data_marshal, &data_stream),
+            &self.create_hash_buffer(&data_marshal, &data_stream),
             &attributes,
             &self.create_uris(media, metadata),
         );
@@ -158,16 +193,12 @@ pub trait DataNftMint:
 
         let treasury_address = self.treasury_address().get();
 
-        if payment.token_identifier.is_egld() {
-            self.send().direct_egld(&treasury_address, &payment.amount);
-        } else {
-            self.send().direct_esdt(
-                &treasury_address,
-                &payment.token_identifier.unwrap_esdt(),
-                payment.token_nonce,
-                &payment.amount,
-            );
-        }
+        self.send().direct(
+            &treasury_address,
+            &payment.token_identifier,
+            payment.token_nonce,
+            &payment.amount,
+        );
 
         attributes
     }
@@ -176,7 +207,7 @@ pub trait DataNftMint:
     #[payable("*")]
     #[endpoint(burn)]
     fn burn_token(&self) {
-        self.require_minting_is_ready();
+        self.require_ready_for_minting_and_burning();
         let caller = self.blockchain().get_caller();
         let payment = self.call_value().single_esdt();
         self.token_id()
@@ -220,24 +251,24 @@ pub trait DataNftMint:
 
     // Endpoint that will be used by the owner and privileged address to change the whitelist enable value.
     #[endpoint(setWhiteListEnabled)]
-    fn set_white_list_enabled(&self, is_enabled: bool) {
+    fn set_whitelist_enabled(&self, is_enabled: bool) {
         let caller = self.blockchain().get_caller();
         self.require_is_privileged(&caller);
         self.whitelist_enable_toggle_event(&is_enabled);
-        self.white_list_enabled().set(is_enabled);
+        self.whitelist_enabled().set(is_enabled);
     }
 
     // Endpoint that will be used by the owner and privileged address to set whitelist spots.
     #[endpoint(setWhiteListSpots)]
     fn set_whitelist_spots(&self, whitelist: MultiValueEncoded<ManagedAddress>) {
-        require!(!whitelist.is_empty(), "Given whitelist is empty");
+        require!(!whitelist.is_empty(), ERR_WHITELIST_IS_EMPTY);
         let caller = self.blockchain().get_caller();
         self.require_is_privileged(&caller);
         for item in whitelist.into_iter() {
-            if self.white_list().insert(item.clone()) {
+            if self.whitelist().insert(item.clone()) {
                 self.set_whitelist_spot_event(&item);
             } else {
-                sc_panic!("Address already in whitelist");
+                sc_panic!(ERR_ALREADY_IN_WHITE_LIST);
             }
         }
     }
@@ -245,14 +276,14 @@ pub trait DataNftMint:
     // Endpoint that will be used by the owner privileged address to unset whitelist spots.
     #[endpoint(removeWhiteListSpots)]
     fn remove_whitelist_spots(&self, whitelist: MultiValueEncoded<ManagedAddress>) {
-        require!(!whitelist.is_empty(), "Given whitelist is empty");
+        require!(!whitelist.is_empty(), ERR_WHITELIST_IS_EMPTY);
         let caller = self.blockchain().get_caller();
         self.require_is_privileged(&caller);
         for item in whitelist.into_iter() {
-            if self.white_list().remove(&item.clone()) {
+            if self.whitelist().remove(&item.clone()) {
                 self.remove_whitelist_spot_event(&item);
             } else {
-                sc_panic!("Address not in whitelist");
+                sc_panic!(ERR_NOT_IN_WHITELIST);
             }
         }
     }
@@ -270,6 +301,7 @@ pub trait DataNftMint:
     fn set_royalties_limits(&self, min_royalties: BigUint, max_royalties: BigUint) {
         let caller = self.blockchain().get_caller();
         self.require_is_privileged(&caller);
+        self.require_royalties_are_valid(&min_royalties, &max_royalties);
         self.set_royalties_limits_event(&min_royalties, &max_royalties);
         self.min_royalties().set(min_royalties);
         self.max_royalties().set(max_royalties);

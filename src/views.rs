@@ -38,16 +38,15 @@ pub trait ViewsModule: crate::storage::StorageModule {
             let max_supply = self.max_supply().get();
             let mint_time_limit = self.mint_time_limit().get();
             let last_mint_time = self.last_mint_time(&address).get();
-            let whitelist_enabled = self.white_list_enabled().get();
-            let is_whitelisted = self.white_list().contains(&address);
+            let whitelist_enabled = self.whitelist_enabled().get();
+            let is_whitelisted = self.whitelist().contains(&address);
             let minted_per_user = self.minted_per_address(&address).get();
             let total_minted = self.minted_tokens().get();
-            let frozen = self.freezed_addresses_for_collection().contains(&address);
-            let nonces = self.freezed_sfts_per_address(&address);
-            let mut frozen_nonces = ManagedVec::new();
-            for item in nonces.iter() {
-                frozen_nonces.push(item);
-            }
+            let frozen = self.frozen_addresses_for_collection().contains(&address);
+            let frozen_nonces = self
+                .frozen_sfts_per_address(&address)
+                .iter()
+                .collect::<ManagedVec<u64>>();
 
             let user_data = UserDataOut {
                 anti_spam_tax_value,

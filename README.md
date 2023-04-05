@@ -257,7 +257,7 @@ Example: "setAntiSpamTax@45474c44@015af1d78b58c40000"
 
 ```rust
     #[endpoint(setWhiteListEnabled)]
-    fn set_white_list_enabled(
+    fn set_whitelist_enabled(
         &self,
         is_enabled: bool
     );
@@ -417,7 +417,7 @@ This smart contract aims to offer the Elrond community an audited NFT minter sma
 
 - Uses `multiversx-sc-* 0.39.4` SDK libs (see Cargo.toml)
 - Building requires minimum **mxpy 6.1.1** (newer version should also work but devs used 6.1.1). Check version using `mxpy --version`
-- To build the project, requires minimum Rust version `1.68.0-nightly`. Check your Rust version by running `rustc --version`. To update your Rust, run `rustup update`. To set to nightly run `rustup default nightly` (devs used 1.69.0-nightly)
+- To build the project, requires minimum Rust version `1.69.0-nightly`. Check your Rust version by running `rustc --version`. To update your Rust, run `rustup update`. To set to nightly run `rustup default nightly` (devs used 1.69.0-nightly)
 - After you make sure you have the minimum Rust version you can then begin development. After you clone repo and before you run build, deploy or run the tests - follow these steps (most likely only needed the 1st time)
 
 ```

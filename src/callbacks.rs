@@ -1,3 +1,5 @@
+use crate::errors::ERR_TOKEN_ISSUED;
+
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
@@ -11,22 +13,8 @@ pub trait Callbacks: crate::storage::StorageModule {
     ) {
         match result {
             ManagedAsyncCallResult::Ok(token_id) => {
+                require!(self.token_id().is_empty(), ERR_TOKEN_ISSUED);
                 self.token_id().set_token_id(token_id.unwrap_esdt());
-                self.send()
-                    .esdt_system_sc_proxy()
-                    .set_special_roles(
-                        &self.blockchain().get_sc_address(),
-                        &self.token_id().get_token_id(),
-                        [
-                            EsdtLocalRole::NftCreate,
-                            EsdtLocalRole::NftBurn,
-                            EsdtLocalRole::NftAddQuantity,
-                        ][..]
-                            .iter()
-                            .cloned(),
-                    )
-                    .async_call()
-                    .call_and_exit()
             }
             ManagedAsyncCallResult::Err(_) => {
                 let caller = self.blockchain().get_owner_address();
@@ -35,6 +23,18 @@ pub trait Callbacks: crate::storage::StorageModule {
                     self.send()
                         .direct(&caller, &returned.token_identifier, 0, &returned.amount);
                 }
+            }
+        }
+    }
+
+    #[callback]
+    fn set_local_roles_callback(&self, #[call_result] result: ManagedAsyncCallResult<()>) {
+        match result {
+            ManagedAsyncCallResult::Ok(_) => {
+                self.roles_are_set().set(true);
+            }
+            ManagedAsyncCallResult::Err(_) => {
+                self.roles_are_set().set(false);
             }
         }
     }
