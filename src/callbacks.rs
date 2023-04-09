@@ -33,9 +33,7 @@ pub trait Callbacks: crate::storage::StorageModule {
             ManagedAsyncCallResult::Ok(_) => {
                 self.roles_are_set().set(true);
             }
-            ManagedAsyncCallResult::Err(_) => {
-                self.roles_are_set().set(false);
-            }
+            ManagedAsyncCallResult::Err(_) => {}
         }
     }
 }

@@ -26,7 +26,7 @@ pub trait RequirementsModule: crate::storage::StorageModule {
         if self.treasury_address().is_empty() {
             is_mint_ready = false;
         }
-        if self.roles_are_set().is_empty() || self.roles_are_set().get() == false {
+        if self.roles_are_set().is_empty() {
             is_mint_ready = false;
         }
         require!(is_mint_ready, ERR_MINTING_AND_BURNING_NOT_ALLOWED);
