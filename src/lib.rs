@@ -44,8 +44,9 @@ pub trait DataNftMint:
 
         self.set_royalties_limits_event(&self.min_royalties().get(), &self.max_royalties().get());
 
-        self.set_max_supply_event(&BigUint::from(20u64));
         self.max_supply().set_if_empty(&BigUint::from(20u64));
+
+        self.set_max_supply_event(&self.max_supply().get());
     }
 
     // Endpoint used by the owner in the first place to initialize the contract with all the data needed for the SFT token creation
