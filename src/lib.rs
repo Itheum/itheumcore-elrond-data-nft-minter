@@ -39,9 +39,10 @@ pub trait DataNftMint:
         self.whitelist_enabled().set(true);
         self.whitelist_enable_toggle_event(&true);
 
-        self.set_royalties_limits_event(&BigUint::from(0u64), &BigUint::from(8000u64));
         self.min_royalties().set_if_empty(BigUint::from(0u64));
         self.max_royalties().set_if_empty(BigUint::from(8000u64));
+
+        self.set_royalties_limits_event(&self.min_royalties().get(), &self.max_royalties().get());
 
         self.set_max_supply_event(&BigUint::from(20u64));
         self.max_supply().set_if_empty(&BigUint::from(20u64));
