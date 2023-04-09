@@ -6,7 +6,7 @@ multiversx_sc::derive_imports!();
 use crate::{
     callbacks::CallbackProxy,
     errors::{
-        ERR_ALREADY_IN_WHITE_LIST, ERR_CONTRACT_ALREADY_INITIALIZED, ERR_DATA_STREAM_IS_EMPTY,
+        ERR_ALREADY_IN_WHITELIST, ERR_CONTRACT_ALREADY_INITIALIZED, ERR_DATA_STREAM_IS_EMPTY,
         ERR_ISSUE_COST, ERR_NOT_IN_WHITELIST, ERR_WHITELIST_IS_EMPTY, ERR_WRONG_AMOUNT_OF_PAYMENT,
     },
     storage::DataNftAttributes,
@@ -269,7 +269,7 @@ pub trait DataNftMint:
             if self.whitelist().insert(item.clone()) {
                 self.set_whitelist_spot_event(&item);
             } else {
-                sc_panic!(ERR_ALREADY_IN_WHITE_LIST);
+                sc_panic!(ERR_ALREADY_IN_WHITELIST);
             }
         }
     }
