@@ -26,7 +26,7 @@ pub trait RequirementsModule: crate::storage::StorageModule {
         if self.treasury_address().is_empty() {
             is_mint_ready = false;
         }
-        if self.roles_are_set().is_empty() || self.roles_are_set().get() == false {
+        if self.roles_are_set().is_empty() {
             is_mint_ready = false;
         }
         require!(is_mint_ready, ERR_MINTING_AND_BURNING_NOT_ALLOWED);
@@ -116,11 +116,11 @@ pub trait RequirementsModule: crate::storage::StorageModule {
     // Checks whether the royalties passed are valid
     fn require_royalties_are_valid(&self, min_royalties: &BigUint, max_royalties: &BigUint) {
         require!(
-            min_royalties < max_royalties,
+            min_royalties <= max_royalties,
             ERR_MIN_ROYALTIES_BIGGER_THAN_MAX_ROYALTIES
         );
         require!(
-            max_royalties < &BigUint::from(10000u64),
+            max_royalties <= &BigUint::from(10000u64),
             ERR_MAX_ROYALTIES_TOO_HIGH
         );
     }

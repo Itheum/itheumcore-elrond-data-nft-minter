@@ -913,7 +913,7 @@ fn requirements_test() {
         .execute_query(&setup.contract_wrapper, |sc| {
             sc.require_royalties_are_valid(&managed_biguint!(1u64), &managed_biguint!(10000u64))
         })
-        .assert_user_error(ERR_MAX_ROYALTIES_TOO_HIGH);
+        .assert_ok();
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {

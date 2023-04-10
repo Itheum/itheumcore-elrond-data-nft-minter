@@ -6,7 +6,7 @@ multiversx_sc::derive_imports!();
 use crate::{
     callbacks::CallbackProxy,
     errors::{
-        ERR_ALREADY_IN_WHITE_LIST, ERR_CONTRACT_ALREADY_INITIALIZED, ERR_DATA_STREAM_IS_EMPTY,
+        ERR_ALREADY_IN_WHITELIST, ERR_CONTRACT_ALREADY_INITIALIZED, ERR_DATA_STREAM_IS_EMPTY,
         ERR_ISSUE_COST, ERR_NOT_IN_WHITELIST, ERR_WHITELIST_IS_EMPTY, ERR_WRONG_AMOUNT_OF_PAYMENT,
     },
     storage::DataNftAttributes,
@@ -39,12 +39,14 @@ pub trait DataNftMint:
         self.whitelist_enabled().set(true);
         self.whitelist_enable_toggle_event(&true);
 
-        self.set_royalties_limits_event(&BigUint::from(0u64), &BigUint::from(8000u64));
         self.min_royalties().set_if_empty(BigUint::from(0u64));
         self.max_royalties().set_if_empty(BigUint::from(8000u64));
 
-        self.set_max_supply_event(&BigUint::from(20u64));
+        self.set_royalties_limits_event(&self.min_royalties().get(), &self.max_royalties().get());
+
         self.max_supply().set_if_empty(&BigUint::from(20u64));
+
+        self.set_max_supply_event(&self.max_supply().get());
     }
 
     // Endpoint used by the owner in the first place to initialize the contract with all the data needed for the SFT token creation
@@ -268,7 +270,7 @@ pub trait DataNftMint:
             if self.whitelist().insert(item.clone()) {
                 self.set_whitelist_spot_event(&item);
             } else {
-                sc_panic!(ERR_ALREADY_IN_WHITE_LIST);
+                sc_panic!(ERR_ALREADY_IN_WHITELIST);
             }
         }
     }
