@@ -83,7 +83,7 @@ pub trait RequirementsModule: crate::storage::StorageModule {
         description: &ManagedBuffer,
     ) {
         require!(!title.is_empty(), ERR_FIELD_IS_EMPTY);
-        require!(title.len() <= 30, ERR_TOO_MANY_CHARS);
+        require!(title.len() <= 100, ERR_TOO_MANY_CHARS);
         require!(!description.is_empty(), ERR_FIELD_IS_EMPTY);
         require!(description.len() <= 400, ERR_TOO_MANY_CHARS);
     }
