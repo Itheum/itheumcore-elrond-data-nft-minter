@@ -948,6 +948,15 @@ fn requirements_test() {
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
             sc.require_title_description_are_valid(
+                &managed_buffer!(&[1u8; 101]),
+                &managed_buffer!(&[1u8; 400]),
+            )
+        })
+        .assert_user_error(ERR_TOO_MANY_CHARS);
+
+    b_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            sc.require_title_description_are_valid(
                 &managed_buffer!(b"Random"),
                 &managed_buffer!(&[1u8; 401]),
             )
