@@ -413,7 +413,7 @@ Main view of the contract. Receives an address and a token identifier as argumen
 
 This smart contract aims to offer the Elrond community an audited NFT minter smart contract that is easy to use, well documented and secure.
 
-### Setting up dev environment (project development bootstrap)
+### Setting up dev environment (project development bootstrap) + how to build
 
 - Uses `multiversx-sc-* 0.39.4` SDK libs (see Cargo.toml)
 - Building requires minimum **mxpy 6.1.1** (newer version should also work but devs used 6.1.1). Check version using `mxpy --version`
@@ -478,6 +478,44 @@ After using that, to deploy one can simply use:
 ### How to interact
 
 After deployment, one can interact with the smart contract and test its functionality. To do so, one can use the interaction snippets already presented above. More explanations can be found about the snippets inside the devnet.snippets file.
+
+### Mainnet Deployment (via Reproducible Builds)
+- After the security audit has passed the Mainnet deployment need to be verified to match the version that was audited. This guarantee is given via [Reproducible Builds](https://docs.multiversx.com/developers/reproducible-contract-builds/#how-to-run-a-reproducible-build-using-mxpy)
+
+**Step 1 (Final build + Code Hash):**
+- Be in the latest `main` branch. On the commit that was audited. Update the cargo.toml files with the correct version. This should match the version we use in our requirements files (i.e Notion). e.g. 1.0.0. you need to update the `cargo.toml` files in the root folder, wasm folder and meta folder.
+
+- In the `cargo.toml` files make sure you set the correct `edition`. i.e. edition = "2021"
+
+- As the `cargo.toml` files has been updated. Build locally as normal. i.e. see "how to build" above and also run tests as per "how to test". This will reflect the `cargo.toml` update in the linked cargo.lock files and produces the final local meta build files to keep the final github check-in and version tagging perfect.
+
+
+**Step 2 (Final build + Code Hash):**
+Once the main commit is locked in, we can then produce the code hash and build to deploy to devnet 1st (for final testing) and then to mainnet (after sending the code hash to the auditor)
+
+1. Make sure your mxpy version is >= 6.
+2. If Cargo.lock is in gitignore, remove it, build the contract and make a new commit. Otherwise this step can be skipped. (see Step 1 and repeat if needed)
+3. Run the following in the root of the repository (run the latest Docker client in your computer. Used `Docker Desktop 4.18.0 (104112) on MacOX 12.6`):
+
+`mxpy contract reproducible-build --docker-image="multiversx/sdk-rust-contract-builder:v4.1.4"`
+
+Note that if you already have a output-docker from a previous build and deploy then delete this folder.
+
+This process may take some time. After it's done you should see "Docker build ran successfully!". An output-docker folder will be created containing the WASM files built in a reproducible way and artifacts.json containing the code hash of the WASM files.
+
+You can then share the auditor the code hash. The auditor will follow the same steps and compare the code hash with yours. If they match, we will be good to go!
+
+Note that "output-docker" folder should not be check-into GIT. 
+
+**Step 4 (Send Code Hash to auditor to verify against devnet and give us all final clear):**
+We should have got this final clear in Step 2, but we still do a final check here.
+
+**Step 5 (Deploy to Devnet as final build for testing + Move ABI to all apps that need it):**
+
+**Step 6 (Tag the commit in the main branch of Github with the version that was deployed. e.g. 1.0.0):**
+
+**Step 6 (Deploy SC to Mainnet):**
+
 
 ## Contributing
 

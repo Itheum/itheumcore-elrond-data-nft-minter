@@ -151,14 +151,14 @@ checksum = "2382f75942f4b3be3690fe4f86365e9c853c1587d6ee58212cebf6e2a9ccd101"
 
 [[package]]
 name = "datanftmint"
-version = "0.0.0"
+version = "1.0.0"
 dependencies = [
  "multiversx-sc",
 ]
 
 [[package]]
 name = "datanftmint-meta"
-version = "0.0.0"
+version = "1.0.0"
 dependencies = [
  "datanftmint",
  "multiversx-sc",

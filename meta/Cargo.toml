@@ -1,9 +1,9 @@
 [package]
 name = "datanftmint-meta"
-version = "0.0.0"
+version = "1.0.0"
 edition = "2021"
 publish = false
-authors = [ "Ovidiu Damian - Itheum","Bucur David - Itheum"]
+authors = [ "Ovidiu Damian - Itheum","Bucur David - Itheum","Mark Paul - Itheum"]
 
 [dev-dependencies]
 
