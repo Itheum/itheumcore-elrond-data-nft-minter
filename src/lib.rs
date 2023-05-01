@@ -63,7 +63,7 @@ pub trait DataNftMint:
         treasury_address: ManagedAddress,
     ) {
         require!(self.token_id().is_empty(), ERR_CONTRACT_ALREADY_INITIALIZED);
-        let issue_cost = self.call_value().egld_value();
+        let issue_cost = self.call_value().egld_value().clone_value();
         require!(
             issue_cost == BigUint::from(5u64) * BigUint::from(10u64).pow(16u32),
             ERR_ISSUE_COST
