@@ -15,6 +15,7 @@ deploy(){
     --bytecode output/datanftmint.wasm \
     --outfile deployOutput \
     --metadata-not-readable \
+    --metadata-payable-by-sc \
     --pem ${WALLET} \
     --proxy ${PROXY} \
     --chain ${CHAIN_ID} \
