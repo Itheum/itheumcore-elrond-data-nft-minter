@@ -7,12 +7,16 @@ USER="../wallet2.pem"
 ADDRESS=$(mxpy data load --key=address-devnet)
 DEPLOY_TRANSACTION=$(mxpy data load --key=deployTransaction-devnet)
 
-TOKEN="ITHEUM-a61317"
+TOKEN="ITHEUM-fce905"
 TOKEN_HEX="0x$(echo -n ${TOKEN} | xxd -p -u | tr -d '\n')"
 
+# to deploy from last reprodubible build, we need to change 
+# --bytecode output/datanftmint.wasm \
+# to 
+# --bytecode output-docker/datanftmint/datanftmint.wasm \
 deploy(){
     mxpy --verbose contract deploy \
-    --bytecode output/datanftmint.wasm \
+    --bytecode output-docker/datanftmint/datanftmint.wasm \
     --outfile deployOutput \
     --metadata-not-readable \
     --metadata-payable-by-sc \
@@ -35,6 +39,10 @@ deploy(){
 restoreDeployData() {
   TRANSACTION=$(mxpy data parse --file="./interaction/deploy-devnet.interaction.json" --expression="data['emittedTransactionHash']")
   ADDRESS=$(mxpy data parse --file="./interaction/deploy-devnet.interaction.json" --expression="data['contractAddress']")
+
+  # after we upgraded to mxpy 8.1.2, mxpy data parse seems to load the ADDRESS correctly but it breaks when used below with a weird "Bad address" error
+  # so, we just hardcode the ADDRESS here. Just make sure you use the "data['contractAddress'] from the latest deploy-devnet.interaction.json file
+  ADDRESS="erd1qqqqqqqqqqqqqpgq7thwlde9hvc5ty7lx2j3l9tvy3wgkwu7fsxsvz9rat"
 }
 
 initializeContract(){
