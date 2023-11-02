@@ -258,11 +258,12 @@ disableWhiteListMainnet(){
 }
 
 setWhiteListSpotsMainnet(){
+  echo $ADDRESS;
     # $1 = address
 
     address="0x$(mxpy wallet bech32 --decode ${1})"
 
-    mxpy --verbose contract call ${ADDRESS} \
+    mxpy --verbose contract call erd1qqqqqqqqqqqqqpgqmuzgkurn657afd3r2aldqy2snsknwvrhc77q3lj8l6 \
     --recall-nonce \
     --gas-limit=6000000 \
     --function "setWhiteListSpots" \
