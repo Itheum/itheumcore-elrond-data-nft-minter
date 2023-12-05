@@ -129,4 +129,15 @@ pub trait EventsModule {
         #[indexed] token: &EgldOrEsdtTokenIdentifier,
         #[indexed] price: &BigUint,
     );
+
+    #[event("setWithdrawalAddress")]
+    fn set_withdrawal_address_event(&self, #[indexed] address: &ManagedAddress);
+
+    #[event("withdrawTokens")]
+    fn withdraw_tokens_event(
+        &self,
+        #[indexed] address: &ManagedAddress,
+        #[indexed] token: &EgldOrEsdtTokenIdentifier,
+        #[indexed] amount: &BigUint,
+    );
 }

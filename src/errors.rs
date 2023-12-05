@@ -33,3 +33,7 @@ pub const ERR_ADDRESS_NOT_IN_COLLECTION_FREEZE_LIST: &str =
 pub const ERR_ADDRESS_IS_IN_COLLECTION_FREEZE_LIST: &str = "Address is in collection freeze list";
 pub const ERR_FIELD_IS_EMPTY: &str = "Field is empty";
 pub const ERR_TOO_MANY_CHARS: &str = "Too many characters";
+pub const ERR_ONLY_WITHDRAWAL_ADDRESS_CAN_FREEZE: &str =
+    "Only withdrawal address can withdraw tokens";
+pub const ERR_WITHDRAWAL_ADDRESS_NOT_SET: &str = "Withdrawal address not set";  
+pub const ERR_NOT_ENOUGH_FUNDS: &str = "Not enough funds";

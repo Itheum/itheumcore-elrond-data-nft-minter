@@ -6,12 +6,11 @@ publish = false
 authors = [ "Ovidiu Damian - Itheum","Bucur David - Itheum","Mark Paul - Itheum"]
 
 [dev-dependencies]
-
 [dependencies.datanftmint]
 path = ".."
 
 [dependencies.multiversx-sc]
-version = "0.39.7"
+version = "0.45.1"
 
 [dependencies.multiversx-sc-meta]
-version = "0.39.7"
+version = "0.45.1"
