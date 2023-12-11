@@ -338,10 +338,7 @@ pub trait DataNftMint:
     fn withdraw(&self, token_identifier: EgldOrEsdtTokenIdentifier, nonce: u64, amount: BigUint) {
         let caller = self.blockchain().get_caller();
 
-        require!(
-            !self.withdrawal_address().is_empty(),
-            ERR_WITHDRAWAL_ADDRESS_NOT_SET
-        );
+        self.require_withdrawal_address_is_set();
         let withdrawal_address = self.withdrawal_address().get();
         self.require_is_withdrawal_address(&caller);
 

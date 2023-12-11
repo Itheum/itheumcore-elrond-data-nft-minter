@@ -5,7 +5,7 @@ use crate::errors::{
     ERR_ROYALTIES_ARE_BIGGER_THAN_MAX_ROYALTIES, ERR_ROYALTIES_ARE_SMALLER_THAN_MIN_ROYALTIES,
     ERR_SUPPLY_HIGHER_THAN_ZERO, ERR_TOKEN_NOT_ISSUED, ERR_TOO_MANY_CHARS,
     ERR_URL_INVALID_CHARACTERS, ERR_URL_IS_EMPTY, ERR_URL_TOO_BIG, ERR_URL_TOO_SMALL,
-    ERR_VALUE_MUST_BE_POSITIVE, ERR_WAIT_MORE_TIME,
+    ERR_VALUE_MUST_BE_POSITIVE, ERR_WAIT_MORE_TIME, ERR_WITHDRAWAL_ADDRESS_NOT_SET,
 };
 
 multiversx_sc::imports!();
@@ -30,6 +30,13 @@ pub trait RequirementsModule: crate::storage::StorageModule {
             is_mint_ready = false;
         }
         require!(is_mint_ready, ERR_MINTING_AND_BURNING_NOT_ALLOWED);
+    }
+
+    fn require_withdrawal_address_is_set(&self) {
+        require!(
+            !self.withdrawal_address().is_empty(),
+            ERR_WITHDRAWAL_ADDRESS_NOT_SET
+        );
     }
 
     // Checks whether the address trying to mint is allowed to do so
