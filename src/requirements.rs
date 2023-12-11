@@ -1,7 +1,7 @@
 use crate::errors::{
     ERR_FIELD_IS_EMPTY, ERR_MAX_ROYALTIES_TOO_HIGH, ERR_MAX_SUPPLY_EXCEEDED,
     ERR_MINTING_AND_BURNING_NOT_ALLOWED, ERR_MIN_ROYALTIES_BIGGER_THAN_MAX_ROYALTIES,
-    ERR_NOT_PRIVILEGED, ERR_NOT_URL, ERR_NOT_WHITELISTED,
+    ERR_NOT_PRIVILEGED, ERR_NOT_URL, ERR_NOT_WHITELISTED, ERR_ONLY_WITHDRAWAL_ADDRESS_CAN_WITHDRAW,
     ERR_ROYALTIES_ARE_BIGGER_THAN_MAX_ROYALTIES, ERR_ROYALTIES_ARE_SMALLER_THAN_MIN_ROYALTIES,
     ERR_SUPPLY_HIGHER_THAN_ZERO, ERR_TOKEN_NOT_ISSUED, ERR_TOO_MANY_CHARS,
     ERR_URL_INVALID_CHARACTERS, ERR_URL_IS_EMPTY, ERR_URL_TOO_BIG, ERR_URL_TOO_SMALL,
@@ -128,5 +128,12 @@ pub trait RequirementsModule: crate::storage::StorageModule {
     // Checks whether the token is issued
     fn require_token_issued(&self) {
         require!(!self.token_id().is_empty(), ERR_TOKEN_NOT_ISSUED);
+    }
+
+    fn require_is_withdrawal_address(&self, address: &ManagedAddress) {
+        require!(
+            &self.withdrawal_address().get() == address,
+            ERR_ONLY_WITHDRAWAL_ADDRESS_CAN_WITHDRAW
+        );
     }
 }

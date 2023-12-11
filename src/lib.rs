@@ -7,7 +7,8 @@ use crate::{
     callbacks::CallbackProxy,
     errors::{
         ERR_ALREADY_IN_WHITELIST, ERR_CONTRACT_ALREADY_INITIALIZED, ERR_DATA_STREAM_IS_EMPTY,
-        ERR_ISSUE_COST, ERR_NOT_IN_WHITELIST, ERR_WHITELIST_IS_EMPTY, ERR_WRONG_AMOUNT_OF_PAYMENT, ERR_ONLY_WITHDRAWAL_ADDRESS_CAN_FREEZE, ERR_WITHDRAWAL_ADDRESS_NOT_SET, ERR_NOT_ENOUGH_FUNDS,
+        ERR_ISSUE_COST, ERR_NOT_ENOUGH_FUNDS, ERR_NOT_IN_WHITELIST, ERR_WHITELIST_IS_EMPTY,
+        ERR_WITHDRAWAL_ADDRESS_NOT_SET, ERR_WRONG_AMOUNT_OF_PAYMENT,
     },
     storage::DataNftAttributes,
 };
@@ -333,16 +334,17 @@ pub trait DataNftMint:
         self.withdrawal_address().set(&withdrawal_address);
     }
 
-
     #[endpoint(withdraw)] // smart contract must be payable to receive royalties
-    fn withdraw(&self, token_identifier: EgldOrEsdtTokenIdentifier, nonce: u64, amount:BigUint) {
+    fn withdraw(&self, token_identifier: EgldOrEsdtTokenIdentifier, nonce: u64, amount: BigUint) {
         let caller = self.blockchain().get_caller();
 
-
-        require!(!self.withdrawal_address().is_empty(),ERR_WITHDRAWAL_ADDRESS_NOT_SET);
+        require!(
+            !self.withdrawal_address().is_empty(),
+            ERR_WITHDRAWAL_ADDRESS_NOT_SET
+        );
         let withdrawal_address = self.withdrawal_address().get();
-        require!(caller == withdrawal_address, ERR_ONLY_WITHDRAWAL_ADDRESS_CAN_FREEZE);
-        
+        self.require_is_withdrawal_address(&caller);
+
         let balance = self.blockchain().get_sc_balance(&token_identifier, nonce);
 
         self.require_value_is_positive(&amount);
@@ -350,8 +352,8 @@ pub trait DataNftMint:
             self.send()
                 .direct(&withdrawal_address, &token_identifier, nonce, &amount);
 
-            self.withdraw_tokens_event(&caller,&token_identifier, &amount);
-        } else{
+            self.withdraw_tokens_event(&caller, &token_identifier, &amount);
+        } else {
             sc_panic!(ERR_NOT_ENOUGH_FUNDS);
         }
     }
