@@ -1837,7 +1837,7 @@ fn url_validation_test() {
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
-            sc.require_url_is_adequate_length(&managed_buffer!(b"https://to.sm"));
+            sc.require_url_is_valid(&managed_buffer!(b"https://to.sm"));
         })
         .assert_user_error("URL length is too small");
 
@@ -2835,12 +2835,11 @@ fn wipe_function_test() {
         .assert_ok();
 }
 
-
 #[test] // Tests the withdrawal endpoint
 fn withdraw_test() {
     let mut setup = setup_contract(datanftmint::contract_obj);
     let owner_address = &setup.owner_address;
-    let withdrawal_address = &setup.withdrawal_address; 
+    let withdrawal_address = &setup.withdrawal_address;
     setup
         .blockchain_wrapper
         .execute_tx(
@@ -2873,98 +2872,264 @@ fn withdraw_test() {
         )
         .assert_ok();
 
+    setup.blockchain_wrapper.set_esdt_balance(
+        setup.contract_wrapper.address_ref(),
+        TOKEN_ID,
+        &rust_biguint!(10_000),
+    );
+    setup.blockchain_wrapper.set_esdt_balance(
+        setup.contract_wrapper.address_ref(),
+        ANOTHER_TOKEN_ID,
+        &rust_biguint!(10_000),
+    );
+    setup
+        .blockchain_wrapper
+        .set_egld_balance(setup.contract_wrapper.address_ref(), &rust_biguint!(20_000));
 
-    setup.blockchain_wrapper.set_esdt_balance(setup.contract_wrapper.address_ref(), TOKEN_ID, &rust_biguint!(10_000));
-    setup.blockchain_wrapper.set_esdt_balance(setup.contract_wrapper.address_ref(), ANOTHER_TOKEN_ID, &rust_biguint!(10_000));
-    setup.blockchain_wrapper.set_egld_balance(setup.contract_wrapper.address_ref(), &rust_biguint!(20_000));
+    setup
+        .blockchain_wrapper
+        .execute_tx(
+            &setup.first_user_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.withdraw(
+                    managed_token_id_wrapped!(TOKEN_ID),
+                    0u64,
+                    managed_biguint!(10_000u64),
+                );
+            },
+        )
+        .assert_user_error("Withdrawal address not set");
 
+    setup
+        .blockchain_wrapper
+        .execute_tx(
+            owner_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.set_withdrawal_address(managed_address!(withdrawal_address));
+            },
+        )
+        .assert_ok();
 
-    
-    setup.blockchain_wrapper.execute_tx(&setup.first_user_address,&setup.contract_wrapper, &rust_biguint!(0u64), |sc|{
-        sc.withdraw(managed_token_id_wrapped!(TOKEN_ID),0u64, managed_biguint!(10_000u64));
-    }).assert_user_error("Withdrawal address not set");
+    setup
+        .blockchain_wrapper
+        .execute_tx(
+            &setup.first_user_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.withdraw(
+                    managed_token_id_wrapped!(TOKEN_ID),
+                    0u64,
+                    managed_biguint!(10_000u64),
+                );
+            },
+        )
+        .assert_user_error("Only withdrawal address can withdraw tokens");
 
-    setup.blockchain_wrapper.execute_tx(owner_address, &setup.contract_wrapper, &rust_biguint!(0u64),|sc|{
-        sc.set_withdrawal_address(managed_address!(withdrawal_address));
-    }).assert_ok();
+    setup
+        .blockchain_wrapper
+        .execute_tx(
+            withdrawal_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.withdraw(
+                    managed_token_id_wrapped!(TOKEN_ID),
+                    0u64,
+                    managed_biguint!(12_000u64),
+                );
+            },
+        )
+        .assert_user_error("Not enough funds");
 
+    setup
+        .blockchain_wrapper
+        .execute_tx(
+            withdrawal_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.withdraw(
+                    managed_token_id_wrapped!(ANOTHER_TOKEN_ID),
+                    0u64,
+                    managed_biguint!(12_000u64),
+                );
+            },
+        )
+        .assert_user_error("Not enough funds");
 
-    
-    setup.blockchain_wrapper.execute_tx(&setup.first_user_address,&setup.contract_wrapper, &rust_biguint!(0u64), |sc|{
-        sc.withdraw(managed_token_id_wrapped!(TOKEN_ID),0u64, managed_biguint!(10_000u64));
-    }).assert_user_error("Only withdrawal address can withdraw tokens");
+    setup.blockchain_wrapper.set_esdt_balance(
+        setup.contract_wrapper.address_ref(),
+        ANOTHER_TOKEN_ID,
+        &rust_biguint!(10_000),
+    );
 
+    setup
+        .blockchain_wrapper
+        .execute_tx(
+            withdrawal_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.withdraw(
+                    managed_token_id_wrapped!(ANOTHER_TOKEN_ID),
+                    0u64,
+                    managed_biguint!(12_000u64),
+                );
+            },
+        )
+        .assert_user_error("Not enough funds");
 
-    setup.blockchain_wrapper.execute_tx(withdrawal_address, &setup.contract_wrapper, &rust_biguint!(0u64),|sc|{
-        sc.withdraw(managed_token_id_wrapped!(TOKEN_ID), 0u64, managed_biguint!(12_000u64));
-    }).assert_user_error("Not enough funds");
+    setup
+        .blockchain_wrapper
+        .execute_tx(
+            withdrawal_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.withdraw(
+                    managed_token_id_wrapped!(ANOTHER_TOKEN_ID),
+                    0u64,
+                    managed_biguint!(12_000u64),
+                );
+            },
+        )
+        .assert_user_error("Not enough funds");
 
+    setup
+        .blockchain_wrapper
+        .execute_tx(
+            withdrawal_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.withdraw(
+                    managed_token_id_wrapped!(ANOTHER_TOKEN_ID),
+                    0u64,
+                    managed_biguint!(0u64),
+                );
+            },
+        )
+        .assert_user_error("Value must be higher than zero");
 
+    setup
+        .blockchain_wrapper
+        .execute_tx(
+            withdrawal_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.withdraw(
+                    managed_token_id_wrapped!(TOKEN_ID),
+                    0u64,
+                    managed_biguint!(5_000u64),
+                );
+            },
+        )
+        .assert_ok();
 
-        setup.blockchain_wrapper.execute_tx(withdrawal_address, &setup.contract_wrapper, &rust_biguint!(0u64),|sc|{
-        sc.withdraw(managed_token_id_wrapped!(ANOTHER_TOKEN_ID), 0u64, managed_biguint!(12_000u64));
-    }).assert_user_error("Not enough funds");
+    setup.blockchain_wrapper.check_esdt_balance(
+        &setup.contract_wrapper.address_ref(),
+        TOKEN_ID,
+        &rust_biguint!(5_000u64),
+    );
+    setup.blockchain_wrapper.check_esdt_balance(
+        &setup.contract_wrapper.address_ref(),
+        ANOTHER_TOKEN_ID,
+        &rust_biguint!(10_000u64),
+    );
+    setup.blockchain_wrapper.check_egld_balance(
+        &setup.contract_wrapper.address_ref(),
+        &rust_biguint!(20_000u64),
+    );
 
-      setup.blockchain_wrapper.set_esdt_balance(setup.contract_wrapper.address_ref(), ANOTHER_TOKEN_ID, &rust_biguint!(10_000));
+    setup.blockchain_wrapper.check_esdt_balance(
+        &withdrawal_address,
+        TOKEN_ID,
+        &rust_biguint!(5_000u64),
+    );
+    setup.blockchain_wrapper.check_esdt_balance(
+        &withdrawal_address,
+        ANOTHER_TOKEN_ID,
+        &rust_biguint!(0u64),
+    );
+    setup
+        .blockchain_wrapper
+        .check_egld_balance(&withdrawal_address, &rust_biguint!(0u64));
 
-       setup.blockchain_wrapper.execute_tx(withdrawal_address, &setup.contract_wrapper, &rust_biguint!(0u64),|sc|{
-        sc.withdraw(managed_token_id_wrapped!(ANOTHER_TOKEN_ID), 0u64, managed_biguint!(12_000u64));
-    }).assert_user_error("Not enough funds");
+    setup
+        .blockchain_wrapper
+        .execute_tx(
+            withdrawal_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.withdraw(
+                    managed_token_id_wrapped!(TOKEN_ID),
+                    0u64,
+                    managed_biguint!(5_000u64),
+                );
+            },
+        )
+        .assert_ok();
 
+    setup
+        .blockchain_wrapper
+        .execute_tx(
+            withdrawal_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.withdraw(
+                    managed_token_id_wrapped!(ANOTHER_TOKEN_ID),
+                    0u64,
+                    managed_biguint!(10_000u64),
+                );
+            },
+        )
+        .assert_ok();
 
-        setup.blockchain_wrapper.execute_tx(withdrawal_address, &setup.contract_wrapper, &rust_biguint!(0u64),|sc|{
-        sc.withdraw(managed_token_id_wrapped!(ANOTHER_TOKEN_ID), 0u64, managed_biguint!(12_000u64));
-    }).assert_user_error("Not enough funds");
+    setup
+        .blockchain_wrapper
+        .execute_tx(
+            withdrawal_address,
+            &setup.contract_wrapper,
+            &rust_biguint!(0u64),
+            |sc| {
+                sc.withdraw(managed_egld_token_id!(), 0u64, managed_biguint!(20_000u64));
+            },
+        )
+        .assert_ok();
 
-     setup.blockchain_wrapper.execute_tx(withdrawal_address, &setup.contract_wrapper, &rust_biguint!(0u64),|sc|{
-        sc.withdraw(managed_token_id_wrapped!(ANOTHER_TOKEN_ID), 0u64, managed_biguint!(0u64));
-    }).assert_user_error("Value must be higher than zero");
+    setup.blockchain_wrapper.check_esdt_balance(
+        &setup.contract_wrapper.address_ref(),
+        TOKEN_ID,
+        &rust_biguint!(0u64),
+    );
+    setup.blockchain_wrapper.check_esdt_balance(
+        &setup.contract_wrapper.address_ref(),
+        ANOTHER_TOKEN_ID,
+        &rust_biguint!(0u64),
+    );
+    setup
+        .blockchain_wrapper
+        .check_egld_balance(&setup.contract_wrapper.address_ref(), &rust_biguint!(0u64));
 
-
-     setup.blockchain_wrapper.execute_tx(withdrawal_address, &setup.contract_wrapper, &rust_biguint!(0u64),|sc|{
-        sc.withdraw(managed_token_id_wrapped!(TOKEN_ID), 0u64, managed_biguint!(5_000u64));
-    }).assert_ok();
-
-
-    setup.blockchain_wrapper.check_esdt_balance(&setup.contract_wrapper.address_ref(), TOKEN_ID,&rust_biguint!(5_000u64));
-    setup.blockchain_wrapper.check_esdt_balance(&setup.contract_wrapper.address_ref(), ANOTHER_TOKEN_ID, &rust_biguint!(10_000u64));
-    setup.blockchain_wrapper.check_egld_balance(&setup.contract_wrapper.address_ref(), &rust_biguint!(20_000u64));
-
-
-    setup.blockchain_wrapper.check_esdt_balance(&withdrawal_address, TOKEN_ID, &rust_biguint!(5_000u64));
-    setup.blockchain_wrapper.check_esdt_balance(&withdrawal_address, ANOTHER_TOKEN_ID, &rust_biguint!(0u64));
-      setup.blockchain_wrapper.check_egld_balance(&withdrawal_address, &rust_biguint!(0u64));
-
-
-
-         setup.blockchain_wrapper.execute_tx(withdrawal_address, &setup.contract_wrapper, &rust_biguint!(0u64),|sc|{
-        sc.withdraw(managed_token_id_wrapped!(TOKEN_ID), 0u64, managed_biguint!(5_000u64));
-    }).assert_ok();
-
-
-       setup.blockchain_wrapper.execute_tx(withdrawal_address, &setup.contract_wrapper, &rust_biguint!(0u64),|sc|{
-        sc.withdraw(managed_token_id_wrapped!(ANOTHER_TOKEN_ID), 0u64, managed_biguint!(10_000u64));
-    }).assert_ok();
-
-
-     setup.blockchain_wrapper.execute_tx(withdrawal_address, &setup.contract_wrapper, &rust_biguint!(0u64),|sc|{
-        sc.withdraw(managed_egld_token_id!(), 0u64, managed_biguint!(20_000u64));
-    }).assert_ok();
-
-
-
-    
-    setup.blockchain_wrapper.check_esdt_balance(&setup.contract_wrapper.address_ref(), TOKEN_ID,&rust_biguint!(0u64));
-    setup.blockchain_wrapper.check_esdt_balance(&setup.contract_wrapper.address_ref(), ANOTHER_TOKEN_ID, &rust_biguint!(0u64));
-    setup.blockchain_wrapper.check_egld_balance(&setup.contract_wrapper.address_ref(), &rust_biguint!(0u64));
-
-
-    setup.blockchain_wrapper.check_esdt_balance(&withdrawal_address, TOKEN_ID, &rust_biguint!(10_000u64));
-    setup.blockchain_wrapper.check_esdt_balance(&withdrawal_address, ANOTHER_TOKEN_ID, &rust_biguint!(10_000u64));
-      setup.blockchain_wrapper.check_egld_balance(&withdrawal_address, &rust_biguint!(20_000u64));
-
-
-
-
-
+    setup.blockchain_wrapper.check_esdt_balance(
+        &withdrawal_address,
+        TOKEN_ID,
+        &rust_biguint!(10_000u64),
+    );
+    setup.blockchain_wrapper.check_esdt_balance(
+        &withdrawal_address,
+        ANOTHER_TOKEN_ID,
+        &rust_biguint!(10_000u64),
+    );
+    setup
+        .blockchain_wrapper
+        .check_egld_balance(&withdrawal_address, &rust_biguint!(20_000u64));
 }
