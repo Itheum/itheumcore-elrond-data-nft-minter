@@ -98,6 +98,7 @@ pub trait RequirementsModule: crate::storage::StorageModule {
     // Checks whether the URL passed is valid (characters, starts with https://)
     fn require_url_is_valid(&self, url: &ManagedBuffer) {
         // Define a closure to perform the URL validation
+        self.require_url_is_adequate_length(url);
         let validation_closure = |url_bytes: &[u8]| {
             let starts_with: &[u8] = b"https://";
 

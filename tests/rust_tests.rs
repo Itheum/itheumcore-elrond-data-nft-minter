@@ -1837,13 +1837,13 @@ fn url_validation_test() {
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
-            sc.require_url_is_adequate_length(&managed_buffer!(b"https://to.sm"));
+            sc.require_url_is_valid(&managed_buffer!(b"https://to.sm"));
         })
         .assert_user_error("URL length is too small");
 
     b_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
-            sc.require_url_is_adequate_length(&managed_buffer!(&[
+            sc.require_url_is_valid(&managed_buffer!(&[
                 SFT_TICKER,
                 DATA_MARSHAL,
                 DATA_STREAM,
