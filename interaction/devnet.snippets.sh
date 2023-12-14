@@ -384,6 +384,47 @@ setAdministrator(){
     --send || return
 }
 
+
+setWithdrawalAddress(){
+    # $1 = address
+
+    address="0x$(mxpy wallet bech32 --decode ${1})"
+
+    mxpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=3000000 \
+    --function "setWithdrawalAddress" \
+    --arguments $address \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return
+
+}
+
+
+withdraw(){
+    # $1 = token identifier
+    # $2 = nonce
+    # $3 = amount
+
+    token_identifier="0x$(echo -n ${1} | xxd -p -u | tr -d '\n')"
+    nonce=${2}
+    amount=${3}
+
+
+    mxpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=3000000 \
+    --function "withdraw" \
+    --arguments $token_identifier $nonce $amount \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return
+}
+
+
 mintTokenUsingEsdt(){
     # $1 = amount of esdt to send
     # $2 = name

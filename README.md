@@ -167,6 +167,22 @@ Call structure: "setAdministrator" + "@" + administrator hex encoded.
 
 Example: "setAdministrator@afb9aa109340a83cdb2129635b060a3a2d67ba2659ad86bf6ef49f948c43572c"
 
+#### setWithdrawalAddress
+
+```rust
+    #[endpoint(setWithdrawalAddress)]
+    fn set_withdrawal_address(
+        &self,
+        withdrawal_address: ManagedAddress
+    );
+```
+
+Endpoint that sets the withdrawal address. The withdrawal address is the address that will receive the funds from the smart contract.
+
+Call structure: "setWithdrawalAddress" + "@" + withdrawal_address hex encoded.
+
+Example: "setWithdrawalAddress@afb9aa109340a83cdb2129635b060a3a2d67ba2659ad86bf6ef49f948c43572c"
+
 ### Owner and administrator endpoints
 
 #### freezeSingleNFT
@@ -381,6 +397,25 @@ Call structure: "ESDTTransfer" + "@" + NFT-FT token identifier hex encoded + "@"
 
 Example: "ESDTNFTTransfer@4e465446542d373736336637@01@1e@00000000000000000500c72532eb1c8f5e32034b46b5041babade020fdefd5fd@6275726e"
 
+### withdrawal address endpoints
+
+#### withdraw
+
+```rust
+    #[endpoint(withdraw)]
+    fn withdraw(&self,
+    token_identifier: &EgldOrEsdtTokenIdentifier,
+    nonce: u64,
+    amount: BigUint
+    );
+```
+
+Endpoint that allows the withdrawal address to withdraw funds from the smart contract. The endpoint takes as arguments the token identifier, the nonce of the token and the amount to withdraw.
+
+Call structure: "withdraw" + "@" + token_identifier hex encoded + "@" + nonce hex encoded + "@" + amount hex encoded.
+
+Example: "withdraw@4e465446542d373736336637@00@91b77e5e5d9a0000"
+
 ### Views
 
 #### getUserDataOut
@@ -427,7 +462,7 @@ cargo clean
 cargo build
 ```
 
-- The above should all work without any errors, next you can successfully run the following command to build via mxpy: `mxpy contract build` 
+- The above should all work without any errors, next you can successfully run the following command to build via mxpy: `mxpy contract build`
 - mxpy may ask you to install `nodejs` and `wasm-opt` to optimize the build, if so then follow instructions given by mxpy and do this
 - You can now run the tests. See "How to test" section below
 - You can now update code as needed
@@ -480,15 +515,16 @@ After using that, to deploy one can simply use:
 After deployment, one can interact with the smart contract and test its functionality. To do so, one can use the interaction snippets already presented above. More explanations can be found about the snippets inside the devnet.snippets file.
 
 ### Mainnet Deployment (via Reproducible Builds)
+
 - After the security audit has passed the Mainnet deployment need to be verified to match the version that was audited. This guarantee is given via [Reproducible Builds](https://docs.multiversx.com/developers/reproducible-contract-builds/#how-to-run-a-reproducible-build-using-mxpy)
 
 **Step 1 (Final build + Code Hash):**
+
 - Be in the latest `main` branch. On the commit that was audited. Update the cargo.toml files with the correct version. This should match the version we use in our requirements files (i.e Notion). e.g. 1.0.0. you need to update the `cargo.toml` files in the root folder, wasm folder and meta folder.
 
 - In the `cargo.toml` files make sure you set the correct `edition`. i.e. edition = "2021"
 
 - As the `cargo.toml` files has been updated. Build locally as normal. i.e. see "how to build" above and also run tests as per "how to test". This will reflect the `cargo.toml` update in the linked cargo.lock files and produces the final local meta build files to keep the final github check-in and version tagging perfect.
-
 
 **Step 2 (Final build + Code Hash):**
 Once the main commit is locked in, we can then produce the code hash and build to deploy to devnet 1st (for final testing) and then to mainnet (after sending the code hash to the auditor)
@@ -505,7 +541,7 @@ This process may take some time. After it's done you should see "Docker build ra
 
 You can then share the auditor the code hash. The auditor will follow the same steps and compare the code hash with yours. If they match, we will be good to go!
 
-Note that "output-docker" folder should not be check-into GIT. 
+Note that "output-docker" folder should not be check-into GIT.
 
 **Step 4 (Send Code Hash to auditor to verify against devnet and give us all final clear):**
 We should have got this final clear in Step 2, but we still do a final check here.
@@ -515,7 +551,6 @@ We should have got this final clear in Step 2, but we still do a final check her
 **Step 6 (Tag the commit in the main branch of Github with the version that was deployed. e.g. 1.0.0):**
 
 **Step 6 (Deploy SC to Mainnet):**
-
 
 ## Contributing
 

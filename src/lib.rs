@@ -7,7 +7,8 @@ use crate::{
     callbacks::CallbackProxy,
     errors::{
         ERR_ALREADY_IN_WHITELIST, ERR_CONTRACT_ALREADY_INITIALIZED, ERR_DATA_STREAM_IS_EMPTY,
-        ERR_ISSUE_COST, ERR_NOT_IN_WHITELIST, ERR_WHITELIST_IS_EMPTY, ERR_WRONG_AMOUNT_OF_PAYMENT,
+        ERR_ISSUE_COST, ERR_NOT_ENOUGH_FUNDS, ERR_NOT_IN_WHITELIST, ERR_WHITELIST_IS_EMPTY,
+        ERR_WRONG_AMOUNT_OF_PAYMENT,
     },
     storage::DataNftAttributes,
 };
@@ -63,7 +64,7 @@ pub trait DataNftMint:
         treasury_address: ManagedAddress,
     ) {
         require!(self.token_id().is_empty(), ERR_CONTRACT_ALREADY_INITIALIZED);
-        let issue_cost = self.call_value().egld_value();
+        let issue_cost = self.call_value().egld_value().clone_value();
         require!(
             issue_cost == BigUint::from(5u64) * BigUint::from(10u64).pow(16u32),
             ERR_ISSUE_COST
@@ -324,5 +325,33 @@ pub trait DataNftMint:
     fn set_administrator(&self, administrator: ManagedAddress) {
         self.set_administrator_event(&administrator);
         self.administrator().set(&administrator);
+    }
+
+    #[only_owner]
+    #[endpoint(setWithdrawalAddress)]
+    fn set_withdrawal_address(&self, withdrawal_address: ManagedAddress) {
+        self.set_withdrawal_address_event(&withdrawal_address);
+        self.withdrawal_address().set(&withdrawal_address);
+    }
+
+    #[endpoint(withdraw)] // smart contract must be payable to receive royalties
+    fn withdraw(&self, token_identifier: EgldOrEsdtTokenIdentifier, nonce: u64, amount: BigUint) {
+        let caller = self.blockchain().get_caller();
+
+        self.require_withdrawal_address_is_set();
+        let withdrawal_address = self.withdrawal_address().get();
+        self.require_is_withdrawal_address(&caller);
+
+        let balance = self.blockchain().get_sc_balance(&token_identifier, nonce);
+
+        self.require_value_is_positive(&amount);
+        if balance > BigUint::zero() && amount <= balance {
+            self.send()
+                .direct(&withdrawal_address, &token_identifier, nonce, &amount);
+
+            self.withdraw_tokens_event(&caller, &token_identifier, &amount);
+        } else {
+            sc_panic!(ERR_NOT_ENOUGH_FUNDS);
+        }
     }
 }

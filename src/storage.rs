@@ -25,6 +25,10 @@ pub trait StorageModule {
     #[storage_mapper("treasury_address")]
     fn treasury_address(&self) -> SingleValueMapper<ManagedAddress>;
 
+    #[view(getWithdrawalAddress)]
+    #[storage_mapper("withdrawal_address")]
+    fn withdrawal_address(&self) -> SingleValueMapper<ManagedAddress>;
+
     // Stores the amount of SFTs that have been created
     #[view(getMintedTokens)]
     #[storage_mapper("minted_tokens")]
