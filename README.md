@@ -448,12 +448,13 @@ Main view of the contract. Receives an address and a token identifier as argumen
 
 This smart contract aims to offer the Elrond community an audited NFT minter smart contract that is easy to use, well documented and secure.
 
-### Setting up dev environment (project development bootstrap) + how to build
+### Setting up dev environment (project development bootstrap) + how to build (and upgrade)
 
-- Uses `multiversx-sc-* 0.39.4` SDK libs (see Cargo.toml)
-- Building requires minimum **mxpy 6.1.1** (newer version should also work but devs used 6.1.1). Check version using `mxpy --version`
-- To build the project, requires minimum Rust version `1.69.0-nightly`. Check your Rust version by running `rustc --version`. To update your Rust, run `rustup update`. To set to nightly run `rustup default nightly` (devs used 1.69.0-nightly)
+- Uses `multiversx-sc-* 0.39.4` (starting v2.0.0, we used 0.45.1) SDK libs (see Cargo.toml)
+- Building requires minimum **mxpy 6.1.1** (starting v2.0.0, we used mxpy 8.1.2). Check version using `mxpy --version`
+- To build the project, requires minimum Rust version `1.69.0-nightly` (staring v2.0.0, we used 1.75.0-nightly). Check your Rust version by running `rustc --version`. To update your Rust, run `rustup update`. To set to nightly run `rustup default nightly`
 - After you make sure you have the minimum Rust version you can then begin development. After you clone repo and before you run build, deploy or run the tests - follow these steps (most likely only needed the 1st time)
+- [Upgrades] Note that when we upgrade smart contract, we should again follow the steps below too as lib version may have changed (but for upgrade I skipped the rustup default nightly cmd and did the others)
 
 ```
 rustup default nightly
@@ -480,15 +481,18 @@ The Smart Contract is structured in 6 files:
 
 ### How to test
 
-Prior to running the below, make sure you check section called **Setting up dev environment (project development bootstrap)** above and your dev environment is configured correctly. You also need to run `mxpy contract build` (requires you to be online with internet connection) prior to running tests.
-
 The tests are located in the tests folder, in the rust_tests file. In order to run the tests one can use the command:
 
 ```shell
-    cargo test --package datanftmint --test rust_tests --  --nocapture
+    cargo test --package datanftmint --test blackbox_tests --  --nocapture // [NOT DONE YET]
+    cargo test --package datanftmint --test whitebox_tests --  --nocapture // [NOT DONE YET]
+
+    cargo test --package datanftmint --test rust_tests --  --nocapture  // [OLD WAY, will work!]
 ```
 
-Another way of running the tests is by using the rust-analyzer extension in Visual Studio Code, which is also very helpful for Elrond Smart Contract development. If one has the extension installed, they can go open and go to the top of the rust_tests file and click the Run Tests button.
+- Note that in Oct 2023 we moved the Claim contract to blackbox and whitebox testing as recommended by the multiversX dev docs. We have HAVE NOT upgraded this yet for this smart contract so you need to use the OLD WAY
+
+Another way of running the tests is by using the rust-analyzer extension in Visual Studio Code, which is also very helpful for MultiversX Smart Contract development. If one has the extension installed, they can go open and go to the top of the rust_tests file and click the Run Tests button.
 
 Note: In order to run the tests, one has to use the rust nightly version. One can switch to the nightly version by using:
 
@@ -529,13 +533,15 @@ After deployment, one can interact with the smart contract and test its function
 **Step 2 (Final build + Code Hash):**
 Once the main commit is locked in, we can then produce the code hash and build to deploy to devnet 1st (for final testing) and then to mainnet (after sending the code hash to the auditor)
 
-1. Make sure your mxpy version is >= 6.
+1. Make sure your mxpy version is >= 6 (starting v2.0.0, we used mxpy 8.1.2).
 2. If Cargo.lock is in gitignore, remove it, build the contract and make a new commit. Otherwise this step can be skipped. (see Step 1 and repeat if needed)
 3. Run the following in the root of the repository (run the latest Docker client in your computer. Used `Docker Desktop 4.18.0 (104112) on MacOX 12.6`):
 
 `mxpy contract reproducible-build --docker-image="multiversx/sdk-rust-contract-builder:v4.1.4"`
 
 Note that if you already have a output-docker from a previous build and deploy then delete this folder.
+
+Also note that if you are upgrading you may need to use a newer docker `sdk-rust-contract-builder` version. You can see the tags here https://hub.docker.com/r/multiversx/sdk-rust-contract-builder/tags. Starting v2.0.0, we used v5.3.0 for the build to upgrade to. We tested this on devnet before doing it on mainnet.
 
 This process may take some time. After it's done you should see "Docker build ran successfully!". An output-docker folder will be created containing the WASM files built in a reproducible way and artifacts.json containing the code hash of the WASM files.
 
@@ -550,7 +556,7 @@ We should have got this final clear in Step 2, but we still do a final check her
 
 **Step 6 (Tag the commit in the main branch of Github with the version that was deployed. e.g. 1.0.0):**
 
-**Step 6 (Deploy SC to Mainnet):**
+**Step 7 (Deploy SC to Mainnet):**
 
 ## Contributing
 
