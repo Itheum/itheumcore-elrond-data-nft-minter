@@ -53,7 +53,7 @@ upgrade(){
 }
 
 # if you interact without calling deploy(), then you need to 1st run this to restore the vars from data
-restoreDeployDataLedgerMainnet() {
+restoreDeployDataLedgerMainnet(){
   TRANSACTION=$(mxpy data parse --file="./interaction/deploy-mainnet.interaction.json" --expression="data['emittedTransactionHash']")
   ADDRESS=$(mxpy data parse --file="./interaction/deploy-mainnet.interaction.json" --expression="data['contractAddress']")
 
@@ -463,4 +463,43 @@ getUserDataOutMainnet(){
     --proxy ${PROXY} \
     --function 'getUserDataOut' \
     --arguments $address $token_identifier     
+}
+
+# v2.0.0
+setWithdrawalAddressMainnet(){
+    # $1 = address
+
+    address="0x$(mxpy wallet bech32 --decode ${1})"
+
+    mxpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --gas-limit=10000000 \
+    --function "setWithdrawalAddress" \
+    --arguments $address \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --ledger \
+    --ledger-address-index 0 \
+    --send || return 
+}
+
+withdrawMainnet(){
+    # $1 = token identifier
+    # $2 = nonce
+    # $3 = amount
+
+    token_identifier="0x$(echo -n ${1} | xxd -p -u | tr -d '\n')"
+    nonce=${2}
+    amount=${3}
+
+    mxpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --gas-limit=10000000 \
+    --function "withdraw" \
+    --arguments $token_identifier $nonce $amount \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --ledger \
+    --ledger-address-index 0 \
+    --send || return
 }
