@@ -5,7 +5,6 @@ multiversx_sc::derive_imports!();
     Clone, NestedEncode, NestedDecode, TopEncode, TopDecode, TypeAbi, Debug, PartialEq, Eq,
 )]
 pub struct UserDataOut<M: ManagedTypeApi> {
-    pub anti_spam_tax_value: BigUint<M>,
     pub is_paused: bool,
     pub max_royalties: BigUint<M>,
     pub min_royalties: BigUint<M>,
@@ -25,13 +24,8 @@ pub struct UserDataOut<M: ManagedTypeApi> {
 pub trait ViewsModule: crate::storage::StorageModule {
     // View that returns the above mentioned all-in-one structure for viewing data through one call
     #[view(getUserDataOut)]
-    fn get_user_data_out(
-        &self,
-        address: &ManagedAddress,
-        tax_token: &EgldOrEsdtTokenIdentifier,
-    ) -> UserDataOut<Self::Api> {
+    fn get_user_data_out(&self, address: &ManagedAddress) -> UserDataOut<Self::Api> {
         {
-            let anti_spam_tax_value = self.anti_spam_tax(tax_token).get(); //if it returns 0 the token is not supported
             let is_paused = self.is_paused().get();
             let max_royalties = self.max_royalties().get();
             let min_royalties = self.min_royalties().get();
@@ -49,7 +43,6 @@ pub trait ViewsModule: crate::storage::StorageModule {
                 .collect::<ManagedVec<u64>>();
 
             let user_data = UserDataOut {
-                anti_spam_tax_value,
                 is_paused,
                 max_royalties,
                 min_royalties,

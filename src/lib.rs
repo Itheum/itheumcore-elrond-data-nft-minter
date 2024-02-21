@@ -8,7 +8,6 @@ use crate::{
     errors::{
         ERR_ALREADY_IN_WHITELIST, ERR_CONTRACT_ALREADY_INITIALIZED, ERR_DATA_STREAM_IS_EMPTY,
         ERR_ISSUE_COST, ERR_NOT_ENOUGH_FUNDS, ERR_NOT_IN_WHITELIST, ERR_WHITELIST_IS_EMPTY,
-        ERR_WRONG_AMOUNT_OF_PAYMENT,
     },
     storage::DataNftAttributes,
 };
@@ -50,6 +49,11 @@ pub trait DataNftMint:
         self.set_max_supply_event(&self.max_supply().get());
     }
 
+    #[upgrade]
+    fn upgrade(&self) {
+        self.is_paused().set(true);
+    }
+
     // Endpoint used by the owner in the first place to initialize the contract with all the data needed for the SFT token creation
     #[only_owner]
     #[payable("EGLD")]
@@ -58,10 +62,7 @@ pub trait DataNftMint:
         &self,
         collection_name: ManagedBuffer,
         token_ticker: ManagedBuffer,
-        anti_spam_tax_token: &EgldOrEsdtTokenIdentifier,
-        anti_spam_tax_value: BigUint,
         mint_time_limit: u64,
-        treasury_address: ManagedAddress,
     ) {
         require!(self.token_id().is_empty(), ERR_CONTRACT_ALREADY_INITIALIZED);
         let issue_cost = self.call_value().egld_value().clone_value();
@@ -70,13 +71,9 @@ pub trait DataNftMint:
             ERR_ISSUE_COST
         );
 
-        self.set_anti_spam_tax_event(&anti_spam_tax_token, &anti_spam_tax_value);
-        self.anti_spam_tax(anti_spam_tax_token)
-            .set(anti_spam_tax_value);
-
         self.set_mint_time_limit_event(&mint_time_limit);
         self.mint_time_limit().set(mint_time_limit);
-        self.treasury_address().set(&treasury_address);
+
         // Collection issuing
         self.send()
             .esdt_system_sc_proxy()
@@ -138,6 +135,7 @@ pub trait DataNftMint:
         supply: BigUint,
         title: ManagedBuffer,
         description: ManagedBuffer,
+        lock_period: u16, // days
     ) -> DataNftAttributes<Self::Api> {
         self.require_ready_for_minting_and_burning();
         require!(!data_stream.is_empty(), ERR_DATA_STREAM_IS_EMPTY);
@@ -155,11 +153,7 @@ pub trait DataNftMint:
         self.require_minting_is_allowed(&caller, current_time);
         self.last_mint_time(&caller).set(current_time);
 
-        let payment = self.call_value().egld_or_single_esdt();
-        let price = self.anti_spam_tax(&payment.token_identifier).get();
-        // The contract will panic if the user tries to use a token which is has not been set as buyable by the owner.
-        self.require_value_is_positive(&payment.amount);
-        require!(&payment.amount == &price, ERR_WRONG_AMOUNT_OF_PAYMENT);
+        let payment = self.call_value().single_esdt();
 
         let one_token = BigUint::from(1u64);
         self.minted_per_address(&caller)
@@ -179,7 +173,12 @@ pub trait DataNftMint:
 
         let token_identifier = self.token_id().get_token_id();
 
-        self.mint_event(&caller, &one_token, &payment.token_identifier, &price);
+        // self.mint_event(
+        //     &caller,
+        //     &one_token,
+        //     &payment.token_identifier,
+        //     &payment.amount,
+        // );
 
         let nonce = self.send().esdt_nft_create(
             &token_identifier,
@@ -191,17 +190,26 @@ pub trait DataNftMint:
             &self.create_uris(media, metadata),
         );
 
+        // call bonding contract with token_identifier and nonce
+
+        // await success
+
+        let mut contract_call: ContractCallNoPayment<Self::Api, ()> = ContractCallNoPayment::new(
+            self.bond_contract_address().get(),
+            ManagedBuffer::new_from_bytes(b"bond"),
+        );
+        contract_call.proxy_arg(&caller);
+        contract_call.proxy_arg(&token_identifier);
+        contract_call.proxy_arg(&nonce);
+        contract_call.proxy_arg(&lock_period);
+
+        contract_call
+            .with_esdt_transfer(payment.clone())
+            .with_gas_limit(100_000_000u64)
+            .execute_on_dest_context::<()>();
+
         self.send()
             .direct_esdt(&caller, &token_identifier, nonce, &supply);
-
-        let treasury_address = self.treasury_address().get();
-
-        self.send().direct(
-            &treasury_address,
-            &payment.token_identifier,
-            payment.token_nonce,
-            &payment.amount,
-        );
 
         attributes
     }
@@ -226,14 +234,6 @@ pub trait DataNftMint:
         );
     }
 
-    // Endpoint used to set the treasury address.
-    #[only_owner]
-    #[endpoint(setTreasuryAddress)]
-    fn set_treasury_address(&self, address: ManagedAddress) {
-        self.treasury_address_event(&address);
-        self.treasury_address().set(&address);
-    }
-
     // Endpoint that will be used by privileged address to change the contract pause value.
     #[endpoint(setIsPaused)]
     fn set_is_paused(&self, is_paused: bool) {
@@ -241,15 +241,6 @@ pub trait DataNftMint:
         self.require_is_privileged(&caller);
         self.mint_pause_toggle_event(&is_paused);
         self.is_paused().set(is_paused);
-    }
-
-    // Endpoint that will be used by privileged address to set the anti spam tax for a specific token identifier.
-    #[endpoint(setAntiSpamTax)]
-    fn set_anti_spam_tax(&self, token_id: EgldOrEsdtTokenIdentifier, tax: BigUint) {
-        let caller = self.blockchain().get_caller();
-        self.require_is_privileged(&caller);
-        self.set_anti_spam_tax_event(&token_id, &tax);
-        self.anti_spam_tax(&token_id).set(tax);
     }
 
     // Endpoint that will be used by the owner and privileged address to change the whitelist enable value.
@@ -325,6 +316,14 @@ pub trait DataNftMint:
     fn set_administrator(&self, administrator: ManagedAddress) {
         self.set_administrator_event(&administrator);
         self.administrator().set(&administrator);
+    }
+
+    #[endpoint(setBondContractAddress)]
+    fn set_bond_contract_address(&self, bond_contract_address: ManagedAddress) {
+        let caller = self.blockchain().get_caller();
+        self.require_is_privileged(&caller);
+        // self.set_bond_contract_address_event(&bond_contract_address);
+        self.bond_contract_address().set(&bond_contract_address);
     }
 
     #[only_owner]
