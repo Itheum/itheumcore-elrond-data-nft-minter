@@ -1,8 +1,8 @@
 PROXY=https://devnet-gateway.multiversx.com
 CHAIN_ID="D"
 
-WALLET="./wallet.pem"
-USER="./wallet2.pem"
+WALLET="../wallet.pem"
+USER="../wallet2.pem"
 
 ADDRESS=$(mxpy data load --key=address-devnet)
 DEPLOY_TRANSACTION=$(mxpy data load --key=deployTransaction-devnet)
@@ -16,7 +16,7 @@ TOKEN_HEX="0x$(echo -n ${TOKEN} | xxd -p -u | tr -d '\n')"
 # --bytecode output-docker/datanftmint/datanftmint.wasm \
 deploy(){
     mxpy --verbose contract deploy \
-    --bytecode output-docker/datanftmint/datanftmint.wasm \
+    --bytecode output/datanftmint.wasm \
     --outfile deployOutput \
     --metadata-not-readable \
     --metadata-payable-by-sc \
@@ -42,7 +42,7 @@ deploy(){
 # in below code example we added --metadata-payable to add PAYABLE to the prop of the SC and removed --metadata-not-readable to make it READABLE
 upgrade(){
     mxpy --verbose contract upgrade ${ADDRESS} \
-    --bytecode output-docker/datanftmint/datanftmint.wasm \
+    --bytecode output/datanftmint.wasm \
     --metadata-payable-by-sc \
     --metadata-payable \
     --pem ${WALLET} \
@@ -66,16 +66,10 @@ restoreDeployData() {
 initializeContract(){
     # $1 = collection name
     # $2 = collection ticker
-    # #3 = anti spam tax
-    # $4 = mint time limit
-    # $5 = treasury address
+    # $3 = mint time limit
 
     collection_name="0x$(echo -n ${1} | xxd -p -u | tr -d '\n')"
     collection_ticker="0x$(echo -n ${2} | xxd -p -u | tr -d '\n')"
-    token_identifier=${TOKEN_HEX}
-    anti_spam_tax=${3}
-    mint_time_limit=${4}
-    treasury_address="0x$(mxpy wallet bech32 --decode ${5})"
     
 
     mxpy --verbose contract call ${ADDRESS} \
@@ -84,7 +78,7 @@ initializeContract(){
     --gas-limit=300000000 \
     --value=50000000000000000 \
     --function "initializeContract" \
-    --arguments $collection_name $collection_ticker $token_identifier $anti_spam_tax $mint_time_limit $treasury_address \
+    --arguments $collection_name $collection_ticker $3 \
     --proxy ${PROXY} \
     --chain ${CHAIN_ID} \
     --send || return
@@ -250,23 +244,6 @@ unPauseContract(){
     --send || return
 }
 
-setAntiSpamTax(){
-    # $1 = token identifier
-    # $2 = anti spam tax value
-
-    token_identifier="0x$(echo -n ${1} | xxd -p -u | tr -d '\n')"
-
-    mxpy --verbose contract call ${ADDRESS} \
-    --recall-nonce \
-    --pem=${WALLET} \
-    --gas-limit=6000000 \
-    --function "setAntiSpamTax" \
-    --arguments $token_identifier ${2} \
-    --proxy ${PROXY} \
-    --chain ${CHAIN_ID} \
-    --send || return
-}
-
 enableWhiteList(){
     mxpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
@@ -366,6 +343,23 @@ setMaxSupply(){
     --send || return
 }
 
+setBondContractAddress(){
+
+    # $1 = bond contract address
+
+    bond_contract_address="0x$(mxpy wallet bech32 --decode ${1})"
+
+    mxpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=6000000 \
+    --function "setBondContractAddress" \
+    --arguments $bond_contract_address \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return
+}
+
 setAdministrator(){
     # $1 = address
 
@@ -394,6 +388,7 @@ mintTokenUsingEsdt(){
     # $9 = supply
     # $10 = title
     # $11 = description
+    # $12 = lock period
 
     method="0x$(echo -n 'mint' | xxd -p -u | tr -d '\n')"
     name="0x$(echo -n ${2} | xxd -p -u | tr -d '\n')"
@@ -408,9 +403,9 @@ mintTokenUsingEsdt(){
     mxpy --verbose contract call $ADDRESS \
     --recall-nonce \
     --pem=${USER} \
-    --gas-limit=100000000 \
+    --gas-limit=30000000 \
     --function "ESDTTransfer" \
-    --arguments ${TOKEN_HEX} $1 $method $name $media $metadata $data_marshal $data_stream $data_preview $7 $8 $title $description \
+    --arguments ${TOKEN_HEX} $1 $method $name $media $metadata $data_marshal $data_stream $data_preview $8 $9 $title $description $12 \
     --proxy ${PROXY} \
     --chain ${CHAIN_ID} \
     --send || return
@@ -441,7 +436,7 @@ mintTokenUsingEgld(){
     mxpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
-    --gas-limit=10000000 \
+    --gas-limit=30000000 \
     --value=${1} \
     --function "mint" \
     --arguments $name $media $data_marshal $data_stream $data_preview $7 $8 $title $description \
