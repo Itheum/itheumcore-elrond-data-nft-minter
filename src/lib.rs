@@ -143,13 +143,9 @@ pub trait DataNftMint:
 
         self.require_url_is_valid(&data_marshal);
 
-        self.require_url_starts_with(&data_preview, b"ipfs/");
-        self.require_url_starts_with(&media, b"ipfs/");
-        self.require_url_starts_with(&metadata, b"https://");
-
         require!(
             self.require_url_starts_with(&data_preview, b"ipfs/")
-                || self.require_url_starts_with(&media, b"ipfs/")
+                || self.require_url_starts_with(&media, b"ipns/")
                 || self.require_url_starts_with(&metadata, b"https://"),
             ERR_INVALID_URL_START_CHARS
         );
