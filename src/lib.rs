@@ -135,7 +135,7 @@ pub trait DataNftMint:
         supply: BigUint,
         title: ManagedBuffer,
         description: ManagedBuffer,
-        lock_period: u16, // days
+        lock_period: u64, // days
     ) -> DataNftAttributes<Self::Api> {
         self.require_ready_for_minting_and_burning();
         require!(!data_stream.is_empty(), ERR_DATA_STREAM_IS_EMPTY);
