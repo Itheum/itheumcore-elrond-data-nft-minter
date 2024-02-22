@@ -37,3 +37,4 @@ pub const ERR_ONLY_WITHDRAWAL_ADDRESS_CAN_WITHDRAW: &str =
     "Only withdrawal address can withdraw tokens";
 pub const ERR_WITHDRAWAL_ADDRESS_NOT_SET: &str = "Withdrawal address not set";
 pub const ERR_NOT_ENOUGH_FUNDS: &str = "Not enough funds";
+pub const ERR_INVALID_URL_START_CHARS: &str = "Invalid URL start characters";

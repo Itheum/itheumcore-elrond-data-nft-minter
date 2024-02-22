@@ -7,7 +7,8 @@ use crate::{
     callbacks::CallbackProxy,
     errors::{
         ERR_ALREADY_IN_WHITELIST, ERR_CONTRACT_ALREADY_INITIALIZED, ERR_DATA_STREAM_IS_EMPTY,
-        ERR_ISSUE_COST, ERR_NOT_ENOUGH_FUNDS, ERR_NOT_IN_WHITELIST, ERR_WHITELIST_IS_EMPTY,
+        ERR_INVALID_URL_START_CHARS, ERR_ISSUE_COST, ERR_NOT_ENOUGH_FUNDS, ERR_NOT_IN_WHITELIST,
+        ERR_WHITELIST_IS_EMPTY,
     },
     storage::DataNftAttributes,
 };
@@ -141,7 +142,18 @@ pub trait DataNftMint:
         require!(!data_stream.is_empty(), ERR_DATA_STREAM_IS_EMPTY);
 
         self.require_url_is_valid(&data_marshal);
-        self.require_url_is_valid(&data_preview);
+
+        self.require_url_starts_with(&data_preview, b"ipfs/");
+        self.require_url_starts_with(&media, b"ipfs/");
+        self.require_url_starts_with(&metadata, b"https://");
+
+        require!(
+            self.require_url_starts_with(&data_preview, b"ipfs/")
+                || self.require_url_starts_with(&media, b"ipfs/")
+                || self.require_url_starts_with(&metadata, b"https://"),
+            ERR_INVALID_URL_START_CHARS
+        );
+
         self.require_url_is_valid(&media);
         self.require_url_is_valid(&metadata);
 

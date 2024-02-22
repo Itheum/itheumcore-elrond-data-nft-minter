@@ -116,6 +116,25 @@ pub trait RequirementsModule: crate::storage::StorageModule {
         url.with_buffer_contents(validation_closure);
     }
 
+    fn require_url_starts_with(&self, url: &ManagedBuffer, expected_start: &[u8]) -> bool {
+        let validation_closure = |url_bytes: &[u8]| {
+            let starts_with: &[u8] = expected_start;
+
+            for i in 0..starts_with.len() {
+                if url_bytes.get(i) != starts_with.get(i) {
+                    return false;
+                }
+            }
+            true
+        };
+
+        if url.with_buffer_contents(validation_closure) {
+            true
+        } else {
+            false
+        }
+    }
+
     // Checks whether the URL passed has a valid length
     fn require_url_is_adequate_length(&self, url: &ManagedBuffer) {
         let url_length = url.len();
