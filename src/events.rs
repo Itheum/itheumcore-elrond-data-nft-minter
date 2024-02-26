@@ -128,6 +128,7 @@ pub trait EventsModule {
         #[indexed] amount: &BigUint,
         #[indexed] token: &EgldOrEsdtTokenIdentifier,
         #[indexed] price: &BigUint,
+        #[indexed] bond_amount: &BigUint,
     );
 
     #[event("setWithdrawalAddress")]

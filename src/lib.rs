@@ -7,8 +7,7 @@ use crate::{
     callbacks::CallbackProxy,
     errors::{
         ERR_ALREADY_IN_WHITELIST, ERR_CONTRACT_ALREADY_INITIALIZED, ERR_DATA_STREAM_IS_EMPTY,
-        ERR_INVALID_URL_START_CHARS, ERR_ISSUE_COST, ERR_NOT_ENOUGH_FUNDS, ERR_NOT_IN_WHITELIST,
-        ERR_WHITELIST_IS_EMPTY,
+        ERR_ISSUE_COST, ERR_NOT_ENOUGH_FUNDS, ERR_NOT_IN_WHITELIST, ERR_WHITELIST_IS_EMPTY,
     },
     storage::DataNftAttributes,
 };
@@ -144,20 +143,13 @@ pub trait DataNftMint:
         supply: BigUint,
         title: ManagedBuffer,
         description: ManagedBuffer,
-        lock_period: u64, // days
+        lock_period_sec: u64,
     ) -> DataNftAttributes<Self::Api> {
         self.require_ready_for_minting_and_burning();
         require!(!data_stream.is_empty(), ERR_DATA_STREAM_IS_EMPTY);
 
         self.require_url_is_valid(&data_marshal);
-
-        require!(
-            self.require_url_starts_with(&data_preview, b"ipfs://")
-                || self.require_url_starts_with(&data_preview, b"ipns://")
-                || self.require_url_starts_with(&data_preview, b"https://"),
-            ERR_INVALID_URL_START_CHARS
-        );
-
+        self.require_url_is_valid(&data_preview);
         self.require_url_is_valid(&media);
         self.require_url_is_valid(&metadata);
 
@@ -184,7 +176,7 @@ pub trait DataNftMint:
                 &price,
             );
 
-            payment.amount -= price;
+            payment.amount -= &price;
         }
 
         let one_token = BigUint::from(1u64);
@@ -205,12 +197,13 @@ pub trait DataNftMint:
 
         let token_identifier = self.token_id().get_token_id();
 
-        // self.mint_event(
-        //     &caller,
-        //     &one_token,
-        //     &payment.token_identifier,
-        //     &payment.amount,
-        // );
+        self.mint_event(
+            &caller,
+            &one_token,
+            &payment.token_identifier,
+            &price,
+            &payment.amount,
+        );
 
         let nonce = self.send().esdt_nft_create(
             &token_identifier,
@@ -222,10 +215,6 @@ pub trait DataNftMint:
             &self.create_uris(media, metadata),
         );
 
-        // call bonding contract with token_identifier and nonce
-
-        // await success
-
         let mut contract_call: ContractCallNoPayment<Self::Api, ()> = ContractCallNoPayment::new(
             self.bond_contract_address().get(),
             ManagedBuffer::new_from_bytes(b"bond"),
@@ -233,7 +222,7 @@ pub trait DataNftMint:
         contract_call.proxy_arg(&caller);
         contract_call.proxy_arg(&token_identifier);
         contract_call.proxy_arg(&nonce);
-        contract_call.proxy_arg(&lock_period);
+        contract_call.proxy_arg(&lock_period_sec);
 
         contract_call
             .with_egld_or_single_esdt_transfer(payment.clone())
