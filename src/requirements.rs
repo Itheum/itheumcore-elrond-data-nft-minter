@@ -23,6 +23,12 @@ pub trait RequirementsModule: crate::storage::StorageModule {
         if self.token_id().is_empty() {
             is_mint_ready = false;
         }
+        if self.treasury_address().is_empty() {
+            is_mint_ready = false;
+        }
+        if self.bond_contract_address().is_empty() {
+            is_mint_ready = false;
+        }
         if self.roles_are_set().is_empty() {
             is_mint_ready = false;
         }

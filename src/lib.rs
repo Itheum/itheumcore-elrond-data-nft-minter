@@ -63,7 +63,10 @@ pub trait DataNftMint:
         &self,
         collection_name: ManagedBuffer,
         token_ticker: ManagedBuffer,
+        anti_spam_tax_token: &EgldOrEsdtTokenIdentifier,
+        anti_spam_tax_value: BigUint,
         mint_time_limit: u64,
+        treasury_address: ManagedAddress,
     ) {
         require!(self.token_id().is_empty(), ERR_CONTRACT_ALREADY_INITIALIZED);
         let issue_cost = self.call_value().egld_value().clone_value();
@@ -72,8 +75,13 @@ pub trait DataNftMint:
             ERR_ISSUE_COST
         );
 
+        self.set_anti_spam_tax_event(&anti_spam_tax_token, &anti_spam_tax_value);
+        self.anti_spam_tax(anti_spam_tax_token)
+            .set(anti_spam_tax_value);
+
         self.set_mint_time_limit_event(&mint_time_limit);
         self.mint_time_limit().set(mint_time_limit);
+        self.treasury_address().set(&treasury_address);
 
         // Collection issuing
         self.send()
@@ -144,9 +152,9 @@ pub trait DataNftMint:
         self.require_url_is_valid(&data_marshal);
 
         require!(
-            self.require_url_starts_with(&data_preview, b"ipfs/")
-                || self.require_url_starts_with(&media, b"ipns/")
-                || self.require_url_starts_with(&metadata, b"https://"),
+            self.require_url_starts_with(&data_preview, b"ipfs://")
+                || self.require_url_starts_with(&data_preview, b"ipns://")
+                || self.require_url_starts_with(&data_preview, b"https://"),
             ERR_INVALID_URL_START_CHARS
         );
 
@@ -161,7 +169,23 @@ pub trait DataNftMint:
         self.require_minting_is_allowed(&caller, current_time);
         self.last_mint_time(&caller).set(current_time);
 
-        let payment = self.call_value().single_esdt();
+        let mut payment = self.call_value().egld_or_single_esdt();
+        let price = self.anti_spam_tax(&payment.token_identifier).get();
+
+        let treasury_address = self.treasury_address().get();
+
+        if price >= BigUint::zero() {
+            // require that the payment is price + bondAmount ([TO DO] - implement proxy view for bondAmount from the bonding contract)
+
+            self.send().direct(
+                &treasury_address,
+                &payment.token_identifier,
+                payment.token_nonce,
+                &price,
+            );
+
+            payment.amount -= price;
+        }
 
         let one_token = BigUint::from(1u64);
         self.minted_per_address(&caller)
@@ -212,7 +236,7 @@ pub trait DataNftMint:
         contract_call.proxy_arg(&lock_period);
 
         contract_call
-            .with_esdt_transfer(payment.clone())
+            .with_egld_or_single_esdt_transfer(payment.clone())
             .with_gas_limit(100_000_000u64)
             .execute_on_dest_context::<()>();
 
@@ -242,6 +266,14 @@ pub trait DataNftMint:
         );
     }
 
+    // Endpoint used to set the treasury address.
+    #[only_owner]
+    #[endpoint(setTreasuryAddress)]
+    fn set_treasury_address(&self, address: ManagedAddress) {
+        self.treasury_address_event(&address);
+        self.treasury_address().set(&address);
+    }
+
     // Endpoint that will be used by privileged address to change the contract pause value.
     #[endpoint(setIsPaused)]
     fn set_is_paused(&self, is_paused: bool) {
@@ -258,6 +290,15 @@ pub trait DataNftMint:
         self.require_is_privileged(&caller);
         self.whitelist_enable_toggle_event(&is_enabled);
         self.whitelist_enabled().set(is_enabled);
+    }
+
+    // Endpoint that will be used by privileged address to set the anti spam tax for a specific token identifier.
+    #[endpoint(setAntiSpamTax)]
+    fn set_anti_spam_tax(&self, token_id: EgldOrEsdtTokenIdentifier, tax: BigUint) {
+        let caller = self.blockchain().get_caller();
+        self.require_is_privileged(&caller);
+        self.set_anti_spam_tax_event(&token_id, &tax);
+        self.anti_spam_tax(&token_id).set(tax);
     }
 
     // Endpoint that will be used by the owner and privileged address to set whitelist spots.
@@ -330,7 +371,7 @@ pub trait DataNftMint:
     fn set_bond_contract_address(&self, bond_contract_address: ManagedAddress) {
         let caller = self.blockchain().get_caller();
         self.require_is_privileged(&caller);
-        // self.set_bond_contract_address_event(&bond_contract_address);
+        self.set_bond_contract_address_event(&bond_contract_address);
         self.bond_contract_address().set(&bond_contract_address);
     }
 

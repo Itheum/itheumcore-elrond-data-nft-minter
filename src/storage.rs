@@ -20,6 +20,11 @@ pub trait StorageModule {
     #[storage_mapper("sft_token_id")]
     fn token_id(&self) -> NonFungibleTokenMapper<Self::Api>;
 
+    // Stores the treasury address
+    #[view(getTreasuryAddress)]
+    #[storage_mapper("treasury_address")]
+    fn treasury_address(&self) -> SingleValueMapper<ManagedAddress>;
+
     #[view(getWithdrawalAddress)]
     #[storage_mapper("withdrawal_address")]
     fn withdrawal_address(&self) -> SingleValueMapper<ManagedAddress>;
@@ -28,6 +33,11 @@ pub trait StorageModule {
     #[view(getMintedTokens)]
     #[storage_mapper("minted_tokens")]
     fn minted_tokens(&self) -> SingleValueMapper<BigUint>;
+
+    // Stores the price for minting an NFT
+    #[view(getAntiSpamTax)]
+    #[storage_mapper("anti_spam_tax")]
+    fn anti_spam_tax(&self, token: &EgldOrEsdtTokenIdentifier) -> SingleValueMapper<BigUint>;
 
     // Stores whether minting is paused or not
     #[view(getIsPaused)]
@@ -93,12 +103,12 @@ pub trait StorageModule {
     #[storage_mapper("roles_are_set")]
     fn roles_are_set(&self) -> SingleValueMapper<bool>;
 
-    #[view(getBondContractAddress)]
-    #[storage_mapper("bond_contract_address")]
-    fn bond_contract_address(&self) -> SingleValueMapper<ManagedAddress>;
-
     // Stores admin address
     #[view(getAdministrator)]
     #[storage_mapper("administrator")]
     fn administrator(&self) -> SingleValueMapper<ManagedAddress>;
+
+    #[view(getBondContractAddress)]
+    #[storage_mapper("bond_contract_address")]
+    fn bond_contract_address(&self) -> SingleValueMapper<ManagedAddress>;
 }

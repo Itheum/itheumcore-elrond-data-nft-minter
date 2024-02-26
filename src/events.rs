@@ -133,6 +133,9 @@ pub trait EventsModule {
     #[event("setWithdrawalAddress")]
     fn set_withdrawal_address_event(&self, #[indexed] address: &ManagedAddress);
 
+    #[event("setBondContractAddress")]
+    fn set_bond_contract_address_event(&self, #[indexed] address: &ManagedAddress);
+
     #[event("withdrawTokens")]
     fn withdraw_tokens_event(
         &self,

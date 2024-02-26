@@ -1,8 +1,8 @@
 PROXY=https://devnet-gateway.multiversx.com
 CHAIN_ID="D"
 
-WALLET="../wallet.pem"
-USER="../wallet2.pem"
+WALLET="./wallet.pem"
+USER="./wallet2.pem"
 
 ADDRESS=$(mxpy data load --key=address-devnet)
 DEPLOY_TRANSACTION=$(mxpy data load --key=deployTransaction-devnet)
@@ -16,7 +16,7 @@ TOKEN_HEX="0x$(echo -n ${TOKEN} | xxd -p -u | tr -d '\n')"
 # --bytecode output-docker/datanftmint/datanftmint.wasm \
 deploy(){
     mxpy --verbose contract deploy \
-    --bytecode output/datanftmint.wasm \
+    --bytecode output-docker/datanftmint/datanftmint.wasm \
     --outfile deployOutput \
     --metadata-not-readable \
     --metadata-payable-by-sc \
@@ -42,7 +42,7 @@ deploy(){
 # in below code example we added --metadata-payable to add PAYABLE to the prop of the SC and removed --metadata-not-readable to make it READABLE
 upgrade(){
     mxpy --verbose contract upgrade ${ADDRESS} \
-    --bytecode output/datanftmint.wasm \
+    --bytecode output-docker/datanftmint/datanftmint.wasm \
     --metadata-payable-by-sc \
     --metadata-payable \
     --pem ${WALLET} \
@@ -66,10 +66,16 @@ restoreDeployData() {
 initializeContract(){
     # $1 = collection name
     # $2 = collection ticker
-    # $3 = mint time limit
+    # #3 = anti spam tax
+    # $4 = mint time limit
+    # $5 = treasury address
 
     collection_name="0x$(echo -n ${1} | xxd -p -u | tr -d '\n')"
     collection_ticker="0x$(echo -n ${2} | xxd -p -u | tr -d '\n')"
+    token_identifier=${TOKEN_HEX}
+    anti_spam_tax=${3}
+    mint_time_limit=${4}
+    treasury_address="0x$(mxpy wallet bech32 --decode ${5})"
     
 
     mxpy --verbose contract call ${ADDRESS} \
@@ -78,7 +84,7 @@ initializeContract(){
     --gas-limit=300000000 \
     --value=50000000000000000 \
     --function "initializeContract" \
-    --arguments $collection_name $collection_ticker $3 \
+    --arguments $collection_name $collection_ticker $token_identifier $anti_spam_tax $mint_time_limit $treasury_address \
     --proxy ${PROXY} \
     --chain ${CHAIN_ID} \
     --send || return
@@ -239,6 +245,23 @@ unPauseContract(){
     --gas-limit=6000000 \
     --function "setIsPaused" \
     --arguments 0 \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return
+}
+
+setAntiSpamTax(){
+    # $1 = token identifier
+    # $2 = anti spam tax value
+
+    token_identifier="0x$(echo -n ${1} | xxd -p -u | tr -d '\n')"
+
+    mxpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=6000000 \
+    --function "setAntiSpamTax" \
+    --arguments $token_identifier ${2} \
     --proxy ${PROXY} \
     --chain ${CHAIN_ID} \
     --send || return
