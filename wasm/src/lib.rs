@@ -5,14 +5,12 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           43
+// Endpoints:                           42
 // Async Callback:                       1
-// Total number of exported functions:  45
+// Total number of exported functions:  44
 
 #![no_std]
-
-// Configuration that works with rustc < 1.73.0.
-// TODO: Recommended rustc version: 1.73.0 or newer.
+#![allow(internal_features)]
 #![feature(lang_items)]
 
 multiversx_sc_wasm_adapter::allocator!();
@@ -22,13 +20,12 @@ multiversx_sc_wasm_adapter::endpoints! {
     datanftmint
     (
         init => init
+        upgrade => upgrade
         initializeContract => initialize_contract
         setLocalRoles => set_local_roles
         mint => mint_token
         burn => burn_token
-        setTreasuryAddress => set_treasury_address
         setIsPaused => set_is_paused
-        setAntiSpamTax => set_anti_spam_tax
         setWhiteListEnabled => set_whitelist_enabled
         setWhiteListSpots => set_whitelist_spots
         removeWhiteListSpots => remove_whitelist_spots
@@ -36,13 +33,12 @@ multiversx_sc_wasm_adapter::endpoints! {
         setRoyaltiesLimits => set_royalties_limits
         setMaxSupply => set_max_supply
         setAdministrator => set_administrator
+        setBondContractAddress => set_bond_contract_address
         setWithdrawalAddress => set_withdrawal_address
         withdraw => withdraw
         getTokenId => token_id
-        getTreasuryAddress => treasury_address
         getWithdrawalAddress => withdrawal_address
         getMintedTokens => minted_tokens
-        getAntiSpamTax => anti_spam_tax
         getIsPaused => is_paused
         getMaxRoyalties => max_royalties
         getMinRoyalties => min_royalties
@@ -56,6 +52,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         getFrozenCount => frozen_count
         isWhiteListEnabled => whitelist_enabled
         rolesAreSet => roles_are_set
+        getBondContractAddress => bond_contract_address
         getAdministrator => administrator
         getUserDataOut => get_user_data_out
         pause => pause_collection

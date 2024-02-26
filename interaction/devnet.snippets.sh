@@ -366,6 +366,23 @@ setMaxSupply(){
     --send || return
 }
 
+setBondContractAddress(){
+
+    # $1 = bond contract address
+
+    bond_contract_address="0x$(mxpy wallet bech32 --decode ${1})"
+
+    mxpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=6000000 \
+    --function "setBondContractAddress" \
+    --arguments $bond_contract_address \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return
+}
+
 setAdministrator(){
     # $1 = address
 
@@ -394,6 +411,7 @@ mintTokenUsingEsdt(){
     # $9 = supply
     # $10 = title
     # $11 = description
+    # $12 = lock period
 
     method="0x$(echo -n 'mint' | xxd -p -u | tr -d '\n')"
     name="0x$(echo -n ${2} | xxd -p -u | tr -d '\n')"
@@ -408,9 +426,9 @@ mintTokenUsingEsdt(){
     mxpy --verbose contract call $ADDRESS \
     --recall-nonce \
     --pem=${USER} \
-    --gas-limit=100000000 \
+    --gas-limit=30000000 \
     --function "ESDTTransfer" \
-    --arguments ${TOKEN_HEX} $1 $method $name $media $metadata $data_marshal $data_stream $data_preview $7 $8 $title $description \
+    --arguments ${TOKEN_HEX} $1 $method $name $media $metadata $data_marshal $data_stream $data_preview $8 $9 $title $description $12 \
     --proxy ${PROXY} \
     --chain ${CHAIN_ID} \
     --send || return
@@ -441,7 +459,7 @@ mintTokenUsingEgld(){
     mxpy --verbose contract call ${ADDRESS} \
     --recall-nonce \
     --pem=${WALLET} \
-    --gas-limit=10000000 \
+    --gas-limit=30000000 \
     --value=${1} \
     --function "mint" \
     --arguments $name $media $data_marshal $data_stream $data_preview $7 $8 $title $description \
