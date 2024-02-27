@@ -167,7 +167,8 @@ pub trait DataNftMint:
         let treasury_address = self.treasury_address().get();
 
         if price >= BigUint::zero() {
-            // require that the payment is price + bondAmount ([TO DO] - implement proxy view for bondAmount from the bonding contract)
+            // @TODO ideally here we require that the payment is price + bondAmount (implement proxy view for bondAmount from the bonding contract)
+            // ... for now, the TX will fail if the payment.amount does not cover the price (anti_spam_tax) + bondAmount
 
             self.send().direct(
                 &treasury_address,
@@ -219,6 +220,7 @@ pub trait DataNftMint:
             self.bond_contract_address().get(),
             ManagedBuffer::new_from_bytes(b"bond"),
         );
+
         contract_call.proxy_arg(&caller);
         contract_call.proxy_arg(&token_identifier);
         contract_call.proxy_arg(&nonce);
@@ -226,7 +228,6 @@ pub trait DataNftMint:
 
         contract_call
             .with_egld_or_single_esdt_transfer(payment.clone())
-            .with_gas_limit(100_000_000u64)
             .execute_on_dest_context::<()>();
 
         self.send()
@@ -356,22 +357,24 @@ pub trait DataNftMint:
         self.administrator().set(&administrator);
     }
 
+    // Endpoint to set the bonding contract address
+    #[only_owner]
     #[endpoint(setBondContractAddress)]
     fn set_bond_contract_address(&self, bond_contract_address: ManagedAddress) {
-        let caller = self.blockchain().get_caller();
-        self.require_is_privileged(&caller);
         self.set_bond_contract_address_event(&bond_contract_address);
         self.bond_contract_address().set(&bond_contract_address);
     }
 
+    // Endpoint to set the withdraw address to collect 3rd party royalties into
     #[only_owner]
     #[endpoint(setWithdrawalAddress)]
     fn set_withdrawal_address(&self, withdrawal_address: ManagedAddress) {
         self.set_withdrawal_address_event(&withdrawal_address);
         self.withdrawal_address().set(&withdrawal_address);
     }
-
-    #[endpoint(withdraw)] // smart contract must be payable to receive royalties
+    
+    // Endpoint for approved withdrawer to withdraw 3rd party royalties
+    #[endpoint(withdraw)]
     fn withdraw(&self, token_identifier: EgldOrEsdtTokenIdentifier, nonce: u64, amount: BigUint) {
         let caller = self.blockchain().get_caller();
 

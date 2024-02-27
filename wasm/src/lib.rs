@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           42
+// Endpoints:                           46
 // Async Callback:                       1
-// Total number of exported functions:  44
+// Total number of exported functions:  48
 
 #![no_std]
 #![allow(internal_features)]
@@ -25,8 +25,10 @@ multiversx_sc_wasm_adapter::endpoints! {
         setLocalRoles => set_local_roles
         mint => mint_token
         burn => burn_token
+        setTreasuryAddress => set_treasury_address
         setIsPaused => set_is_paused
         setWhiteListEnabled => set_whitelist_enabled
+        setAntiSpamTax => set_anti_spam_tax
         setWhiteListSpots => set_whitelist_spots
         removeWhiteListSpots => remove_whitelist_spots
         setMintTimeLimit => set_mint_time_limit
@@ -37,8 +39,10 @@ multiversx_sc_wasm_adapter::endpoints! {
         setWithdrawalAddress => set_withdrawal_address
         withdraw => withdraw
         getTokenId => token_id
+        getTreasuryAddress => treasury_address
         getWithdrawalAddress => withdrawal_address
         getMintedTokens => minted_tokens
+        getAntiSpamTax => anti_spam_tax
         getIsPaused => is_paused
         getMaxRoyalties => max_royalties
         getMinRoyalties => min_royalties
@@ -52,8 +56,8 @@ multiversx_sc_wasm_adapter::endpoints! {
         getFrozenCount => frozen_count
         isWhiteListEnabled => whitelist_enabled
         rolesAreSet => roles_are_set
-        getBondContractAddress => bond_contract_address
         getAdministrator => administrator
+        getBondContractAddress => bond_contract_address
         getUserDataOut => get_user_data_out
         pause => pause_collection
         unpause => unpause_collection
