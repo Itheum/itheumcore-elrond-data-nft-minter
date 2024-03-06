@@ -12,6 +12,7 @@ use crate::{
     storage::DataNftAttributes,
 };
 
+pub mod bonding_proxy;
 pub mod callbacks;
 pub mod collection_management;
 pub mod errors;
@@ -20,6 +21,7 @@ pub mod nft_mint_utils;
 pub mod requirements;
 pub mod storage;
 pub mod views;
+
 #[multiversx_sc::contract]
 pub trait DataNftMint:
     storage::StorageModule
@@ -29,6 +31,7 @@ pub trait DataNftMint:
     + views::ViewsModule
     + callbacks::Callbacks
     + collection_management::CollectionManagement
+    + bonding_proxy::BondingContractProxyMethods
 {
     // When the smart contract is deployed or upgraded, minting is automatically paused, whitelisting is enabled and default values are set
     #[init]
@@ -166,8 +169,13 @@ pub trait DataNftMint:
 
         let treasury_address = self.treasury_address().get();
 
+        let bond_amount = self.get_bond_amount_for_lock_period(lock_period_sec);
+
         if price >= BigUint::zero() {
-            // require that the payment is price + bondAmount ([TO DO] - implement proxy view for bondAmount from the bonding contract)
+            require!(
+                payment.amount >= &price + &bond_amount,
+                ERR_NOT_ENOUGH_FUNDS
+            );
 
             self.send().direct(
                 &treasury_address,
@@ -177,6 +185,8 @@ pub trait DataNftMint:
             );
 
             payment.amount -= &price;
+        } else {
+            require!(payment.amount == bond_amount, ERR_NOT_ENOUGH_FUNDS);
         }
 
         let one_token = BigUint::from(1u64);
@@ -215,19 +225,13 @@ pub trait DataNftMint:
             &self.create_uris(media, metadata),
         );
 
-        let mut contract_call: ContractCallNoPayment<Self::Api, ()> = ContractCallNoPayment::new(
-            self.bond_contract_address().get(),
-            ManagedBuffer::new_from_bytes(b"bond"),
+        self.send_bond(
+            &caller,
+            token_identifier.clone(),
+            nonce,
+            lock_period_sec,
+            payment,
         );
-        contract_call.proxy_arg(&caller);
-        contract_call.proxy_arg(&token_identifier);
-        contract_call.proxy_arg(&nonce);
-        contract_call.proxy_arg(&lock_period_sec);
-
-        contract_call
-            .with_egld_or_single_esdt_transfer(payment.clone())
-            .with_gas_limit(100_000_000u64)
-            .execute_on_dest_context::<()>();
 
         self.send()
             .direct_esdt(&caller, &token_identifier, nonce, &supply);
