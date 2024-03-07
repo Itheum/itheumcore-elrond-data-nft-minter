@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           46
+// Endpoints:                           48
 // Async Callback:                       1
-// Total number of exported functions:  48
+// Total number of exported functions:  50
 
 #![no_std]
 #![allow(internal_features)]
@@ -66,6 +66,8 @@ multiversx_sc_wasm_adapter::endpoints! {
         freezeSingleNFT => freeze_single_token_for_address
         unFreezeSingleNFT => unfreeze_single_token_for_address
         wipeSingleNFT => wipe_single_token_for_address
+        get_bond_amount_for_lock_period => get_bond_amount_for_lock_period
+        send_bond => send_bond
     )
 }
 

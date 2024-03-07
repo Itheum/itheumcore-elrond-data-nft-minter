@@ -11,3 +11,7 @@ path = "src/lib.rs"
 version = "0.47.4"
 [dev-dependencies.multiversx-sc-scenario]
 version = "0.47.4"
+
+
+[dev-dependencies]
+core-mx-life-bonding-sc = {git = "https://github.com/Itheum/core-mx-life-bonding-sc"}
