@@ -383,6 +383,8 @@ Call structure for ESDT payment: "ESDTTransfer" + "@" + token to send hex encode
 
 Example: "ESDTTransfer@49544845554d2d613631333137@015af1d78b58c40000@6d696e74@53616d706c65546f6b656e4e616d65@68747470733a2f2f697066732e696f2f697066732f62616679726569647835367968706f7371626e6b616432767970363734713574776a637666356a67767473626579686f6366346b6a657835776f34@68747470733a2f2f69746865756d6170692e636f6d2f646465782f646174616d61727368616c2f76312f73657276696365732f67656e6572617465@68747470733a2f2f69746865756d2d7265736f75726365732e73332e61702d736f757468656173742d322e616d617a6f6e6177732e636f6d2f6a736f6e2f54484f525f45636f47505f52616365312e637376@68747470733a2f2f69746865756d2d7265736f75726365732e73332e61702d736f757468656173742d322e616d617a6f6e6177732e636f6d2f6a736f6e2f54484f525f45636f47505f52616365312e637376@@01@53616d706c65205469746c65@53616d706c65204465736372697074696f6e"
 
+Note: in v3.0, a lock_period_sec in u64 was added as a minimum requirement so above examples wont work anymore after v3.0 is deployed
+
 #### burn
 
 ```rust
@@ -450,9 +452,9 @@ This smart contract aims to offer the Elrond community an audited NFT minter sma
 
 ### Setting up dev environment (project development bootstrap) + how to build (and upgrade)
 
-- Uses `multiversx-sc-* 0.39.4` (starting v2.0.0, we used 0.45.1) SDK libs (see Cargo.toml)
-- Building requires minimum **mxpy 6.1.1** (starting v2.0.0, we used mxpy 8.1.2). Check version using `mxpy --version`
-- To build the project, requires minimum Rust version `1.69.0-nightly` (staring v2.0.0, we used 1.75.0-nightly). Check your Rust version by running `rustc --version`. To update your Rust, run `rustup update`. To set to nightly run `rustup default nightly`
+- Uses `multiversx-sc-* 0.39.4` (In v3.0.0, we used 0.47.4) SDK libs (see Cargo.toml)
+- Building requires minimum **mxpy 6.1.1** (In v2.0.0, we used mxpy 9.5.1). Check version using `mxpy --version`
+- To build the project, requires minimum Rust version `1.76.0-nightly` (In v3.0.0, we used 1.76.0-nightly). Check your Rust version by running `rustc --version`. To update your Rust, run `rustup update`. To set to nightly run `rustup default nightly`. Note that `mxpy deps install rust --overwrite` also brings in it's own compatible rust version so running `rustup default nightly` might have a higher rust version than what is used via `mxpy deps install rust --overwrite`.
 - After you make sure you have the minimum Rust version you can then begin development. After you clone repo and before you run build, deploy or run the tests - follow these steps (most likely only needed the 1st time)
 - [Upgrades] Note that when we upgrade smart contract, we should again follow the steps below too as lib version may have changed (but for upgrade I skipped the rustup default nightly cmd and did the others)
 
@@ -533,7 +535,7 @@ After deployment, one can interact with the smart contract and test its function
 **Step 2 (Final build + Code Hash):**
 Once the main commit is locked in, we can then produce the code hash and build to deploy to devnet 1st (for final testing) and then to mainnet (after sending the code hash to the auditor)
 
-1. Make sure your mxpy version is >= 6 (starting v2.0.0, we used mxpy 8.1.2).
+1. Make sure your mxpy version is >= 6 (In v3.0.0, we used mxpy 9.5.1).
 2. If Cargo.lock is in gitignore, remove it, build the contract and make a new commit. Otherwise this step can be skipped. (see Step 1 and repeat if needed)
 3. Run the following in the root of the repository (run the latest Docker client in your computer. Used `Docker Desktop 4.18.0 (104112) on MacOX 12.6`):
 

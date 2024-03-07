@@ -303,14 +303,14 @@ dependencies = [
 
 [[package]]
 name = "datanftmint"
-version = "2.0.0"
+version = "3.0.0"
 dependencies = [
  "multiversx-sc",
 ]
 
 [[package]]
 name = "datanftmint-meta"
-version = "2.0.0"
+version = "3.0.0"
 dependencies = [
  "datanftmint",
  "multiversx-sc",

@@ -5,9 +5,15 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
+<<<<<<< HEAD
 // Endpoints:                           48
 // Async Callback:                       1
 // Total number of exported functions:  50
+=======
+// Endpoints:                           46
+// Async Callback:                       1
+// Total number of exported functions:  48
+>>>>>>> develop
 
 #![no_std]
 #![allow(internal_features)]

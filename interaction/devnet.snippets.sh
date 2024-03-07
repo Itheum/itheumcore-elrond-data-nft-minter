@@ -366,23 +366,6 @@ setMaxSupply(){
     --send || return
 }
 
-setBondContractAddress(){
-
-    # $1 = bond contract address
-
-    bond_contract_address="0x$(mxpy wallet bech32 --decode ${1})"
-
-    mxpy --verbose contract call ${ADDRESS} \
-    --recall-nonce \
-    --pem=${WALLET} \
-    --gas-limit=6000000 \
-    --function "setBondContractAddress" \
-    --arguments $bond_contract_address \
-    --proxy ${PROXY} \
-    --chain ${CHAIN_ID} \
-    --send || return
-}
-
 setAdministrator(){
     # $1 = address
 
@@ -411,7 +394,7 @@ mintTokenUsingEsdt(){
     # $9 = supply
     # $10 = title
     # $11 = description
-    # $12 = lock period
+    # $12 = lock period (added v3.0.0)
 
     method="0x$(echo -n 'mint' | xxd -p -u | tr -d '\n')"
     name="0x$(echo -n ${2} | xxd -p -u | tr -d '\n')"
@@ -514,6 +497,23 @@ withdraw(){
     --gas-limit=10000000 \
     --function "withdraw" \
     --arguments $token_identifier $nonce $amount \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return
+}
+
+# v3.0.0
+setBondContractAddress(){
+    # $1 = bond contract address
+
+    bond_contract_address="0x$(mxpy wallet bech32 --decode ${1})"
+
+    mxpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=6000000 \
+    --function "setBondContractAddress" \
+    --arguments $bond_contract_address \
     --proxy ${PROXY} \
     --chain ${CHAIN_ID} \
     --send || return

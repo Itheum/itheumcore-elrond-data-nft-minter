@@ -394,6 +394,7 @@ mintTokenUsingEsdtMainnet(){
     # $9 = supply
     # $10 = title
     # $11 = description
+    # $12 = lock period (added v3.0.0)
 
     method="0x$(echo -n 'mint' | xxd -p -u | tr -d '\n')"
     name="0x$(echo -n ${2} | xxd -p -u | tr -d '\n')"
@@ -409,7 +410,7 @@ mintTokenUsingEsdtMainnet(){
     --recall-nonce \
     --gas-limit=100000000 \
     --function "ESDTTransfer" \
-    --arguments ${TOKEN_HEX} $1 $method $name $media $metadata $data_marshal $data_stream $data_preview $7 $8 $title $description \
+    --arguments ${TOKEN_HEX} $1 $method $name $media $metadata $data_marshal $data_stream $data_preview $7 $8 $title $description $12 \
     --proxy ${PROXY} \
     --chain ${CHAIN_ID} \
     --ledger \
@@ -497,6 +498,24 @@ withdrawMainnet(){
     --gas-limit=10000000 \
     --function "withdraw" \
     --arguments $token_identifier $nonce $amount \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --ledger \
+    --ledger-address-index 0 \
+    --send || return
+}
+
+# v3.0.0
+setBondContractAddressMainnet(){
+    # $1 = bond contract address
+
+    bond_contract_address="0x$(mxpy wallet bech32 --decode ${1})"
+
+    mxpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --gas-limit=6000000 \
+    --function "setBondContractAddress" \
+    --arguments $bond_contract_address \
     --proxy ${PROXY} \
     --chain ${CHAIN_ID} \
     --ledger \

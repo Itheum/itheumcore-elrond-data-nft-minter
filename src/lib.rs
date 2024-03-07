@@ -360,14 +360,15 @@ pub trait DataNftMint:
         self.administrator().set(&administrator);
     }
 
+    // Endpoint to set the bonding contract address
+    #[only_owner]
     #[endpoint(setBondContractAddress)]
     fn set_bond_contract_address(&self, bond_contract_address: ManagedAddress) {
-        let caller = self.blockchain().get_caller();
-        self.require_is_privileged(&caller);
         self.set_bond_contract_address_event(&bond_contract_address);
         self.bond_contract_address().set(&bond_contract_address);
     }
 
+    // Endpoint to set the withdraw address to collect 3rd party royalties into
     #[only_owner]
     #[endpoint(setWithdrawalAddress)]
     fn set_withdrawal_address(&self, withdrawal_address: ManagedAddress) {
@@ -375,7 +376,8 @@ pub trait DataNftMint:
         self.withdrawal_address().set(&withdrawal_address);
     }
 
-    #[endpoint(withdraw)] // smart contract must be payable to receive royalties
+    // Endpoint for approved withdrawer to withdraw 3rd party royalties
+    #[endpoint(withdraw)]
     fn withdraw(&self, token_identifier: EgldOrEsdtTokenIdentifier, nonce: u64, amount: BigUint) {
         let caller = self.blockchain().get_caller();
 
