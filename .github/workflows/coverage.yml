@@ -21,7 +21,7 @@ jobs:
       - name: Making coverage dir
         run: mkdir coverage
       - name: Generate code coverage
-        run: cargo llvm-cov --lcov --output-path coverage/lcov.info --ignore-filename-regex '(storage.rs|events.rs)'
+        run: cargo llvm-cov --lcov --output-path coverage/lcov.info --ignore-filename-regex '(callbacks.rs|views.rs|events.rs|storage.rs)'
       - name: Generating report
         uses: vebr/jest-lcov-reporter@v0.2.0
         with:
