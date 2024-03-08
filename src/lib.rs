@@ -7,7 +7,7 @@ use crate::{
     callbacks::CallbackProxy,
     errors::{
         ERR_ALREADY_IN_WHITELIST, ERR_CONTRACT_ALREADY_INITIALIZED, ERR_DATA_STREAM_IS_EMPTY,
-        ERR_ISSUE_COST, ERR_NOT_ENOUGH_FUNDS, ERR_NOT_IN_WHITELIST, ERR_WHITELIST_IS_EMPTY,
+        ERR_ISSUE_COST, ERR_NOT_IN_WHITELIST, ERR_WHITELIST_IS_EMPTY, ERR_WRONG_AMOUNT_OF_FUNDS,
     },
     storage::DataNftAttributes,
 };
@@ -171,23 +171,19 @@ pub trait DataNftMint:
 
         let bond_amount = self.get_bond_amount_for_lock_period(lock_period_sec);
 
-        if price >= BigUint::zero() {
-            require!(
-                payment.amount >= &price + &bond_amount,
-                ERR_NOT_ENOUGH_FUNDS
-            );
+        require!(
+            payment.amount == &price + &bond_amount,
+            ERR_WRONG_AMOUNT_OF_FUNDS
+        );
 
-            self.send().direct(
-                &treasury_address,
-                &payment.token_identifier,
-                payment.token_nonce,
-                &price,
-            );
+        payment.amount -= &price;
 
-            payment.amount -= &price;
-        } else {
-            require!(payment.amount == bond_amount, ERR_NOT_ENOUGH_FUNDS);
-        }
+        self.send().direct_non_zero(
+            &treasury_address,
+            &payment.token_identifier,
+            payment.token_nonce,
+            &price,
+        );
 
         let one_token = BigUint::from(1u64);
         self.minted_per_address(&caller)
@@ -394,7 +390,7 @@ pub trait DataNftMint:
 
             self.withdraw_tokens_event(&caller, &token_identifier, &amount);
         } else {
-            sc_panic!(ERR_NOT_ENOUGH_FUNDS);
+            sc_panic!(ERR_WRONG_AMOUNT_OF_FUNDS);
         }
     }
 }
