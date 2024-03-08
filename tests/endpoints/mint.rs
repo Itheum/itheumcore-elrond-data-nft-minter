@@ -353,11 +353,30 @@ fn mint_test_without_anti_spam_tax_test() {
         10u64,
         ITHEUM_TOKEN_IDENTIFIER,
         0u64,
-        10u64 + 100u64,
+        0u64, // testing that bonding is not ready
         Some(TxExpect::user_error("str:Contract not ready")),
     );
 
     state.bond_contract_default_deploy_and_set(10u64, 100u64);
+
+    state.minter_mint(
+        FIRST_USER_ADDRESS_EXPR,
+        "Test",
+        "https://test.com/test",
+        "https://test.com/test",
+        "https://test.com/test",
+        "random-url-encoded-here",
+        "https://test.com/test",
+        1000u64,
+        5u64,
+        &"Test title".repeat(1),
+        &"Test description".repeat(1),
+        10u64,
+        ITHEUM_TOKEN_IDENTIFIER,
+        0u64,
+        10 + 100u64,
+        Some(TxExpect::user_error("str:Wrong amount of funds")),
+    );
 
     state.minter_mint(
         FIRST_USER_ADDRESS_EXPR,
@@ -430,7 +449,26 @@ fn mint_with_anti_spam_tax_test_and_whitelist() {
         ITHEUM_TOKEN_IDENTIFIER,
         0u64,
         100u64,
-        Some(TxExpect::user_error("str:Not enough funds")),
+        Some(TxExpect::user_error("str:Wrong amount of funds")),
+    );
+
+    state.minter_mint(
+        FIRST_USER_ADDRESS_EXPR,
+        "Test",
+        "https://test.com/test",
+        "https://test.com/test",
+        "https://test.com/test",
+        "random-url-encoded-here",
+        "https://test.com/test",
+        1000u64,
+        5u64,
+        &"Test title".repeat(1),
+        &"Test description".repeat(1),
+        10u64,
+        ITHEUM_TOKEN_IDENTIFIER,
+        0u64,
+        99u64 + 100u64,
+        Some(TxExpect::user_error("str:Wrong amount of funds")),
     );
 
     state.minter_mint(
