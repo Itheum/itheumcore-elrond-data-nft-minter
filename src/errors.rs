@@ -37,3 +37,4 @@ pub const ERR_ONLY_WITHDRAWAL_ADDRESS_CAN_WITHDRAW: &str =
     "Only withdrawal address can withdraw tokens";
 pub const ERR_WITHDRAWAL_ADDRESS_NOT_SET: &str = "Withdrawal address not set";
 pub const ERR_WRONG_AMOUNT_OF_FUNDS: &str = "Wrong amount of funds";
+pub const ERR_WRONG_BOND_PERIOD: &str = "Wrong bond period";

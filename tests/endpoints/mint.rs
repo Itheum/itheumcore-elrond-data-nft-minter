@@ -353,8 +353,8 @@ fn mint_test_without_anti_spam_tax_test() {
         10u64,
         ITHEUM_TOKEN_IDENTIFIER,
         0u64,
-        0u64, // testing that bonding is not ready
-        Some(TxExpect::user_error("str:Contract not ready")),
+        0u64,
+        Some(TxExpect::user_error("str:Wrong bond period")),
     );
 
     state.bond_contract_default_deploy_and_set(10u64, 100u64);

@@ -8,6 +8,7 @@ use crate::{
     errors::{
         ERR_ALREADY_IN_WHITELIST, ERR_CONTRACT_ALREADY_INITIALIZED, ERR_DATA_STREAM_IS_EMPTY,
         ERR_ISSUE_COST, ERR_NOT_IN_WHITELIST, ERR_WHITELIST_IS_EMPTY, ERR_WRONG_AMOUNT_OF_FUNDS,
+        ERR_WRONG_BOND_PERIOD,
     },
     storage::DataNftAttributes,
 };
@@ -170,6 +171,8 @@ pub trait DataNftMint:
         let treasury_address = self.treasury_address().get();
 
         let bond_amount = self.get_bond_amount_for_lock_period(lock_period_sec);
+
+        require!(bond_amount > BigUint::zero(), ERR_WRONG_BOND_PERIOD);
 
         require!(
             payment.amount == &price + &bond_amount,
