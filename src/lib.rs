@@ -7,11 +7,13 @@ use crate::{
     callbacks::CallbackProxy,
     errors::{
         ERR_ALREADY_IN_WHITELIST, ERR_CONTRACT_ALREADY_INITIALIZED, ERR_DATA_STREAM_IS_EMPTY,
-        ERR_ISSUE_COST, ERR_NOT_ENOUGH_FUNDS, ERR_NOT_IN_WHITELIST, ERR_WHITELIST_IS_EMPTY,
+        ERR_ISSUE_COST, ERR_NOT_IN_WHITELIST, ERR_WHITELIST_IS_EMPTY, ERR_WRONG_AMOUNT_OF_FUNDS,
+        ERR_WRONG_BOND_PERIOD,
     },
     storage::DataNftAttributes,
 };
 
+pub mod bonding_proxy;
 pub mod callbacks;
 pub mod collection_management;
 pub mod errors;
@@ -20,6 +22,7 @@ pub mod nft_mint_utils;
 pub mod requirements;
 pub mod storage;
 pub mod views;
+
 #[multiversx_sc::contract]
 pub trait DataNftMint:
     storage::StorageModule
@@ -29,6 +32,7 @@ pub trait DataNftMint:
     + views::ViewsModule
     + callbacks::Callbacks
     + collection_management::CollectionManagement
+    + bonding_proxy::BondingContractProxyMethods
 {
     // When the smart contract is deployed or upgraded, minting is automatically paused, whitelisting is enabled and default values are set
     #[init]
@@ -166,19 +170,23 @@ pub trait DataNftMint:
 
         let treasury_address = self.treasury_address().get();
 
-        if price >= BigUint::zero() {
-            // @TODO ideally here we require that the payment is price + bondAmount (implement proxy view for bondAmount from the bonding contract)
-            // ... for now, the TX will fail if the payment.amount does not cover the price (anti_spam_tax) + bondAmount
+        let bond_amount = self.get_bond_amount_for_lock_period(lock_period_sec);
 
-            self.send().direct(
-                &treasury_address,
-                &payment.token_identifier,
-                payment.token_nonce,
-                &price,
-            );
+        require!(bond_amount > BigUint::zero(), ERR_WRONG_BOND_PERIOD);
 
-            payment.amount -= &price;
-        }
+        require!(
+            payment.amount == &price + &bond_amount,
+            ERR_WRONG_AMOUNT_OF_FUNDS
+        );
+
+        payment.amount -= &price;
+
+        self.send().direct_non_zero(
+            &treasury_address,
+            &payment.token_identifier,
+            payment.token_nonce,
+            &price,
+        );
 
         let one_token = BigUint::from(1u64);
         self.minted_per_address(&caller)
@@ -216,19 +224,13 @@ pub trait DataNftMint:
             &self.create_uris(media, metadata),
         );
 
-        let mut contract_call: ContractCallNoPayment<Self::Api, ()> = ContractCallNoPayment::new(
-            self.bond_contract_address().get(),
-            ManagedBuffer::new_from_bytes(b"bond"),
+        self.send_bond(
+            &caller,
+            token_identifier.clone(),
+            nonce,
+            lock_period_sec,
+            payment,
         );
-
-        contract_call.proxy_arg(&caller);
-        contract_call.proxy_arg(&token_identifier);
-        contract_call.proxy_arg(&nonce);
-        contract_call.proxy_arg(&lock_period_sec);
-
-        contract_call
-            .with_egld_or_single_esdt_transfer(payment.clone())
-            .execute_on_dest_context::<()>();
 
         self.send()
             .direct_esdt(&caller, &token_identifier, nonce, &supply);
@@ -372,7 +374,7 @@ pub trait DataNftMint:
         self.set_withdrawal_address_event(&withdrawal_address);
         self.withdrawal_address().set(&withdrawal_address);
     }
-    
+
     // Endpoint for approved withdrawer to withdraw 3rd party royalties
     #[endpoint(withdraw)]
     fn withdraw(&self, token_identifier: EgldOrEsdtTokenIdentifier, nonce: u64, amount: BigUint) {
@@ -391,7 +393,7 @@ pub trait DataNftMint:
 
             self.withdraw_tokens_event(&caller, &token_identifier, &amount);
         } else {
-            sc_panic!(ERR_NOT_ENOUGH_FUNDS);
+            sc_panic!(ERR_WRONG_AMOUNT_OF_FUNDS);
         }
     }
 }
