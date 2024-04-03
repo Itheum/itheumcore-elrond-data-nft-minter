@@ -107,4 +107,8 @@ pub trait StorageModule {
     #[view(getAdministrator)]
     #[storage_mapper("administrator")]
     fn administrator(&self) -> SingleValueMapper<ManagedAddress>;
+
+    #[view(getBondContractAddress)]
+    #[storage_mapper("bond_contract_address")]
+    fn bond_contract_address(&self) -> SingleValueMapper<ManagedAddress>;
 }

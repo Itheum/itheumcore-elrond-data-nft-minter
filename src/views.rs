@@ -31,7 +31,7 @@ pub trait ViewsModule: crate::storage::StorageModule {
         tax_token: &EgldOrEsdtTokenIdentifier,
     ) -> UserDataOut<Self::Api> {
         {
-            let anti_spam_tax_value = self.anti_spam_tax(tax_token).get(); //if it returns 0 the token is not supported
+            let anti_spam_tax_value = self.anti_spam_tax(tax_token).get(); //if it returns 0 the token is not supported or it requires only bondAmount to be sent
             let is_paused = self.is_paused().get();
             let max_royalties = self.max_royalties().get();
             let min_royalties = self.min_royalties().get();
