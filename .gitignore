@@ -6,6 +6,7 @@
 # The erdpy/mxpy output
 output*
 deployOutput
+deployOutputMainnet
 
 interact-rs/
 wallets/
@@ -16,3 +17,6 @@ erdpy.data-storage.json
 mxpy.data-storage.json
 deploy-devnet.interaction.json
 .DS_Store
+
+
+deploy-mainnet.interaction.json

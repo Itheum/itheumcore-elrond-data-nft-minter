@@ -1,17 +1,16 @@
 [package]
 name = "datanftmint-meta"
-version = "1.0.0"
+version = "3.0.0"
 edition = "2021"
 publish = false
 authors = [ "Ovidiu Damian - Itheum","Bucur David - Itheum","Mark Paul - Itheum"]
 
 [dev-dependencies]
-
 [dependencies.datanftmint]
 path = ".."
 
 [dependencies.multiversx-sc]
-version = "0.39.7"
+version = "0.47.5"
 
 [dependencies.multiversx-sc-meta]
-version = "0.39.7"
+version = "0.47.5"

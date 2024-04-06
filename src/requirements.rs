@@ -1,11 +1,11 @@
 use crate::errors::{
     ERR_FIELD_IS_EMPTY, ERR_MAX_ROYALTIES_TOO_HIGH, ERR_MAX_SUPPLY_EXCEEDED,
     ERR_MINTING_AND_BURNING_NOT_ALLOWED, ERR_MIN_ROYALTIES_BIGGER_THAN_MAX_ROYALTIES,
-    ERR_NOT_PRIVILEGED, ERR_NOT_URL, ERR_NOT_WHITELISTED,
+    ERR_NOT_PRIVILEGED, ERR_NOT_URL, ERR_NOT_WHITELISTED, ERR_ONLY_WITHDRAWAL_ADDRESS_CAN_WITHDRAW,
     ERR_ROYALTIES_ARE_BIGGER_THAN_MAX_ROYALTIES, ERR_ROYALTIES_ARE_SMALLER_THAN_MIN_ROYALTIES,
     ERR_SUPPLY_HIGHER_THAN_ZERO, ERR_TOKEN_NOT_ISSUED, ERR_TOO_MANY_CHARS,
     ERR_URL_INVALID_CHARACTERS, ERR_URL_IS_EMPTY, ERR_URL_TOO_BIG, ERR_URL_TOO_SMALL,
-    ERR_VALUE_MUST_BE_POSITIVE, ERR_WAIT_MORE_TIME,
+    ERR_VALUE_MUST_BE_POSITIVE, ERR_WAIT_MORE_TIME, ERR_WITHDRAWAL_ADDRESS_NOT_SET,
 };
 
 multiversx_sc::imports!();
@@ -26,10 +26,23 @@ pub trait RequirementsModule: crate::storage::StorageModule {
         if self.treasury_address().is_empty() {
             is_mint_ready = false;
         }
+        if self.bond_contract_address().is_empty() {
+            is_mint_ready = false;
+        }
         if self.roles_are_set().is_empty() {
             is_mint_ready = false;
         }
+        if self.bond_contract_address().is_empty() {
+            is_mint_ready = false;
+        }
         require!(is_mint_ready, ERR_MINTING_AND_BURNING_NOT_ALLOWED);
+    }
+
+    fn require_withdrawal_address_is_set(&self) {
+        require!(
+            !self.withdrawal_address().is_empty(),
+            ERR_WITHDRAWAL_ADDRESS_NOT_SET
+        );
     }
 
     // Checks whether the address trying to mint is allowed to do so
@@ -90,19 +103,26 @@ pub trait RequirementsModule: crate::storage::StorageModule {
 
     // Checks whether the URL passed is valid (characters, starts with https://)
     fn require_url_is_valid(&self, url: &ManagedBuffer) {
-        let url_length = url.len();
-        let starts_with: &[u8] = b"https://";
         self.require_url_is_adequate_length(url);
-        let url_vec = url.to_boxed_bytes().into_vec();
-        for i in 0..starts_with.len() {
-            require!(url_vec[i] == starts_with[i], ERR_NOT_URL);
-        }
-        for i in 0..url_length {
-            require!(
-                url_vec[i] > 32 && url_vec[i] < 127,
-                ERR_URL_INVALID_CHARACTERS
-            )
-        }
+
+        // Define a closure to perform the URL validation
+        let validation_closure = |url_bytes: &[u8]| {
+            let starts_with: &[u8] = b"https://";
+
+            for i in 0..starts_with.len() {
+                require!(url_bytes[i] == starts_with[i], ERR_NOT_URL);
+            }
+
+            for i in 0..url_bytes.len() {
+                require!(
+                    url_bytes[i] > 32 && url_bytes[i] < 127,
+                    ERR_URL_INVALID_CHARACTERS
+                )
+            }
+        };
+
+        // Use the with_buffer_contents function to apply the closure
+        url.with_buffer_contents(validation_closure);
     }
 
     // Checks whether the URL passed has a valid length
@@ -128,5 +148,12 @@ pub trait RequirementsModule: crate::storage::StorageModule {
     // Checks whether the token is issued
     fn require_token_issued(&self) {
         require!(!self.token_id().is_empty(), ERR_TOKEN_NOT_ISSUED);
+    }
+
+    fn require_is_withdrawal_address(&self, address: &ManagedAddress) {
+        require!(
+            &self.withdrawal_address().get() == address,
+            ERR_ONLY_WITHDRAWAL_ADDRESS_CAN_WITHDRAW
+        );
     }
 }
