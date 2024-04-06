@@ -565,6 +565,7 @@ impl ContractsState {
                     title,
                     description,
                     lock_period,
+                    MultiValueEncoded::new()
                 ))
                 .expect(expect.unwrap_or(TxExpect::ok())),
         );
