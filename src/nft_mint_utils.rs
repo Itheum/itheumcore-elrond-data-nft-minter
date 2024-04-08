@@ -18,10 +18,12 @@ pub trait NftMintUtils: crate::storage::StorageModule {
         &self,
         media: ManagedBuffer,
         metadata: ManagedBuffer,
+        extra_assets: ManagedVec<ManagedBuffer>,
     ) -> ManagedVec<ManagedBuffer> {
         let mut uris = ManagedVec::new();
         uris.push(media);
         uris.push(metadata);
+        uris.append_vec(extra_assets);
         uris
     }
 }
