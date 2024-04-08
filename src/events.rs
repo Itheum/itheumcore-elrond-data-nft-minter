@@ -129,6 +129,7 @@ pub trait EventsModule {
         #[indexed] token: &EgldOrEsdtTokenIdentifier,
         #[indexed] price: &BigUint,
         #[indexed] bond_amount: &BigUint,
+        #[indexed] extra_assets: &ManagedVec<ManagedBuffer>
     );
 
     #[event("setWithdrawalAddress")]

@@ -148,6 +148,7 @@ pub trait DataNftMint:
         title: ManagedBuffer,
         description: ManagedBuffer,
         lock_period_sec: u64,
+        extra_assets: MultiValueEncoded<ManagedBuffer>,
     ) -> DataNftAttributes<Self::Api> {
         self.require_ready_for_minting_and_burning();
         require!(!data_stream.is_empty(), ERR_DATA_STREAM_IS_EMPTY);
@@ -205,13 +206,14 @@ pub trait DataNftMint:
         };
 
         let token_identifier = self.token_id().get_token_id();
-
+        let extra_assets_vec = extra_assets.into_vec_of_buffers(); 
         self.mint_event(
             &caller,
             &one_token,
             &payment.token_identifier,
             &price,
             &payment.amount,
+            &extra_assets_vec
         );
 
         let nonce = self.send().esdt_nft_create(
@@ -221,7 +223,7 @@ pub trait DataNftMint:
             &royalties,
             &self.create_hash_buffer(&data_marshal, &data_stream),
             &attributes,
-            &self.create_uris(media, metadata),
+            &self.create_uris(media, metadata, extra_assets_vec),
         );
 
         self.send_bond(
