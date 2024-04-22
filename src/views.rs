@@ -18,6 +18,7 @@ pub struct UserDataOut<M: ManagedTypeApi> {
     pub total_minted: BigUint<M>,
     pub frozen: bool,
     pub frozen_nonces: ManagedVec<M, u64>,
+    pub max_donation_percentage: u64,
 }
 
 //Module that handles read-only endpoints (views) for the smart contract
@@ -47,6 +48,7 @@ pub trait ViewsModule: crate::storage::StorageModule {
                 .frozen_sfts_per_address(&address)
                 .iter()
                 .collect::<ManagedVec<u64>>();
+            let max_donation_percentage = self.max_donation_percentage().get();
 
             let user_data = UserDataOut {
                 anti_spam_tax_value,
@@ -62,6 +64,7 @@ pub trait ViewsModule: crate::storage::StorageModule {
                 total_minted,
                 frozen,
                 frozen_nonces,
+                max_donation_percentage,
             };
             user_data
         }

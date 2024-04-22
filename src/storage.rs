@@ -25,6 +25,14 @@ pub trait StorageModule {
     #[storage_mapper("treasury_address")]
     fn treasury_address(&self) -> SingleValueMapper<ManagedAddress>;
 
+    #[view(getDonationTreasuryAddress)]
+    #[storage_mapper("donation_treasury_address")]
+    fn donation_treasury_address(&self) -> SingleValueMapper<ManagedAddress>;
+
+    #[view(getMaxDonationPercentage)]
+    #[storage_mapper("max_donation_percentage")]
+    fn max_donation_percentage(&self) -> SingleValueMapper<u64>;
+
     #[view(getWithdrawalAddress)]
     #[storage_mapper("withdrawal_address")]
     fn withdrawal_address(&self) -> SingleValueMapper<ManagedAddress>;
