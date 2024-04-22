@@ -11,6 +11,17 @@ pub trait EventsModule {
     #[event("setTreasuryAddress")]
     fn treasury_address_event(&self, #[indexed] treasury_address: &ManagedAddress);
 
+    // Emitted whenever donation treasury address is set
+    #[event("setDonationTreasuryAddress")]
+    fn donation_treasury_address_event(
+        &self,
+        #[indexed] donation_treasury_address: &ManagedAddress,
+    );
+
+    // Emitted whenever max donation percentage is set
+    #[event("setMaxDonationPercentage")]
+    fn max_donation_percentage_event(&self, #[indexed] max_donation_percentage: &u64);
+
     // Emitted whenever whitelist enabling changes value
     #[event("whitelistEnableToggle")]
     fn whitelist_enable_toggle_event(&self, #[indexed] enable_value: &bool);
@@ -129,7 +140,7 @@ pub trait EventsModule {
         #[indexed] token: &EgldOrEsdtTokenIdentifier,
         #[indexed] price: &BigUint,
         #[indexed] bond_amount: &BigUint,
-        #[indexed] extra_assets: &ManagedVec<ManagedBuffer>
+        #[indexed] extra_assets: &ManagedVec<ManagedBuffer>,
     );
 
     #[event("setWithdrawalAddress")]

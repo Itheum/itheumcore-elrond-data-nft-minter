@@ -9,7 +9,7 @@ use crate::minter_state::minter_state::{
     ContractsState, BONDING_CONTRACT_ADDRESS_EXPR, BONDING_OWNER_ADDRESS_EXPR,
     DATA_NFT_IDENTIFIER_EXPR, FIRST_USER_ADDRESS_EXPR, ITHEUM_TOKEN_IDENTIFIER,
     ITHEUM_TOKEN_IDENTIFIER_EXPR, MINTER_CONTRACT_ADDRESS_EXPR, MINTER_OWNER_ADDRESS_EXPR,
-    TREAASURY_ADDRESS_EXPR,
+    SECOND_USER_ADDRESS_EXPR, TREAASURY_ADDRESS_EXPR,
 };
 
 #[test]
@@ -34,6 +34,7 @@ fn mint_test_without_anti_spam_tax_test() {
         ITHEUM_TOKEN_IDENTIFIER,
         0u64,
         10u64 + 100u64,
+        0u64,
         Some(TxExpect::user_error("str:Minting and burning not allowed")),
     );
 
@@ -57,6 +58,7 @@ fn mint_test_without_anti_spam_tax_test() {
         ITHEUM_TOKEN_IDENTIFIER,
         0u64,
         10u64 + 100u64,
+        0u64,
         Some(TxExpect::user_error("str:Data Stream is empty")),
     );
 
@@ -76,6 +78,7 @@ fn mint_test_without_anti_spam_tax_test() {
         ITHEUM_TOKEN_IDENTIFIER,
         0u64,
         10u64 + 100u64,
+        0u64,
         Some(TxExpect::user_error("str:URL must start with https://")),
     );
 
@@ -95,6 +98,7 @@ fn mint_test_without_anti_spam_tax_test() {
         ITHEUM_TOKEN_IDENTIFIER,
         0u64,
         10u64 + 100u64,
+        0u64,
         Some(TxExpect::user_error("str:URL is empty")),
     );
 
@@ -114,6 +118,7 @@ fn mint_test_without_anti_spam_tax_test() {
         ITHEUM_TOKEN_IDENTIFIER,
         0u64,
         10u64 + 100u64,
+        0u64,
         Some(TxExpect::user_error("str:URL length is too small")),
     );
 
@@ -133,6 +138,7 @@ fn mint_test_without_anti_spam_tax_test() {
         ITHEUM_TOKEN_IDENTIFIER,
         0u64,
         10u64 + 100u64,
+        0u64,
         Some(TxExpect::user_error("str:URL length is too big")),
     );
 
@@ -152,6 +158,7 @@ fn mint_test_without_anti_spam_tax_test() {
         ITHEUM_TOKEN_IDENTIFIER,
         0u64,
         10u64 + 100u64,
+        0u64,
         Some(TxExpect::user_error("str:URL must start with https://")),
     );
 
@@ -171,6 +178,7 @@ fn mint_test_without_anti_spam_tax_test() {
         ITHEUM_TOKEN_IDENTIFIER,
         0u64,
         10u64 + 100u64,
+        0u64,
         Some(TxExpect::user_error("str:URL must start with https://")),
     );
 
@@ -190,6 +198,7 @@ fn mint_test_without_anti_spam_tax_test() {
         ITHEUM_TOKEN_IDENTIFIER,
         0u64,
         10u64 + 100u64,
+        0u64,
         Some(TxExpect::user_error("str:Field is empty")),
     );
 
@@ -209,6 +218,7 @@ fn mint_test_without_anti_spam_tax_test() {
         ITHEUM_TOKEN_IDENTIFIER,
         0u64,
         10u64 + 100u64,
+        0u64,
         Some(TxExpect::user_error("str:Field is empty")),
     );
 
@@ -228,6 +238,7 @@ fn mint_test_without_anti_spam_tax_test() {
         ITHEUM_TOKEN_IDENTIFIER,
         0u64,
         10u64 + 100u64,
+        0u64,
         Some(TxExpect::user_error("str:Too many characters")),
     );
 
@@ -247,6 +258,7 @@ fn mint_test_without_anti_spam_tax_test() {
         ITHEUM_TOKEN_IDENTIFIER,
         0u64,
         10u64 + 100u64,
+        0u64,
         Some(TxExpect::user_error("str:Too many characters")),
     );
 
@@ -266,6 +278,7 @@ fn mint_test_without_anti_spam_tax_test() {
         ITHEUM_TOKEN_IDENTIFIER,
         0u64,
         10u64 + 100u64,
+        0u64,
         Some(TxExpect::user_error(
             "str:Royalties are bigger than max royalties",
         )),
@@ -287,6 +300,7 @@ fn mint_test_without_anti_spam_tax_test() {
         ITHEUM_TOKEN_IDENTIFIER,
         0u64,
         10u64 + 100u64,
+        0u64,
         Some(TxExpect::user_error("str:Max supply exceeded")),
     );
 
@@ -306,6 +320,7 @@ fn mint_test_without_anti_spam_tax_test() {
         ITHEUM_TOKEN_IDENTIFIER,
         0u64,
         10u64 + 100u64,
+        0u64,
         Some(TxExpect::user_error(
             "str:You need to wait more time before minting again",
         )),
@@ -331,6 +346,7 @@ fn mint_test_without_anti_spam_tax_test() {
         ITHEUM_TOKEN_IDENTIFIER,
         0u64,
         10u64 + 100u64,
+        0u64,
         Some(TxExpect::user_error("str:You are not whitelisted")),
     );
 
@@ -354,6 +370,7 @@ fn mint_test_without_anti_spam_tax_test() {
         ITHEUM_TOKEN_IDENTIFIER,
         0u64,
         0u64,
+        0u64,
         Some(TxExpect::user_error("str:Wrong bond period")),
     );
 
@@ -375,6 +392,7 @@ fn mint_test_without_anti_spam_tax_test() {
         ITHEUM_TOKEN_IDENTIFIER,
         0u64,
         10 + 100u64,
+        0u64,
         Some(TxExpect::user_error("str:Wrong amount of funds")),
     );
 
@@ -394,6 +412,7 @@ fn mint_test_without_anti_spam_tax_test() {
         ITHEUM_TOKEN_IDENTIFIER,
         0u64,
         100u64,
+        0u64,
         None,
     );
 
@@ -449,6 +468,7 @@ fn mint_with_anti_spam_tax_test_and_whitelist() {
         ITHEUM_TOKEN_IDENTIFIER,
         0u64,
         100u64,
+        0u64,
         Some(TxExpect::user_error("str:Wrong amount of funds")),
     );
 
@@ -468,6 +488,7 @@ fn mint_with_anti_spam_tax_test_and_whitelist() {
         ITHEUM_TOKEN_IDENTIFIER,
         0u64,
         99u64 + 100u64,
+        0u64,
         Some(TxExpect::user_error("str:Wrong amount of funds")),
     );
 
@@ -487,6 +508,7 @@ fn mint_with_anti_spam_tax_test_and_whitelist() {
         ITHEUM_TOKEN_IDENTIFIER,
         0u64,
         100u64 + 100u64,
+        0u64,
         None,
     );
 
@@ -530,4 +552,151 @@ fn mint_with_anti_spam_tax_test_and_whitelist() {
                 ),
             ),
     );
+}
+
+#[test]
+fn mint_with_donation_to_treasury() {
+    let mut state = ContractsState::new();
+    let treasury_address = state.treasury.clone();
+    let first_user_address = state.first_user.clone();
+    let second_user_address = state.second_user.clone();
+
+    state
+        .world
+        .set_state_step(SetStateStep::new().block_timestamp(0u64));
+
+    state
+        .mock_minter_initialized(ITHEUM_TOKEN_IDENTIFIER, 100u64, 10u64)
+        .unpause_minter_contract(MINTER_OWNER_ADDRESS_EXPR, None)
+        .bond_contract_default_deploy_and_set(10u64, 100u64)
+        .bond_unpause_contract(BONDING_OWNER_ADDRESS_EXPR, None)
+        .minter_set_donation_treasury_address(
+            MINTER_OWNER_ADDRESS_EXPR,
+            treasury_address.clone(),
+            None,
+        )
+        .minter_disable_whitelist(MINTER_OWNER_ADDRESS_EXPR, None)
+        .minter_set_mint_time_limit(MINTER_OWNER_ADDRESS_EXPR, 0u64, None)
+        .minter_set_max_supply(MINTER_OWNER_ADDRESS_EXPR, 1_000u64, None)
+        .minter_set_donation_max_percentage(MINTER_OWNER_ADDRESS_EXPR, 1_000, None);
+
+    state.minter_mint(
+        FIRST_USER_ADDRESS_EXPR,
+        "Test",
+        "https://test.com/test",
+        "https://test.com/test",
+        "https://test.com/test",
+        "random-url-encoded-here",
+        "https://test.com/test",
+        1000u64,
+        100u64,
+        &"Test title".repeat(1),
+        &"Test description".repeat(1),
+        10u64,
+        ITHEUM_TOKEN_IDENTIFIER,
+        0u64,
+        100u64 + 100u64,
+        5_000u64, // 1%
+        Some(TxExpect::user_error("str:Percentage too high")),
+    );
+
+    state.minter_mint(
+        FIRST_USER_ADDRESS_EXPR,
+        "Test",
+        "https://test.com/test",
+        "https://test.com/test",
+        "https://test.com/test",
+        "random-url-encoded-here",
+        "https://test.com/test",
+        1000u64,
+        100u64,
+        &"Test title".repeat(1),
+        &"Test description".repeat(1),
+        10u64,
+        ITHEUM_TOKEN_IDENTIFIER,
+        0u64,
+        100u64 + 100u64,
+        0,
+        None,
+    );
+
+    let data_nft_attributes: DataNftAttributes<SingleTxApi> = DataNftAttributes {
+        data_stream_url: managed_buffer!(b"random-url-encoded-here"),
+        data_preview_url: managed_buffer!(b"https://test.com/test"),
+        data_marshal_url: managed_buffer!(b"https://test.com/test"),
+        creator: managed_address!(&first_user_address),
+        creation_time: 0u64,
+        title: managed_buffer!(b"Test title"),
+        description: managed_buffer!(b"Test description"),
+    };
+
+    state
+        .world
+        .check_state_step(CheckStateStep::new().put_account(
+            FIRST_USER_ADDRESS_EXPR,
+            CheckAccount::new().esdt_nft_balance_and_attributes(
+                DATA_NFT_IDENTIFIER_EXPR,
+                1u64,
+                "100",
+                Some(data_nft_attributes.clone()),
+            ),
+        ));
+
+    state
+        .world
+        .set_state_step(SetStateStep::new().block_timestamp(1u64));
+
+    state.minter_mint(
+        SECOND_USER_ADDRESS_EXPR,
+        "Test",
+        "https://test.com/test",
+        "https://test.com/test",
+        "https://test.com/test",
+        "random-url-encoded-here",
+        "https://test.com/test",
+        1000u64,
+        100u64,
+        &"Test title".repeat(1),
+        &"Test description".repeat(1),
+        10u64,
+        ITHEUM_TOKEN_IDENTIFIER,
+        0u64,
+        100u64 + 100u64,
+        100u64,
+        None,
+    );
+
+    let data_nft_attributes: DataNftAttributes<SingleTxApi> = DataNftAttributes {
+        data_stream_url: managed_buffer!(b"random-url-encoded-here"),
+        data_preview_url: managed_buffer!(b"https://test.com/test"),
+        data_marshal_url: managed_buffer!(b"https://test.com/test"),
+        creator: managed_address!(&second_user_address),
+        creation_time: 1u64,
+        title: managed_buffer!(b"Test title"),
+        description: managed_buffer!(b"Test description"),
+    };
+
+    state
+        .world
+        .check_state_step(CheckStateStep::new().put_account(
+            SECOND_USER_ADDRESS_EXPR,
+            CheckAccount::new().esdt_nft_balance_and_attributes(
+                DATA_NFT_IDENTIFIER_EXPR,
+                2u64,
+                "99",
+                Some(data_nft_attributes.clone()),
+            ),
+        ));
+
+    state
+        .world
+        .check_state_step(CheckStateStep::new().put_account(
+            TREAASURY_ADDRESS_EXPR,
+            CheckAccount::new().esdt_nft_balance_and_attributes(
+                DATA_NFT_IDENTIFIER_EXPR,
+                2u64,
+                "1",
+                Some(data_nft_attributes.clone()),
+            ),
+        ));
 }

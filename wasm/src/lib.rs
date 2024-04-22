@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           48
+// Endpoints:                           52
 // Async Callback:                       1
-// Total number of exported functions:  50
+// Total number of exported functions:  54
 
 #![no_std]
 #![allow(internal_features)]
@@ -26,6 +26,8 @@ multiversx_sc_wasm_adapter::endpoints! {
         mint => mint_token
         burn => burn_token
         setTreasuryAddress => set_treasury_address
+        setDonationTreasuryAddress => set_donation_treasury_address
+        setMaxDonationPercentage => set_max_donation_percentage
         setIsPaused => set_is_paused
         setWhiteListEnabled => set_whitelist_enabled
         setAntiSpamTax => set_anti_spam_tax
@@ -40,6 +42,8 @@ multiversx_sc_wasm_adapter::endpoints! {
         withdraw => withdraw
         getTokenId => token_id
         getTreasuryAddress => treasury_address
+        getDonationTreasuryAddress => donation_treasury_address
+        getMaxDonationPercentage => max_donation_percentage
         getWithdrawalAddress => withdrawal_address
         getMintedTokens => minted_tokens
         getAntiSpamTax => anti_spam_tax

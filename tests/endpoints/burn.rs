@@ -44,6 +44,7 @@ fn burn_token_test() {
         ITHEUM_TOKEN_IDENTIFIER,
         0u64,
         100u64 + 100u64,
+        0u64,
         None,
     );
 

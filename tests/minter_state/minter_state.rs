@@ -287,6 +287,41 @@ impl ContractsState {
         self
     }
 
+    pub fn minter_set_donation_treasury_address(
+        &mut self,
+        caller: &str,
+        address: Address,
+        expect: Option<TxExpect>,
+    ) -> &mut Self {
+        let tx_expect = expect.unwrap_or(TxExpect::ok());
+        self.world.sc_call(
+            ScCallStep::new()
+                .from(caller)
+                .call(self.minter_contract.set_donation_treasury_address(address))
+                .expect(tx_expect),
+        );
+        self
+    }
+
+    pub fn minter_set_donation_max_percentage(
+        &mut self,
+        caller: &str,
+        max_donation_percentage: u64,
+        expect: Option<TxExpect>,
+    ) -> &mut Self {
+        let tx_expect = expect.unwrap_or(TxExpect::ok());
+        self.world.sc_call(
+            ScCallStep::new()
+                .from(caller)
+                .call(
+                    self.minter_contract
+                        .set_max_donation_percentage(max_donation_percentage),
+                )
+                .expect(tx_expect),
+        );
+        self
+    }
+
     pub fn pause_minter_contract(&mut self, caller: &str, expect: Option<TxExpect>) -> &mut Self {
         let tx_expect = expect.unwrap_or(TxExpect::ok());
         self.world.sc_call(
@@ -543,6 +578,7 @@ impl ContractsState {
         payment_token_identifier: &[u8],
         payment_token_nonce: u64,
         payment_amount: u64,
+        donation_percentage: u64,
         expect: Option<TxExpect>,
     ) -> &mut Self {
         self.world.sc_call(
@@ -565,7 +601,8 @@ impl ContractsState {
                     title,
                     description,
                     lock_period,
-                    MultiValueEncoded::new()
+                    donation_percentage,
+                    MultiValueEncoded::new(),
                 ))
                 .expect(expect.unwrap_or(TxExpect::ok())),
         );
@@ -654,7 +691,12 @@ impl ContractsState {
         self.minter_set_royalties_limits(MINTER_OWNER_ADDRESS_EXPR, 0u64, 8000u64, None);
         self.minter_set_administarator(MINTER_OWNER_ADDRESS_EXPR, admin, None);
         self.minter_set_bond_contract_address(MINTER_OWNER_ADDRESS_EXPR, None);
-        self.minter_set_treasury_address(MINTER_OWNER_ADDRESS_EXPR, treasury_address, None);
+        self.minter_set_treasury_address(MINTER_OWNER_ADDRESS_EXPR, treasury_address.clone(), None);
+        self.minter_set_donation_treasury_address(
+            MINTER_ADMIN_ADDRESS_EXPR,
+            treasury_address,
+            None,
+        );
         self.minter_set_anti_spam_tax_token_and_amount(
             MINTER_OWNER_ADDRESS_EXPR,
             anti_spam_tax_token,

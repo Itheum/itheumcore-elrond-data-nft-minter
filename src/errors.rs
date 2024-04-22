@@ -38,3 +38,4 @@ pub const ERR_ONLY_WITHDRAWAL_ADDRESS_CAN_WITHDRAW: &str =
 pub const ERR_WITHDRAWAL_ADDRESS_NOT_SET: &str = "Withdrawal address not set";
 pub const ERR_WRONG_AMOUNT_OF_FUNDS: &str = "Wrong amount of funds";
 pub const ERR_WRONG_BOND_PERIOD: &str = "Wrong bond period";
+pub const ERR_PERCENTAGE_TOO_HIGH: &str = "Percentage too high";

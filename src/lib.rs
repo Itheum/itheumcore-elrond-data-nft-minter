@@ -7,8 +7,8 @@ use crate::{
     callbacks::CallbackProxy,
     errors::{
         ERR_ALREADY_IN_WHITELIST, ERR_CONTRACT_ALREADY_INITIALIZED, ERR_DATA_STREAM_IS_EMPTY,
-        ERR_ISSUE_COST, ERR_NOT_IN_WHITELIST, ERR_WHITELIST_IS_EMPTY, ERR_WRONG_AMOUNT_OF_FUNDS,
-        ERR_WRONG_BOND_PERIOD,
+        ERR_ISSUE_COST, ERR_NOT_IN_WHITELIST, ERR_PERCENTAGE_TOO_HIGH, ERR_WHITELIST_IS_EMPTY,
+        ERR_WRONG_AMOUNT_OF_FUNDS, ERR_WRONG_BOND_PERIOD,
     },
     storage::DataNftAttributes,
 };
@@ -148,6 +148,7 @@ pub trait DataNftMint:
         title: ManagedBuffer,
         description: ManagedBuffer,
         lock_period_sec: u64,
+        donation_percentage: u64,
         extra_assets: MultiValueEncoded<ManagedBuffer>,
     ) -> DataNftAttributes<Self::Api> {
         self.require_ready_for_minting_and_burning();
@@ -160,6 +161,23 @@ pub trait DataNftMint:
 
         self.require_title_description_are_valid(&title, &description);
         self.require_sft_is_valid(&royalties, &supply);
+
+        sc_print!("donation percentage: {} ", donation_percentage.clone());
+
+        let donation_supply = if donation_percentage > 0 {
+            require!(
+                donation_percentage <= self.max_donation_percentage().get(),
+                ERR_PERCENTAGE_TOO_HIGH
+            );
+
+            let donation_supply =
+                &supply * &BigUint::from(donation_percentage) / BigUint::from(10_000u64);
+            donation_supply
+        } else {
+            BigUint::zero()
+        };
+
+        sc_print!("donation supply:{}", donation_supply);
 
         let caller = self.blockchain().get_caller();
         let current_time = self.blockchain().get_block_timestamp();
@@ -206,14 +224,14 @@ pub trait DataNftMint:
         };
 
         let token_identifier = self.token_id().get_token_id();
-        let extra_assets_vec = extra_assets.into_vec_of_buffers(); 
+        let extra_assets_vec = extra_assets.into_vec_of_buffers();
         self.mint_event(
             &caller,
             &one_token,
             &payment.token_identifier,
             &price,
             &payment.amount,
-            &extra_assets_vec
+            &extra_assets_vec,
         );
 
         let nonce = self.send().esdt_nft_create(
@@ -234,8 +252,24 @@ pub trait DataNftMint:
             payment,
         );
 
-        self.send()
-            .direct_esdt(&caller, &token_identifier, nonce, &supply);
+        if donation_supply > BigUint::zero() {
+            let donation_treasury_address = self.donation_treasury_address().get();
+            self.send().direct_esdt(
+                &donation_treasury_address,
+                &token_identifier,
+                nonce,
+                &donation_supply,
+            );
+            self.send().direct_esdt(
+                &caller,
+                &token_identifier,
+                nonce,
+                &(&supply - &donation_supply),
+            );
+        } else {
+            self.send()
+                .direct_esdt(&caller, &token_identifier, nonce, &supply);
+        }
 
         attributes
     }
@@ -266,6 +300,21 @@ pub trait DataNftMint:
     fn set_treasury_address(&self, address: ManagedAddress) {
         self.treasury_address_event(&address);
         self.treasury_address().set(&address);
+    }
+
+    #[endpoint(setDonationTreasuryAddress)]
+    fn set_donation_treasury_address(&self, address: ManagedAddress) {
+        self.require_is_privileged(&self.blockchain().get_caller());
+        self.donation_treasury_address_event(&address);
+        self.donation_treasury_address().set(&address);
+    }
+
+    #[endpoint(setMaxDonationPercentage)]
+    fn set_max_donation_percentage(&self, percentage: u64) {
+        self.require_is_privileged(&self.blockchain().get_caller());
+        require!(percentage <= 10_000, ERR_PERCENTAGE_TOO_HIGH);
+        self.max_donation_percentage_event(&percentage);
+        self.max_donation_percentage().set(percentage);
     }
 
     // Endpoint that will be used by privileged address to change the contract pause value.
