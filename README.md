@@ -30,8 +30,8 @@ This smart contract aims to offer the MultiversX community an audited NFT minter
 
 ### Setting up dev environment (project development bootstrap) + how to build (and upgrade)
 
-- Uses `multiversx-sc-* 0.39.4` (In v3.0.0, we used 0.47.5) SDK libs (see Cargo.toml)
-- Building requires minimum **mxpy 6.1.1** (In v2.0.0, we used mxpy 9.5.1). Check version using `mxpy --version`
+- Uses `multiversx-sc-* 0.39.4` (In v3.0.0 and v4.0.0, we used 0.47.5) SDK libs (see Cargo.toml)
+- Building requires minimum **mxpy 6.1.1** (In >v2.0.0, we used mxpy 9.5.1). Check version using `mxpy --version`
 - To build the project, requires minimum Rust version `1.76.0-nightly` (In v3.0.0, we used 1.76.0-nightly). Check your Rust version by running `rustc --version`. To update your Rust, run `rustup update`. To set to nightly run `rustup default nightly`. Note that `mxpy deps install rust --overwrite` also brings in it's own compatible rust version so running `rustup default nightly` might have a higher rust version than what is used via `mxpy deps install rust --overwrite`.
 - After you make sure you have the minimum Rust version you can then begin development. After you clone repo and before you run build, deploy or run the tests - follow these steps (most likely only needed the 1st time)
 - [Upgrades] Note that when we upgrade smart contract, we should again follow the steps below too as lib version may have changed (but for upgrade I skipped the rustup default nightly cmd and did the others)
@@ -116,7 +116,7 @@ Once the main commit is locked in, we can then produce the code hash and build t
 
 Note that if you already have a output-docker from a previous build and deploy then delete this folder.
 
-Also note that if you are upgrading you may need to use a newer docker `sdk-rust-contract-builder` version. You can see the tags here https://hub.docker.com/r/multiversx/sdk-rust-contract-builder/tags. In v2.0.0, we used v5.3.0 and for v3.0.0, we used v6.1.1 for the build to upgrade to. We tested this on devnet before doing it on mainnet.
+Also note that if you are upgrading you may need to use a newer docker `sdk-rust-contract-builder` version. You can see the tags here https://hub.docker.com/r/multiversx/sdk-rust-contract-builder/tags. In v2.0.0, we used v5.3.0 and for v3.0.0, v4.0.0, we used v6.1.1 for the build to upgrade to. We tested this on devnet before doing it on mainnet.
 
 This process may take some time. After it's done you should see "Docker build ran successfully!". An output-docker folder will be created containing the WASM files built in a reproducible way and artifacts.json containing the code hash of the WASM files.
 

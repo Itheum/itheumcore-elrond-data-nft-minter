@@ -162,8 +162,6 @@ pub trait DataNftMint:
         self.require_title_description_are_valid(&title, &description);
         self.require_sft_is_valid(&royalties, &supply);
 
-        sc_print!("donation percentage: {} ", donation_percentage.clone());
-
         let donation_supply = if donation_percentage > 0 {
             require!(
                 donation_percentage <= self.max_donation_percentage().get(),
@@ -176,8 +174,6 @@ pub trait DataNftMint:
         } else {
             BigUint::zero()
         };
-
-        sc_print!("donation supply:{}", donation_supply);
 
         let caller = self.blockchain().get_caller();
         let current_time = self.blockchain().get_block_timestamp();
