@@ -382,6 +382,42 @@ setAdministrator(){
     --send || return
 }
 
+
+setDonationTreasuryAddress(){
+
+    # $1 = address
+
+    address="0x$(mxpy wallet bech32 --decode ${1})"
+
+    mxpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=6000000 \
+    --function "setDonationTreasuryAddress" \
+    --arguments $address \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return
+
+}
+
+
+setMaxDonationPercentage(){
+
+    # $1 = max donation percentage value (1% -> 100 ; 100% -> 10000)
+
+    mxpy --verbose contract call ${ADDRESS} \
+    --recall-nonce \
+    --pem=${WALLET} \
+    --gas-limit=6000000 \
+    --function "setMaxDonationPercentage" \
+    --arguments ${1} \
+    --proxy ${PROXY} \
+    --chain ${CHAIN_ID} \
+    --send || return
+
+}
+
 mintTokenUsingEsdt(){
     # $1 = amount of esdt to send
     # $2 = name
