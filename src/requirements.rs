@@ -26,6 +26,7 @@ pub trait RequirementsModule: crate::storage::StorageModule {
         if self.treasury_address().is_empty() {
             is_mint_ready = false;
         }
+
         if self.bond_contract_address().is_empty() {
             is_mint_ready = false;
         }
@@ -33,6 +34,9 @@ pub trait RequirementsModule: crate::storage::StorageModule {
             is_mint_ready = false;
         }
         if self.bond_contract_address().is_empty() {
+            is_mint_ready = false;
+        }
+        if self.donation_treasury_address().is_empty() {
             is_mint_ready = false;
         }
         require!(is_mint_ready, ERR_MINTING_AND_BURNING_NOT_ALLOWED);

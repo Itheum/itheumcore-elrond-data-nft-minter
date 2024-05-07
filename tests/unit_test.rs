@@ -140,6 +140,12 @@ fn minter_contract_ready_test() {
 
         minter_contract.roles_are_set().set(true);
 
+        minter_contract
+            .donation_treasury_address()
+            .set(managed_address!(
+                &AddressValue::from("address:donation").to_address()
+            ));
+
         minter_contract.require_ready_for_minting_and_burning();
     });
 
